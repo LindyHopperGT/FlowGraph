@@ -45,11 +45,16 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	bool bUseAdaptiveNodeTitles;
 
 	// Default class to use as a FlowAsset's "ExpectedOwnerClass" 
-	UPROPERTY(EditAnywhere, Config, meta = (MustImplement = "FlowOwnerInterface"))
+	UPROPERTY(EditAnywhere, Config, Category = "Nodes", meta = (MustImplement = "FlowOwnerInterface"))
 	FSoftClassPath DefaultExpectedOwnerClass;
 
 public:
 	UClass* GetDefaultExpectedOwnerClass() const;
 
 	static UClass* TryResolveOrLoadSoftClass(const FSoftClassPath& SoftClassPath);
+
+#if WITH_EDITORONLY_DATA
+	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
+	virtual FText GetSectionText() const override { return INVTEXT("Settings"); }
+#endif
 };
