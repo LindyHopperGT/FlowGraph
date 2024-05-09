@@ -11,6 +11,7 @@
 #include "Utils/SLevelEditorFlow.h"
 #include "MovieScene/FlowTrackEditor.h"
 #include "Nodes/AssetTypeActions_FlowNodeBlueprint.h"
+#include "Nodes/AssetTypeActions_FlowNodeAddOnBlueprint.h"
 #include "Pins/SFlowInputPinHandle.h"
 #include "Pins/SFlowOutputPinHandle.h"
 
@@ -20,10 +21,13 @@
 #include "DetailCustomizations/FlowNode_CustomInputDetails.h"
 #include "DetailCustomizations/FlowNode_CustomOutputDetails.h"
 #include "DetailCustomizations/FlowNode_PlayLevelSequenceDetails.h"
-#include "DetailCustomizations/FlowOwnerFunctionRefCustomization.h"
 #include "DetailCustomizations/FlowNode_SubGraphDetails.h"
+#include "DetailCustomizations/FlowNodeAddOn_Details.h"
+#include "DetailCustomizations/FlowOwnerFunctionRefCustomization.h"
+#include "DetailCustomizations/FlowActorOwnerComponentRefCustomization.h"
 
 #include "FlowAsset.h"
+#include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
@@ -132,6 +136,10 @@ void FFlowEditorModule::RegisterAssets()
 	const TSharedRef<IAssetTypeActions> FlowNodeActions = MakeShareable(new FAssetTypeActions_FlowNodeBlueprint());
 	RegisteredAssetActions.Add(FlowNodeActions);
 	AssetTools.RegisterAssetTypeActions(FlowNodeActions);
+
+	const TSharedRef<IAssetTypeActions> FlowNodeAddOnActions = MakeShareable(new FAssetTypeActions_FlowNodeAddOnBlueprint());
+	RegisteredAssetActions.Add(FlowNodeAddOnActions);
+	AssetTools.RegisterAssetTypeActions(FlowNodeAddOnActions);
 }
 
 void FFlowEditorModule::UnregisterAssets()
@@ -179,12 +187,14 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 
 		RegisterCustomClassLayout(UFlowAsset::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowAssetDetails::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_Details::MakeInstance));
+		RegisterCustomClassLayout(UFlowNodeAddOn::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNodeAddOn_Details::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_ComponentObserver::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_ComponentObserverDetails::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_CustomInput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomInputDetails::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_PlayLevelSequence::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_PlayLevelSequenceDetails::MakeInstance));
-    RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
+	    RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
 		RegisterCustomStructLayout(*FFlowOwnerFunctionRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowOwnerFunctionRefCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowActorOwnerComponentRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowActorOwnerComponentRefCustomization::MakeInstance));
 
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}

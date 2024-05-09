@@ -16,7 +16,7 @@ TSharedPtr<SToolTip> SFlowGraphNode_SubGraph::GetComplexTooltip()
 {
 	if (UFlowGraphEditorSettings::Get()->bShowSubGraphPreview && FlowGraphNode)
 	{
-		if (UFlowNode* FlowNode = FlowGraphNode->GetFlowNode())
+		if (UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase()))
 		{
 			const UFlowAsset* AssetToEdit = Cast<UFlowAsset>(FlowNode->GetAssetToEdit());
 			if (AssetToEdit && AssetToEdit->GetGraph())

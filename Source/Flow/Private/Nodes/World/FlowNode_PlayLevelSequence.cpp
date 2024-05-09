@@ -54,7 +54,7 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 }
 
 #if WITH_EDITOR
-TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
+TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 {
 	if (Sequence.IsNull())
 	{
@@ -63,7 +63,8 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
 
 	TArray<FFlowPin> Pins = {};
 
-	Sequence = Sequence.LoadSynchronous();
+	Sequence.LoadSynchronous();
+
 	if (Sequence && Sequence->GetMovieScene())
 	{
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2

@@ -1,15 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "FlowOwnerFunctionRef.h"
-
+#include "Types/FlowOwnerFunctionRef.h"
+#include "Types/FlowOwnerFunctionParams.h"
+#include "Interfaces/FlowOwnerInterface.h"
 #include "FlowLogChannels.h"
-#include "FlowOwnerFunctionParams.h"
-#include "FlowOwnerInterface.h"
 
-#include "Logging/LogMacros.h"
 #include "UObject/Class.h"
-
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowOwnerFunctionRef)
+#include "Logging/LogMacros.h"
 
 UFunction* FFlowOwnerFunctionRef::TryResolveFunction(const UClass& InClass)
 {
@@ -52,7 +49,7 @@ FName FFlowOwnerFunctionRef::CallFunction(IFlowOwnerInterface& InFlowOwnerInterf
 		FName OutputPinName;
 	};
 
-	FFlowOwnerFunctionRef_Parms Parms = {&InParams, NAME_None};
+	FFlowOwnerFunctionRef_Parms Parms = { &InParams, NAME_None };
 
 	// Call the owner function itself
 	FlowOwnerObject->ProcessEvent(Function, &Parms);

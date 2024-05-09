@@ -3,7 +3,6 @@
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "FlowAsset.h"
-#include "FlowMessageLog.h"
 #include "FlowSubsystem.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_SubGraph)
@@ -121,7 +120,7 @@ EDataValidationResult UFlowNode_SubGraph::ValidateNode()
 	return EDataValidationResult::Valid;
 }
 
-TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs()
+TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs() const
 {
 	TArray<FFlowPin> EventNames;
 
@@ -140,7 +139,7 @@ TArray<FFlowPin> UFlowNode_SubGraph::GetContextInputs()
 	return EventNames;
 }
 
-TArray<FFlowPin> UFlowNode_SubGraph::GetContextOutputs()
+TArray<FFlowPin> UFlowNode_SubGraph::GetContextOutputs() const
 {
 	TArray<FFlowPin> Pins;
 

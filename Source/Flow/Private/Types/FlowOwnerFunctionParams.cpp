@@ -1,17 +1,16 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "FlowOwnerFunctionParams.h"
+#include "Types/FlowOwnerFunctionParams.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/World/FlowNode_CallOwnerFunction.h"
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowOwnerFunctionParams)
-
 UFlowOwnerFunctionParams::UFlowOwnerFunctionParams()
+	: Super()
 {
 #if WITH_EDITOR
 	InputNames.Add(UFlowNode::DefaultInputPin.PinName);
 	OutputNames.Add(UFlowNode::DefaultOutputPin.PinName);
-#endif
+#endif //WITH_EDITOR
 }
 
 void UFlowOwnerFunctionParams::PreExecute(UFlowNode_CallOwnerFunction& InSourceNode, const FName& InputPinName)

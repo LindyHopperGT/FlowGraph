@@ -101,6 +101,8 @@ public:
 	// FAssetEditorToolkit
 	virtual void InitToolMenuContext(FToolMenuContext& MenuContext) override;
 	virtual void PostRegenerateMenusAndToolbars() override;
+	virtual void SaveAsset_Execute() override;
+	virtual void SaveAssetAs_Execute() override;
 	// --
 
 	bool IsTabFocused(const FTabId& TabId) const;
@@ -114,6 +116,8 @@ private:
 	TSharedRef<SDockTab> SpawnTab_Search(const FSpawnTabArgs& Args) const;
 #endif
 	TSharedRef<SDockTab> SpawnTab_ValidationLog(const FSpawnTabArgs& Args) const;
+
+	void DoPresaveAssetUpdate();
 
 public:
 	/** Edits the specified FlowAsset object */
@@ -150,7 +154,7 @@ public:
 	virtual void ClearSelectionStateFor(const FName SelectionOwner);
 	FName GetUISelectionState() const;
 
-	virtual void OnSelectedNodesChanged(const TSet<UObject*>& Nodes) {}
+	virtual void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
 
 #if ENABLE_JUMP_TO_INNER_OBJECT
 	// FAssetEditorToolkit

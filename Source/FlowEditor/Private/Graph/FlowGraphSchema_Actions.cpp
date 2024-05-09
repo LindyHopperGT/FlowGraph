@@ -9,6 +9,7 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
+#include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/FlowNode.h"
 
 #include "EdGraph/EdGraph.h"
@@ -55,7 +56,8 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::CreateNode(UEdGraph* ParentGraph
 	FlowAsset->Modify();
 
 	// create new Flow Graph node
-	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(NodeClass);
+	TSubclassOf<UFlowNodeBase> FlowNodeBaseClass = const_cast<UClass*>(NodeClass);
+	TSubclassOf<UEdGraphNode> GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNodeBaseClass);
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
 
 	// register to the graph
@@ -103,7 +105,7 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::RecreateNode(UEdGraph* ParentGra
 	FlowAsset->Modify();
 
 	// create new Flow Graph node
-	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNode->GetClass());
+	const TSubclassOf<UEdGraphNode> GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNode->GetClass());
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
 
 	// register to the graph
@@ -171,7 +173,8 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::ImportNode(UEdGraph* ParentGraph
 	FlowAsset->Modify();
 
 	// create new Flow Graph node
-	const UClass* GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(NodeClass);
+	TSubclassOf<UFlowNodeBase> FlowNodeBaseClass = const_cast<UClass*>(NodeClass);
+	const TSubclassOf<UEdGraphNode> GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNodeBaseClass);
 	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
 
 	// register to the graph
@@ -197,6 +200,69 @@ UFlowGraphNode* FFlowGraphSchemaAction_NewNode::ImportNode(UEdGraph* ParentGraph
 	return NewGraphNode;
 }
 
+/////////////////////////////////////////////////////
+// New SubNode (AddOn)
+
+UEdGraphNode* FFlowSchemaAction_NewSubNode::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
+{
+	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
+	return NULL;
+}
+
+UEdGraphNode* FFlowSchemaAction_NewSubNode::PerformAction(class UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode)
+{
+	return PerformAction(ParentGraph, NULL, Location, bSelectNewNode);
+}
+
+void FFlowSchemaAction_NewSubNode::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	FEdGraphSchemaAction::AddReferencedObjects(Collector);
+
+	// These don't get saved to disk, but we want to make sure the objects don't get GC'd while the action array is around
+	Collector.AddReferencedObject(NodeTemplate);
+	Collector.AddReferencedObject(ParentNode);
+}
+
+UFlowGraphNode* FFlowSchemaAction_NewSubNode::RecreateNode(UEdGraph* ParentGraph, UEdGraphNode* OldInstance, UFlowGraphNode* ParentFlowGraphNode, UFlowNodeAddOn* FlowNodeAddOn)
+{
+	check(FlowNodeAddOn);
+
+	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(ParentGraph)->GetFlowAsset();
+	FlowAsset->Modify();
+
+	// create new Flow Graph node
+	const TSubclassOf<UEdGraphNode> GraphNodeClass = UFlowGraphSchema::GetAssignedGraphNodeClass(FlowNodeAddOn->GetClass());
+	UFlowGraphNode* NewGraphNode = NewObject<UFlowGraphNode>(ParentGraph, GraphNodeClass, NAME_None, RF_Transactional);
+
+	// link editor and runtime nodes together
+	FlowNodeAddOn->SetGraphNode(NewGraphNode);
+	NewGraphNode->SetNodeTemplate(FlowNodeAddOn);
+
+	// remove leftover
+	if (OldInstance)
+	{
+		OldInstance->DestroyNode();
+	}
+
+	ParentFlowGraphNode->AddSubNode(NewGraphNode, ParentGraph);
+
+	// call notifies
+	ParentGraph->NotifyGraphChanged();
+	NewGraphNode->PostPlacedNewNode();
+
+	return NewGraphNode;
+}
+
+TSharedPtr<FFlowSchemaAction_NewSubNode> FFlowSchemaAction_NewSubNode::AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
+{
+	TSharedPtr<FFlowSchemaAction_NewSubNode> NewAction = TSharedPtr<FFlowSchemaAction_NewSubNode>(new FFlowSchemaAction_NewSubNode(Category, MenuDesc, Tooltip, 0));
+	ContextMenuBuilder.AddAction(NewAction);
+	return NewAction;
+}
+
+/////////////////////////////////////////////////////
+// Paste
+
 UEdGraphNode* FFlowGraphSchemaAction_Paste::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, const bool bSelectNewNode/* = true*/)
 {
 	// prevent adding new nodes while playing
@@ -209,7 +275,7 @@ UEdGraphNode* FFlowGraphSchemaAction_Paste::PerformAction(class UEdGraph* Parent
 }
 
 /////////////////////////////////////////////////////
-// Comment Node
+// New Comment
 
 UEdGraphNode* FFlowGraphSchemaAction_NewComment::PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, const bool bSelectNewNode/* = true*/)
 {

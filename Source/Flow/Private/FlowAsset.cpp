@@ -2,10 +2,12 @@
 
 #include "FlowAsset.h"
 
+#include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
-#include "Nodes/FlowNode.h"
+#include "AddOns/FlowNodeAddOn.h"
+#include "Nodes/FlowNodeBase.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
 #include "Nodes/Route/FlowNode_Start.h"
@@ -16,16 +18,9 @@
 #include "Serialization/MemoryWriter.h"
 
 #if WITH_EDITOR
-#include "FlowMessageLog.h"
-#include "FlowLogChannels.h"
-
 #include "Editor.h"
 #include "Editor/EditorEngine.h"
-#endif
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
-
-#if WITH_EDITOR
 FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} is not allowed in this asset.");
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 #endif
@@ -113,7 +108,7 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 		if (IsValid(Node.Value))
 		{
 			FText FailureReason;
-			if (!IsNodeClassAllowed(Node.Value->GetClass(), &FailureReason))
+			if (!IsNodeOrAddOnClassAllowed(Node.Value->GetClass(), &FailureReason))
 			{
 				const FString ErrorMsg = 
 					FailureReason.IsEmpty() ?
@@ -139,25 +134,25 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 	return MessageLog.Messages.Num() > 0 ? EDataValidationResult::Invalid : EDataValidationResult::Valid;
 }
 
-bool UFlowAsset::IsNodeClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason) const
+bool UFlowAsset::IsNodeOrAddOnClassAllowed(const UClass* FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const
 {
-	if (!IsValid(FlowNodeClass))
+	if (!IsValid(FlowNodeOrAddOnClass))
 	{
 		return false;
 	}
 
-	if (!CanFlowNodeClassBeUsedByFlowAsset(*FlowNodeClass))
+	if (!CanFlowNodeClassBeUsedByFlowAsset(*FlowNodeOrAddOnClass))
 	{
 		return false;
 	}
 
-	if (!CanFlowAssetUseFlowNodeClass(*FlowNodeClass))
+	if (!CanFlowAssetUseFlowNodeClass(*FlowNodeOrAddOnClass))
 	{
 		return false;
 	}
 
 	// Confirm plugin reference restrictions are being respected
-	if (!CanFlowAssetReferenceFlowNode(*FlowNodeClass, OutOptionalFailureReason))
+	if (!CanFlowAssetReferenceFlowNode(*FlowNodeOrAddOnClass, OutOptionalFailureReason))
 	{
 		return false;
 	}
@@ -167,7 +162,15 @@ bool UFlowAsset::IsNodeClassAllowed(const UClass* FlowNodeClass, FText* OutOptio
 
 bool UFlowAsset::CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const
 {
-	UFlowNode* NodeDefaults = FlowNodeClass.GetDefaultObject<UFlowNode>();
+	UFlowNode* NodeDefaults = Cast<UFlowNode>(FlowNodeClass.GetDefaultObject());
+	if (!NodeDefaults)
+	{
+		check(FlowNodeClass.IsChildOf<UFlowNodeAddOn>());
+
+		// AddOns don't have the AllowedAssetClasses/DeniedAssetClasses 
+		// (yet?  maybe we move it up to the base?)
+		return true;
+	}
 
 	// UFlowNode class limits which UFlowAsset class can use it
 	for (const UClass* DeniedAssetClass : NodeDefaults->DeniedAssetClasses)
@@ -200,6 +203,17 @@ bool UFlowAsset::CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) 
 
 bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 {
+	const bool bIsFlowNode = FlowNodeClass.IsChildOf<UFlowNode>();
+	if (!bIsFlowNode)
+	{
+		check(FlowNodeClass.IsChildOf<UFlowNodeAddOn>());
+
+		// AddOns don't have the AllowedAssetClasses/DeniedAssetClasses 
+		// (yet?  maybe we move it up to the base?)
+
+		return true;
+	}
+
 	// UFlowAsset class can limit which UFlowNode classes can be used
 	for (const UClass* DeniedNodeClass : DeniedNodeClasses)
 	{
@@ -209,7 +223,7 @@ bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 		}
 	}
 
-	if (AllowedNodeClasses.Num() > 0)
+	if (bIsFlowNode && AllowedNodeClasses.Num() > 0)
 	{
 		bool bAllowedInAsset = false;
 		for (const UClass* AllowedNodeClass : AllowedNodeClasses)
@@ -229,14 +243,14 @@ bool UFlowAsset::CanFlowAssetUseFlowNodeClass(const UClass& FlowNodeClass) const
 	return true;
 }
 
-bool UFlowAsset::CanFlowAssetReferenceFlowNode(const UClass& FlowNodeClass, FText* OutOptionalFailureReason) const
+bool UFlowAsset::CanFlowAssetReferenceFlowNode(const UClass& FlowNodeOrAddOnClass, FText* OutOptionalFailureReason) const
 {
-	if (!GEditor || !IsValid(&FlowNodeClass))
+	if (!GEditor || !IsValid(&FlowNodeOrAddOnClass))
 	{
 		return false;
 	}
 
-	FAssetData FlowNodeAssetData(&FlowNodeClass);
+	FAssetData FlowNodeAssetData(&FlowNodeOrAddOnClass);
 
 	FAssetReferenceFilterContext AssetReferenceFilterContext;
 	AssetReferenceFilterContext.ReferencingAssets.Add(FAssetData(this));
@@ -891,7 +905,7 @@ bool UFlowAsset::IsBoundToWorld_Implementation()
 }
 
 #if WITH_EDITOR
-void UFlowAsset::LogError(const FString& MessageToLog, UFlowNode* Node)
+void UFlowAsset::LogError(const FString& MessageToLog, UFlowNodeBase* Node)
 {
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
@@ -906,7 +920,7 @@ void UFlowAsset::LogError(const FString& MessageToLog, UFlowNode* Node)
 	}
 }
 
-void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNode* Node)
+void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNodeBase* Node)
 {
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
@@ -921,7 +935,7 @@ void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNode* Node)
 	}
 }
 
-void UFlowAsset::LogNote(const FString& MessageToLog, UFlowNode* Node)
+void UFlowAsset::LogNote(const FString& MessageToLog, UFlowNodeBase* Node)
 {
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)

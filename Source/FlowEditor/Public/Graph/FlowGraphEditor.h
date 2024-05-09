@@ -2,7 +2,10 @@
 
 #pragma once
 
+#include "EdGraphUtilities.h"
 #include "GraphEditor.h"
+#include "GraphEditorActions.h"
+#include "SGraphNode.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 
 #include "FlowGraph.h"
@@ -71,6 +74,7 @@ protected:
 	virtual bool CanDeleteNodes() const;
 
 	virtual void CopySelectedNodes() const;
+	void PrepareFlowGraphNodeForCopy(UFlowGraphNode& FlowGraphNode, int32 ParentEdNodeIndex, FGraphPanelSelectionSet& NewSelectedNodes) const;
 	virtual bool CanCopyNodes() const;
 
 	virtual void CutSelectedNodes();

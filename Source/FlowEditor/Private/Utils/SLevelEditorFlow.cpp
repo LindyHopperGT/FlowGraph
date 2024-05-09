@@ -11,6 +11,7 @@
 #include "Graph/FlowGraphSettings.h"
 
 #include "Editor.h"
+#include "GameFramework/WorldSettings.h"
 #include "PropertyCustomizationHelpers.h"
 #include "Runtime/Launch/Resources/Version.h"
 

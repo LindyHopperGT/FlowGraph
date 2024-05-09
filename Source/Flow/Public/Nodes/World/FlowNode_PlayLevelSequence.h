@@ -85,8 +85,10 @@ protected:
 
 public:
 #if WITH_EDITOR
+	// IFlowContextPinSupplierInterface
 	virtual bool SupportsContextPins() const override { return true; }
-	virtual TArray<FFlowPin> GetContextOutputs() override;
+	virtual TArray<FFlowPin> GetContextOutputs() const override;
+	// --
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

@@ -7,7 +7,7 @@
 
 #include "FlowSave.h"
 #include "FlowTypes.h"
-#include "FlowOwnerInterface.h"
+#include "Interfaces/FlowOwnerInterface.h"
 #include "FlowComponent.generated.h"
 
 class UFlowAsset;

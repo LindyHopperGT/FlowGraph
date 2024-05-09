@@ -1,30 +1,21 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/FlowNode.h"
+#include "Interfaces/FlowOwnerInterface.h"
+#include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowAsset.h"
-#include "FlowLogChannels.h"
-#include "FlowOwnerInterface.h"
 #include "FlowSettings.h"
-#include "FlowSubsystem.h"
-#include "FlowTypes.h"
 
 #include "Components/ActorComponent.h"
-#include "Engine/Blueprint.h"
-#include "Engine/Engine.h"
-#include "Engine/ViewportStatsSubsystem.h"
-#include "Engine/World.h"
-#include "GameFramework/Actor.h"
-#include "Misc/App.h"
-#include "Misc/Paths.h"
-#include "Serialization/MemoryReader.h"
-#include "Serialization/MemoryWriter.h"
-
 #if WITH_EDITOR
 #include "Editor.h"
 #endif
 
-#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode)
+#include "GameFramework/Actor.h"
+#include "Misc/App.h"
+#include "Serialization/MemoryReader.h"
+#include "Serialization/MemoryWriter.h"
 
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
 FFlowPin UFlowNode::DefaultOutputPin(TEXT("Out"));
@@ -36,12 +27,6 @@ FString UFlowNode::NoActorsFound = TEXT("No actors found");
 
 UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, GraphNode(nullptr)
-#if WITH_EDITOR
-	, bCanDelete(true)
-	, bCanDuplicate(true)
-	, bNodeDeprecated(false)
-#endif
 	, AllowedSignalModes({EFlowSignalMode::Enabled, EFlowSignalMode::Disabled, EFlowSignalMode::PassThrough})
 	, SignalMode(EFlowSignalMode::Enabled)
 	, bPreloaded(false)
@@ -62,10 +47,17 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.Property
-		&& (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)
-			|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)))
+	if (!PropertyChangedEvent.Property)
 	{
+		return;
+	}
+
+	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins))
+	{
+		// Potentially need to rebuild the pins from the this node
 		OnReconstructionRequested.ExecuteIfBound();
 	}
 }
@@ -78,83 +70,7 @@ void UFlowNode::PostLoad()
 	FixNode(nullptr);
 }
 
-void UFlowNode::FixNode(UEdGraphNode* NewGraphNode)
-{
-	// Fix any node pointers that may be out of date
-	if (NewGraphNode)
-	{
-		GraphNode = NewGraphNode;
-	}
-}
-
-void UFlowNode::SetGraphNode(UEdGraphNode* NewGraph)
-{
-	GraphNode = NewGraph;
-}
-
-FString UFlowNode::GetNodeCategory() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintCategory = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintCategory;
-		if (!BlueprintCategory.IsEmpty())
-		{
-			return BlueprintCategory;
-		}
-	}
-
-	return Category;
-}
-
-FText UFlowNode::GetNodeTitle() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
-		if (!BlueprintTitle.IsEmpty())
-		{
-			return FText::FromString(BlueprintTitle);
-		}
-	}
-
-	return GetClass()->GetDisplayNameText();
-}
-
-FText UFlowNode::GetNodeToolTip() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
-		if (!BlueprintToolTip.IsEmpty())
-		{
-			return FText::FromString(BlueprintToolTip);
-		}
-	}
-
-	return GetClass()->GetToolTipText();
-}
-
-bool UFlowNode::GetDynamicTitleColor(FLinearColor& OutColor) const
-{
-	if (NodeStyle == EFlowNodeStyle::Custom)
-	{
-		OutColor = NodeColor;
-		return true;
-	}
-
-	return false;
-}
-
-FString UFlowNode::GetNodeDescription() const
-{
-	return K2_GetNodeDescription();
-}
 #endif
-
-UFlowAsset* UFlowNode::GetFlowAsset() const
-{
-	return GetOuter() ? Cast<UFlowAsset>(GetOuter()) : nullptr;
-}
 
 AActor* UFlowNode::TryGetRootFlowActorOwner() const
 {
@@ -282,6 +198,78 @@ void UFlowNode::AddOutputPins(TArray<FFlowPin> Pins)
 		OutputPins.Emplace(Pin);
 	}
 }
+
+#if WITH_EDITOR
+
+bool UFlowNode::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
+{
+	bool bIsChanged = false;
+
+	TArray<FFlowPin> NewPins;
+
+	if (NewPinNames.Num() == 0)
+	{
+		bIsChanged = true;
+
+		NewPins.Reserve(1);
+
+		NewPins.Add(DefaultPin);
+	}
+	else
+	{
+		const bool bIsSameNum = (NewPinNames.Num() == InOutPins.Num());
+
+		bIsChanged = !bIsSameNum;
+
+		NewPins.Reserve(NewPinNames.Num());
+
+		for (int32 NewPinIndex = 0; NewPinIndex < NewPinNames.Num(); ++NewPinIndex)
+		{
+			const FName& NewPinName = NewPinNames[NewPinIndex];
+			NewPins.Add(FFlowPin(NewPinName));
+
+			if (bIsSameNum)
+			{
+				bIsChanged = bIsChanged || (NewPinName != InOutPins[NewPinIndex].PinName);
+			}
+		}
+	}
+
+	if (bIsChanged)
+	{
+		InOutPins.Reset();
+
+		check(NewPins.Num() > 0);
+
+		if (&InOutPins == &InputPins)
+		{
+			AddInputPins(NewPins);
+		}
+		else
+		{
+			checkf(&InOutPins == &OutputPins, TEXT("Only expected to be called with one or the other of the pin arrays"));
+
+			AddOutputPins(NewPins);
+		}
+	}
+
+	return bIsChanged;
+}
+
+bool UFlowNode::RebuildPinArray(const TArray<FFlowPin>& NewPins, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
+{
+	TArray<FName> NewPinNames;
+	NewPinNames.Reserve(NewPins.Num());
+
+	for (const FFlowPin& NewPin : NewPins)
+	{
+		NewPinNames.Add(NewPin.PinName);
+	}
+
+	return RebuildPinArray(NewPinNames, InOutPins, DefaultPin);
+}
+
+#endif // WITH_EDITOR
 
 void UFlowNode::SetNumberedInputPins(const uint8 FirstNumber, const uint8 LastNumber)
 {
@@ -496,26 +484,6 @@ void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFl
 	}
 }
 
-UFlowSubsystem* UFlowNode::GetFlowSubsystem() const
-{
-	return GetFlowAsset() ? GetFlowAsset()->GetFlowSubsystem() : nullptr;
-}
-
-UWorld* UFlowNode::GetWorld() const
-{
-	if (GetFlowAsset() && GetFlowAsset()->GetFlowSubsystem())
-	{
-		return GetFlowAsset()->GetFlowSubsystem()->GetWorld();
-	}
-
-	return nullptr;
-}
-
-void UFlowNode::InitializeInstance()
-{
-	K2_InitializeInstance();
-}
-
 void UFlowNode::TriggerPreload()
 {
 	bPreloaded = true;
@@ -526,21 +494,6 @@ void UFlowNode::TriggerFlush()
 {
 	bPreloaded = false;
 	FlushContent();
-}
-
-void UFlowNode::PreloadContent()
-{
-	K2_PreloadContent();
-}
-
-void UFlowNode::FlushContent()
-{
-	K2_FlushContent();
-}
-
-void UFlowNode::OnActivate()
-{
-	K2_OnActivate();
 }
 
 void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType /*= Default*/)
@@ -606,11 +559,6 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	}
 }
 
-void UFlowNode::ExecuteInput(const FName& PinName)
-{
-	K2_ExecuteInput(PinName);
-}
-
 void UFlowNode::TriggerFirstOutput(const bool bFinish)
 {
 	if (OutputPins.Num() > 0)
@@ -619,7 +567,7 @@ void UFlowNode::TriggerFirstOutput(const bool bFinish)
 	}
 }
 
-void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false*/, const EFlowPinActivationType ActivationType /*= Default*/)
+void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*/, const EFlowPinActivationType ActivationType /*= Default*/)
 {
 	// clean up node, if needed
 	if (bFinish)
@@ -655,26 +603,6 @@ void UFlowNode::TriggerOutput(const FName& PinName, const bool bFinish /*= false
 	}
 }
 
-void UFlowNode::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType /*= Default*/)
-{
-	TriggerOutput(Pin.PinName, bFinish, ActivationType);
-}
-
-void UFlowNode::TriggerOutput(const FString& PinName, const bool bFinish)
-{
-	TriggerOutput(*PinName, bFinish);
-}
-
-void UFlowNode::TriggerOutput(const FText& PinName, const bool bFinish)
-{
-	TriggerOutput(*PinName.ToString(), bFinish);
-}
-
-void UFlowNode::TriggerOutput(const TCHAR* PinName, const bool bFinish)
-{
-	TriggerOutput(FName(PinName), bFinish);
-}
-
 void UFlowNode::Finish()
 {
 	Deactivate();
@@ -693,21 +621,6 @@ void UFlowNode::Deactivate()
 	}
 
 	Cleanup();
-}
-
-void UFlowNode::Cleanup()
-{
-	K2_Cleanup();
-}
-
-void UFlowNode::DeinitializeInstance()
-{
-	K2_DeinitializeInstance();
-}
-
-void UFlowNode::ForceFinishNode()
-{
-	K2_ForceFinishNode();
 }
 
 void UFlowNode::ResetRecords()
@@ -784,16 +697,6 @@ void UFlowNode::OnPassThrough_Implementation()
 }
 
 #if WITH_EDITOR
-UFlowNode* UFlowNode::GetInspectedInstance() const
-{
-	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
-	{
-		return FlowInstance->GetNode(GetGuid());
-	}
-
-	return nullptr;
-}
-
 TMap<uint8, FPinRecord> UFlowNode::GetWireRecords() const
 {
 	TMap<uint8, FPinRecord> Result;
@@ -815,31 +718,6 @@ TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraph
 		default:
 			return TArray<FPinRecord>();
 	}
-}
-
-FString UFlowNode::GetStatusString() const
-{
-	return K2_GetStatusString();
-}
-
-bool UFlowNode::GetStatusBackgroundColor(FLinearColor& OutColor) const
-{
-	return K2_GetStatusBackgroundColor(OutColor);
-}
-
-FString UFlowNode::GetAssetPath()
-{
-	return K2_GetAssetPath();
-}
-
-UObject* UFlowNode::GetAssetToEdit()
-{
-	return K2_GetAssetToEdit();
-}
-
-AActor* UFlowNode::GetActorToFocus()
-{
-	return K2_GetActorToFocus();
 }
 #endif
 
@@ -868,85 +746,39 @@ FString UFlowNode::GetProgressAsString(const float Value)
 	return FString::Printf(TEXT("%.*f"), 2, Value);
 }
 
-void UFlowNode::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
-{
-#if !UE_BUILD_SHIPPING
-	if (BuildMessage(Message))
-	{
-		// OnScreen Message
-		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
-		{
-			if (GetWorld())
-			{
-				if (UViewportStatsSubsystem* StatsSubsystem = GetWorld()->GetSubsystem<UViewportStatsSubsystem>())
-				{
-					StatsSubsystem->AddDisplayDelegate([this, Message](FText& OutText, FLinearColor& OutColor)
-					{
-						OutText = FText::FromString(Message);
-						OutColor = FLinearColor::Red;
-						return IsValid(this) && ActivationState != EFlowNodeState::NeverActivated;
-					});
-				}
-			}
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
-		}
-
-		// Output Log
-		UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
-
-		// Message Log
 #if WITH_EDITOR
-		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
-#endif
+UFlowNode* UFlowNode::GetInspectedInstance() const
+{
+	if (const UFlowAsset* FlowInstance = GetFlowAsset()->GetInspectedInstance())
+	{
+		return FlowInstance->GetNode(GetGuid());
 	}
-#endif
+
+	return nullptr;
 }
 
-void UFlowNode::LogWarning(FString Message)
+FString UFlowNode::GetStatusString() const
 {
-#if !UE_BUILD_SHIPPING
-	if (BuildMessage(Message))
-	{
-		// Output Log
-		UE_LOG(LogFlow, Warning, TEXT("%s"), *Message);
-
-		// Message Log
-#if WITH_EDITOR
-		GetFlowAsset()->GetTemplateAsset()->LogWarning(Message, this);
-#endif
-	}
-#endif
+	return K2_GetStatusString();
 }
 
-void UFlowNode::LogNote(FString Message)
+bool UFlowNode::GetStatusBackgroundColor(FLinearColor& OutColor) const
 {
-#if !UE_BUILD_SHIPPING
-	if (BuildMessage(Message))
-	{
-		// Output Log
-		UE_LOG(LogFlow, Log, TEXT("%s"), *Message);
-
-		// Message Log
-#if WITH_EDITOR
-		GetFlowAsset()->GetTemplateAsset()->LogNote(Message, this);
-#endif
-	}
-#endif
+	return K2_GetStatusBackgroundColor(OutColor);
 }
 
-#if !UE_BUILD_SHIPPING
-bool UFlowNode::BuildMessage(FString& Message) const
+FString UFlowNode::GetAssetPath()
 {
-	if (GetFlowAsset()->TemplateAsset) // this is runtime log which is should be only called on runtime instances of asset
-	{
-		const FString TemplatePath = GetFlowAsset()->TemplateAsset->GetPathName();
-		Message.Append(TEXT(" --- node ")).Append(GetName()).Append(TEXT(", asset ")).Append(FPaths::GetPath(TemplatePath) / FPaths::GetBaseFilename(TemplatePath));
-		return true;
-	}
+	return K2_GetAssetPath();
+}
 
-	return false;
+UObject* UFlowNode::GetAssetToEdit()
+{
+	return K2_GetAssetToEdit();
+}
+
+AActor* UFlowNode::GetActorToFocus()
+{
+	return K2_GetActorToFocus();
 }
 #endif
