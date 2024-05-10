@@ -5,6 +5,8 @@
 
 #include "Misc/RuntimeErrors.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeAddOn)
+
 void UFlowNodeAddOn::InitializeInstance()
 {
 	CacheFlowNode();
@@ -70,9 +72,12 @@ bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
 	// If the AddOn supplies ContextInputs, 
 	// only those Inputs are allowed inputs to be triggered for the AddOn
 	const TArray<FFlowPin> ContextInputs = GetContextInputs();
-	const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, GetContextInputs());
+	if (ContextInputs.IsEmpty())
+	{
+		return true;
+	}
 
-	if (FoundFlowPin)
+	if (const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, ContextInputs))
 	{
 		return true;
 	}

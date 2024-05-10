@@ -25,6 +25,8 @@ FString UFlowAsset::ValidationError_NodeClassNotAllowed = TEXT("Node class {0} i
 FString UFlowAsset::ValidationError_NullNodeInstance = TEXT("Node with GUID {0} is NULL");
 #endif
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowAsset)
+
 UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bWorldBound(true)
