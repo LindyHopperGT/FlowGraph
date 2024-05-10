@@ -4,6 +4,7 @@
 
 #include "Nodes/FlowNodeBase.h"
 #include "Interfaces/FlowNativeExecutableInterface.h"
+#include "Nodes/FlowPin.h"
 
 #include "FlowNodeAddOn.generated.h"
 
@@ -45,6 +46,14 @@ public:
 	FLOW_API UFlowNode* GetFlowNode() const;
 	// --
 
+#if WITH_EDITOR
+	// IFlowContextPinSupplierInterface
+	FLOW_API virtual bool SupportsContextPins() const override { return !InputPins.IsEmpty() || !OutputPins.IsEmpty(); }
+	FLOW_API virtual TArray<FFlowPin> GetContextInputs() const override { return InputPins; }
+	FLOW_API virtual TArray<FFlowPin> GetContextOutputs() const override { return OutputPins; }
+	// --
+#endif // WITH_EDITOR
+
 protected:
 	void CacheFlowNode();
 
@@ -54,4 +63,13 @@ protected:
 	// (accessible only when initialized, runtime only)
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowNode> FlowNode;
+
+	// Input pins to add to the owning flow node
+	// If defined, ExecuteInput will only be executed for these inputs
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlowNodeAddOn")
+	TArray<FFlowPin> InputPins;
+
+	// Output pins to add to the owning flow node
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlowNodeAddOn")
+	TArray<FFlowPin> OutputPins;
 };

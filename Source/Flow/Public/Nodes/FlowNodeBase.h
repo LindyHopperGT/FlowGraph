@@ -122,16 +122,15 @@ public:
 	// used when import graph from another asset
 	virtual void PostImport() {}
 
-#endif // WITH_EDITOR
-
-	virtual bool SupportsContextPins() const override { return false; }
-
-	static const FFlowPin* FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins);
-
 	// IFlowContextPinSupplierInterface
+	virtual bool SupportsContextPins() const override { return false; }
 	virtual TArray<FFlowPin> GetContextInputs() const override;
 	virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
+
+#endif // WITH_EDITOR
+
+	static const FFlowPin* FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);

@@ -309,6 +309,10 @@ public:
 	UPROPERTY()
 	bool bIsSubNode = false;
 
+	/** if set, this node has context pins from the last RefreshContextPins */
+	UPROPERTY()
+	bool bHasContextPins = true;
+
 	/** error message for node */
 	UPROPERTY()
 	FString ErrorMessage;

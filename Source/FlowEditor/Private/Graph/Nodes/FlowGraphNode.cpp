@@ -963,23 +963,43 @@ void UFlowGraphNode::RemoveInstancePin(UEdGraphPin* Pin)
 
 void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 {
-	if (SupportsContextPins())
+	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
+	if (!IsValid(FlowNode))
+	{
+		return;
+	}
+
+	const bool bShouldConsiderRefreshingContextPins = SupportsContextPins() || bHasContextPins;
+	if (!bShouldConsiderRefreshingContextPins)
+	{
+		return;
+	}
+
+	const TArray<FFlowPin> ContextInputs = FlowNode->GetContextInputs();
+	const TArray<FFlowPin> ContextOutputs = FlowNode->GetContextOutputs();
+
+	const bool bPrevHasContextPins = bHasContextPins;
+	bHasContextPins = !ContextInputs.IsEmpty() || !ContextOutputs.IsEmpty();
+
+	// Skip the rest if the node went from no ContextPins to no ContextPins
+	const bool bMaintainedNoContextPins = !bPrevHasContextPins && !bHasContextPins;
+
+	if (!bMaintainedNoContextPins)
 	{
 		const FScopedTransaction Transaction(LOCTEXT("RefreshContextPins", "Refresh Context Pins"));
 		Modify();
 
-		UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
 		const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
 
 		// recreate inputs
 		FlowNode->InputPins = NodeDefaults->InputPins;
-		FlowNode->AddInputPins(FlowNode->GetContextInputs());
+		FlowNode->AddInputPins(ContextInputs);
 
 		// recreate outputs
 		FlowNode->OutputPins = NodeDefaults->OutputPins;
-		FlowNode->AddOutputPins(FlowNode->GetContextOutputs());
+		FlowNode->AddOutputPins(ContextOutputs);
 
-		if (bReconstructNode)
+		if (bReconstructNode && !bMaintainedNoContextPins)
 		{
 			ReconstructNode();
 			GetGraph()->NotifyGraphChanged();
@@ -1331,6 +1351,13 @@ void UFlowGraphNode::RebuildRuntimeAddOnsFromEditorSubNodes()
 		{
 			SubNode->RebuildRuntimeAddOnsFromEditorSubNodes();
 		}
+	}
+
+	// Reconstruct the context pins for all flow nodes after their AddOns have been processed
+	if (IsValid(NodeInstance) && NodeInstance->IsA<UFlowNode>())
+	{
+		constexpr bool bReconstructNode = true;
+		RefreshContextPins(bReconstructNode);
 	}
 }
 

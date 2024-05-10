@@ -64,20 +64,12 @@ UFlowNode* UFlowNodeAddOn::GetFlowNode() const
 
 bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
 {
-	if (!SupportsContextPins())
+	if (InputPins.IsEmpty())
 	{
 		return true;
 	}
 
-	// If the AddOn supplies ContextInputs, 
-	// only those Inputs are allowed inputs to be triggered for the AddOn
-	const TArray<FFlowPin> ContextInputs = GetContextInputs();
-	if (ContextInputs.IsEmpty())
-	{
-		return true;
-	}
-
-	if (const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, ContextInputs))
+	if (const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, InputPins))
 	{
 		return true;
 	}

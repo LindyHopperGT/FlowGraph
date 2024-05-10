@@ -457,6 +457,7 @@ void UFlowNodeBase::ForEachFlowNodeAddOn(bool bIncludeChildren, FFlowNodeAddOnFu
 	}
 }
 
+#if WITH_EDITOR
 TArray<FFlowPin> UFlowNodeBase::GetContextInputs() const
 {
 	TArray<FFlowPin> ContextInputs = IFlowContextPinSupplierInterface::GetContextInputs();
@@ -498,3 +499,4 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 
 	return ContextOutputs;
 }
+#endif // WITH_EDITOR

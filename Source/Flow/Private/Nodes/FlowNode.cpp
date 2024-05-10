@@ -364,6 +364,20 @@ TArray<FName> UFlowNode::GetOutputNames() const
 }
 
 #if WITH_EDITOR
+
+bool UFlowNode::SupportsContextPins() const
+{
+	for (const UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn) && AddOn->SupportsContextPins())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool UFlowNode::CanUserAddInput() const
 {
 	return K2_CanUserAddInput();

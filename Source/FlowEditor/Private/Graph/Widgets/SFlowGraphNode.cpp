@@ -1148,6 +1148,8 @@ FReply SFlowGraphNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent&
 
 			DropTargetParentNode->Modify();
 			DropTargetParentNode->InsertSubNodeAt(DraggedTestNode, InsertIndex);
+
+			DropTargetParentNode->OnSubNodeAdded(DraggedTestNode);
 		}
 
 		if (bReorderOperation)
