@@ -42,7 +42,7 @@ public:
 protected:
 
 	// The name of the function to call
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.");
+	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UPROPERTY(VisibleAnywhere, Category = "FlowOwnerFunction")
 	FName FunctionName = NAME_None;	
 
