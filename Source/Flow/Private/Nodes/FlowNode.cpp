@@ -43,6 +43,7 @@ UFlowNode::UFlowNode(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
+
 void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -71,6 +72,25 @@ void UFlowNode::PostLoad()
 }
 
 #endif
+
+bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
+{
+	if (AddOns.IsEmpty())
+	{
+		checkf(FindFlowPinByName(PinName, InputPins), TEXT("Only AddOns should introduce unknown Pins to a FlowNode, so if we have no AddOns, we should have no unknown pins"));
+
+		return true;
+	}
+
+	if (const FFlowPin* FoundInputFlowPin = FindFlowPinByName(PinName, InputPins))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 AActor* UFlowNode::TryGetRootFlowActorOwner() const
 {

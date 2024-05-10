@@ -19,7 +19,6 @@ public:
 	void PreExecute(UFlowNode_CallOwnerFunction& InSourceNode, const FName& InputPinName);
 	void PostExecute();
 
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowOwnerFunction")
 	bool ShouldFinishForOutputName(const FName& OutputName) const;
 
@@ -38,25 +37,21 @@ protected:
 
 	// Called prior to the owner executing the function described by this object.
 	//  Can be overridden to prepare the stateful data before execution.
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowOwnerFunction", DisplayName = "PreExecute")
 	void BP_PreExecute();
 
 	// Cleans up the stateful data in this Params struct.
 	//  Can be overridden to cleanup the stateful data after execution.
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowOwnerFunction", DisplayName = "PostExecute")
 	void BP_PostExecute();
 
 	// Get the input pin names for the SourceNode
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowOwnerFunction", DisplayName = "GetInputNames")
 	TArray<FName> BP_GetInputNames() const;
 
 	// Get the output pin names for the SourceNode
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "FlowOwnerFunction", DisplayName = "GetOutputNames")
 	TArray<FName> BP_GetOutputNames() const;
 
@@ -64,24 +59,19 @@ protected:
 
 	// CallOwnerObjectFunction node that is executing this set of function params.
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "FlowOwnerFunction")
 	UFlowNode_CallOwnerFunction* SourceNode = nullptr;
 
 	// This is the Name from the Input Pin that caused this node to Execute.
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "FlowOwnerFunction")
 	FName ExecutedInputPinName;
 
 #if WITH_EDITORONLY_DATA
 	// Input pin names for this function
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UPROPERTY(EditDefaultsOnly, Category = "FlowOwnerFunction")
 	TArray<FName> InputNames;
 
 	// Output pin names for this function
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UPROPERTY(EditDefaultsOnly, Category = "FlowOwnerFunction")
 	TArray<FName> OutputNames;
 #endif // WITH_EDITORONLY_DATA

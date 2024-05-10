@@ -26,6 +26,7 @@ public:
 	FLOW_API EFlowAddOnAcceptResult AcceptFlowNodeAddOnParent(const UFlowNodeBase* ParentTemplate) const;
 
 	FLOW_API virtual UFlowNode* GetFlowNodeSelfOrOwner() override { return FlowNode; }
+	FLOW_API virtual bool IsSupportedInputPinName(const FName& PinName) const override;
 	// --
 
 	// IFlowCoreExecutableInterface

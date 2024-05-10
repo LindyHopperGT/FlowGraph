@@ -78,12 +78,11 @@ protected:
 protected:
 
 	// Function reference on the expected owner to call
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
-	UPROPERTY(EditAnywhere, Category = "Call Owner", meta = (DisplayName = "Function"))
+	// DEPRECATED - Sunsetting this feature from FlowGraph with the next release.  Custom FlowNodes are a better mechanism to use
+	UPROPERTY(EditAnywhere, Category = "Call Owner", meta = (DisplayName = "DEPRECATED - Function"))
 	FFlowOwnerFunctionRef FunctionRef;
 
 	// Parameter object to pass to the function when called
-	UE_DEPRECATED(5.4, "Sunsetting this feature from FlowGraph with UE 5.4.  Custom FlowNodes are a better mechanism to use.")
 	UPROPERTY(EditAnywhere, Category = "Call Owner", Instanced)
 	UFlowOwnerFunctionParams* Params;
 };

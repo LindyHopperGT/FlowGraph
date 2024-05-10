@@ -60,6 +60,28 @@ UFlowNode* UFlowNodeAddOn::GetFlowNode() const
 	return FlowNode;
 }
 
+bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
+{
+	if (!SupportsContextPins())
+	{
+		return true;
+	}
+
+	// If the AddOn supplies ContextInputs, 
+	// only those Inputs are allowed inputs to be triggered for the AddOn
+	const TArray<FFlowPin> ContextInputs = GetContextInputs();
+	const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, GetContextInputs());
+
+	if (FoundFlowPin)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void UFlowNodeAddOn::CacheFlowNode()
 {
 	UObject* OuterObject = GetOuter();

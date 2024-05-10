@@ -50,6 +50,7 @@ protected:
 public:
 	// UFlowNodeBase
 	virtual UFlowNode* GetFlowNodeSelfOrOwner() override { return this; }
+	virtual bool IsSupportedInputPinName(const FName& PinName) const override;
 	// --
 
 public:
@@ -146,11 +147,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	TArray<FName> GetOutputNames() const;
 
-#if WITH_EDITOR
 	// IFlowContextPinSupplierInterface
 	virtual bool SupportsContextPins() const override { return false; }
 	// --
 
+#if WITH_EDITOR
 	virtual bool CanUserAddInput() const;
 	virtual bool CanUserAddOutput() const;
 

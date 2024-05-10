@@ -22,9 +22,9 @@ class FLOW_API IFlowContextPinSupplierInterface
 
 public:
 
-#if WITH_EDITOR
 	virtual bool SupportsContextPins() const { return true; }
 
+#if WITH_EDITOR
 	// Be careful, enabling it might cause loading gigabytes of data as nodes would load all related data (i.e. Level Sequences)
 	virtual bool CanRefreshContextPinsOnLoad() const { return false; }
 #endif // WITH_EDITOR
@@ -32,14 +32,10 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode In-Editor Functions", DisplayName = "GetContextInputs", meta = (DevelopmentOnly))
 	TArray<FFlowPin> K2_GetContextInputs() const;
 	virtual TArray<FFlowPin> K2_GetContextInputs_Implementation() const;
-#if WITH_EDITOR
 	virtual TArray<FFlowPin> GetContextInputs() const { return Execute_K2_GetContextInputs(Cast<UObject>(this)); }
-#endif // WITH_EDITOR
 
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode In-Editor Functions", DisplayName = "GetContextOutputs", meta = (DevelopmentOnly))
 	TArray<FFlowPin> K2_GetContextOutputs() const;
 	virtual TArray<FFlowPin> K2_GetContextOutputs_Implementation() const;
-#if WITH_EDITOR
 	virtual TArray<FFlowPin> GetContextOutputs() const { return Execute_K2_GetContextOutputs(Cast<UObject>(this)); }
-#endif // WITH_EDITOR
 };

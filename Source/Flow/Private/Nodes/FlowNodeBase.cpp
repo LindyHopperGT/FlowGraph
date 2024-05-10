@@ -402,12 +402,27 @@ void UFlowNodeBase::ForceFinishNode()
 
 void UFlowNodeBase::ExecuteInput(const FName& PinName)
 {
-	IFlowCoreExecutableInterface::ExecuteInput(PinName);
+	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
+	// To ensure that Nodes and AddOns only get the input pins signalled that they expect,
+	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
+
+	if (IsSupportedInputPinName(PinName))
+	{
+		IFlowCoreExecutableInterface::ExecuteInput(PinName);
+	}
 
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
-		AddOn->InitializeInstance();
+		AddOn->ExecuteInput(PinName);
 	}
+}
+
+const FFlowPin* UFlowNodeBase::FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins)
+{
+	return FlowPins.FindByPredicate([&PinName](const FFlowPin& FlowPin)
+		{
+			return FlowPin.PinName == PinName;
+		});
 }
 
 void UFlowNodeBase::ForEachFlowNodeConstAddOn(bool bIncludeChildren, FConstFlowNodeAddOnFunction Function) const
@@ -441,8 +456,6 @@ void UFlowNodeBase::ForEachFlowNodeAddOn(bool bIncludeChildren, FFlowNodeAddOnFu
 		}
 	}
 }
-
-#if WITH_EDITOR
 
 TArray<FFlowPin> UFlowNodeBase::GetContextInputs() const
 {
@@ -485,5 +498,3 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 
 	return ContextOutputs;
 }
-
-#endif // WITH_EDITOR
