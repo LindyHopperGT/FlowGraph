@@ -311,7 +311,7 @@ public:
 
 	/** if set, this node has context pins from the last RefreshContextPins */
 	UPROPERTY()
-	bool bHasContextPins = true;
+	bool bHasContextPins = false;
 
 	/** error message for node */
 	UPROPERTY()

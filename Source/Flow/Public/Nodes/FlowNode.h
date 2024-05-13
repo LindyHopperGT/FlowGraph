@@ -13,10 +13,6 @@
 
 #include "FlowNode.generated.h"
 
-class UFlowAsset;
-class UFlowSubsystem;
-class IFlowOwnerInterface;
-
 /**
  * A Flow Node is UObject-based node designed to handle entire gameplay feature within single node.
  */
@@ -74,23 +70,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	const FGuid& GetGuid() const { return NodeGuid; }
-
-	// Gets the Owning Actor for this Node's RootFlow
-	// (if the immediate parent is an UActorComponent, it will get that Component's actor)
-	AActor* TryGetRootFlowActorOwner() const;
-
-	// Returns the IFlowOwnerInterface for the owner object (if implemented)
-	//  NOTE - will consider a UActorComponent owner's owning actor if appropriate
-	IFlowOwnerInterface* GetFlowOwnerInterface() const;
-
-protected:
-
-	// Helper functions for GetFlowOwnerInterface()
-	IFlowOwnerInterface* TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
-	IFlowOwnerInterface* TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
-
-	// Gets the Owning Object for this Node's RootFlow
-	UObject* TryGetRootFlowObjectOwner() const;
 
 public:	
 	virtual bool CanFinishGraph() const { return false; }

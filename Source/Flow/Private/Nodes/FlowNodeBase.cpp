@@ -151,6 +151,117 @@ UFlowSubsystem* UFlowNodeBase::GetFlowSubsystem() const
 	return GetFlowAsset() ? GetFlowAsset()->GetFlowSubsystem() : nullptr;
 }
 
+AActor* UFlowNodeBase::TryGetRootFlowActorOwner() const
+{
+	AActor* OwningActor = nullptr;
+
+	UObject* RootFlowOwner = TryGetRootFlowObjectOwner();
+
+	if (IsValid(RootFlowOwner))
+	{
+		// Check if the immediate parent is an AActor
+		OwningActor = Cast<AActor>(RootFlowOwner);
+
+		if (!IsValid(OwningActor))
+		{
+			// Check if the if the immediate parent is an UActorComponent
+			//  and return that Component's Owning actor
+			if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
+			{
+				OwningActor = OwningComponent->GetOwner();
+			}
+		}
+	}
+
+	return OwningActor;
+}
+
+UObject* UFlowNodeBase::TryGetRootFlowObjectOwner() const
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+
+	if (IsValid(FlowAsset))
+	{
+		return FlowAsset->GetOwner();
+	}
+
+	return nullptr;
+}
+
+IFlowOwnerInterface* UFlowNodeBase::GetFlowOwnerInterface() const
+{
+	const UFlowAsset* FlowAsset = GetFlowAsset();
+	if (!IsValid(FlowAsset))
+	{
+		return nullptr;
+	}
+
+	const UClass* ExpectedOwnerClass = FlowAsset->GetExpectedOwnerClass();
+	if (!IsValid(ExpectedOwnerClass))
+	{
+		return nullptr;
+	}
+
+	UObject* RootFlowOwner = FlowAsset->GetOwner();
+	if (!IsValid(RootFlowOwner))
+	{
+		return nullptr;
+	}
+
+	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceFromRootFlowOwner(*RootFlowOwner, *ExpectedOwnerClass))
+	{
+		return FlowOwnerInterface;
+	}
+
+	if (IFlowOwnerInterface* FlowOwnerInterface = TryGetFlowOwnerInterfaceActor(*RootFlowOwner, *ExpectedOwnerClass))
+	{
+		return FlowOwnerInterface;
+	}
+
+	return nullptr;
+}
+
+IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const
+{
+	const UClass* RootFlowOwnerClass = RootFlowOwner.GetClass();
+	if (!IsValid(RootFlowOwnerClass))
+	{
+		return nullptr;
+	}
+
+	if (!RootFlowOwnerClass->IsChildOf(&ExpectedOwnerClass))
+	{
+		return nullptr;
+	}
+
+	// If the immediate owner is the expected class type, return its FlowOwnerInterface
+	return CastChecked<IFlowOwnerInterface>(&RootFlowOwner);
+}
+
+IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const
+{
+	// Special case if the immediate owner is a component, also consider the component's owning actor
+	const UActorComponent* FlowComponent = Cast<UActorComponent>(&RootFlowOwner);
+	if (!IsValid(FlowComponent))
+	{
+		return nullptr;
+	}
+
+	AActor* ActorOwner = FlowComponent->GetOwner();
+	if (!IsValid(ActorOwner))
+	{
+		return nullptr;
+	}
+
+	const UClass* ActorOwnerClass = ActorOwner->GetClass();
+	if (!ActorOwnerClass->IsChildOf(&ExpectedOwnerClass))
+	{
+		return nullptr;
+	}
+
+	return CastChecked<IFlowOwnerInterface>(ActorOwner);
+}
+
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 {
 #if WITH_EDITOR
@@ -425,7 +536,7 @@ const FFlowPin* UFlowNodeBase::FindFlowPinByName(const FName& PinName, const TAr
 		});
 }
 
-void UFlowNodeBase::ForEachFlowNodeConstAddOn(bool bIncludeChildren, FConstFlowNodeAddOnFunction Function) const
+void UFlowNodeBase::ForEachAddOnConst(FConstFlowNodeAddOnFunction Function) const
 {
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
@@ -433,15 +544,12 @@ void UFlowNodeBase::ForEachFlowNodeConstAddOn(bool bIncludeChildren, FConstFlowN
 		{
 			Function(*AddOn);
 
-			if (bIncludeChildren)
-			{
-				AddOn->ForEachFlowNodeConstAddOn(bIncludeChildren, Function);
-			}
+			AddOn->ForEachAddOnConst(Function);
 		}
 	}
 }
 
-void UFlowNodeBase::ForEachFlowNodeAddOn(bool bIncludeChildren, FFlowNodeAddOnFunction Function) const
+void UFlowNodeBase::ForEachAddOn(FFlowNodeAddOnFunction Function) const
 {
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
@@ -449,10 +557,7 @@ void UFlowNodeBase::ForEachFlowNodeAddOn(bool bIncludeChildren, FFlowNodeAddOnFu
 		{
 			Function(*AddOn);
 
-			if (bIncludeChildren)
-			{
-				AddOn->ForEachFlowNodeAddOn(bIncludeChildren, Function);
-			}
+			AddOn->ForEachAddOn(Function);
 		}
 	}
 }

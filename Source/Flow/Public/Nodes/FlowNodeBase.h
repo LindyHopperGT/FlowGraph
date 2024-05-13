@@ -16,6 +16,7 @@ class UFlowNode;
 class UFlowNodeAddOn;
 class UFlowSubsystem;
 class UEdGraphNode;
+class IFlowOwnerInterface;
 
 #if WITH_EDITOR
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -71,10 +72,9 @@ public:
 	virtual UFlowNode* GetFlowNodeSelfOrOwner() PURE_VIRTUAL(GetFlowNodeSelfOrOwner, return nullptr;);
 	const UFlowNode* GetFlowNodeSelfOrOwner() const { return const_cast<UFlowNodeBase*>(this)->GetFlowNodeSelfOrOwner(); }
 
-	// Call a Function for all of this object's AddOns and optionally, 
-	// if bIncludeChildren is true, recursively for all of their child AddOns
-	void ForEachFlowNodeConstAddOn(bool bIncludeChildren, FConstFlowNodeAddOnFunction Function) const;
-	void ForEachFlowNodeAddOn(bool bIncludeChildren, FFlowNodeAddOnFunction Function) const;
+	// Call a Function for all of this object's AddOns (including all AddOn's AddOns, ie recursively)
+	void ForEachAddOnConst(FConstFlowNodeAddOnFunction Function) const;
+	void ForEachAddOn(FFlowNodeAddOnFunction Function) const;
 	// --
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
@@ -82,6 +82,25 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	UFlowSubsystem* GetFlowSubsystem() const;
+
+	// Gets the Owning Actor for this Node's RootFlow
+	// (if the immediate parent is an UActorComponent, it will get that Component's actor)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	AActor* TryGetRootFlowActorOwner() const;
+
+	// Gets the Owning Object for this Node's RootFlow
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	UObject* TryGetRootFlowObjectOwner() const;
+
+	// Returns the IFlowOwnerInterface for the owner object (if implemented)
+	//  NOTE - will consider a UActorComponent owner's owning actor if appropriate
+	IFlowOwnerInterface* GetFlowOwnerInterface() const;
+
+protected:
+
+	// Helper functions for GetFlowOwnerInterface()
+	IFlowOwnerInterface* TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
+	IFlowOwnerInterface* TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const;
 
 public:
 
