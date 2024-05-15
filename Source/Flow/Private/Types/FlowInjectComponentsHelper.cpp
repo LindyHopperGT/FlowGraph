@@ -56,7 +56,9 @@ UActorComponent* FFlowInjectComponentsHelper::TryCreateComponentInstanceForActor
 	UClass* ComponentClass = ComponentTemplate.GetClass();
 	if (!ComponentClass->GetDefaultObject<UActorComponent>()->GetIsReplicated() || Actor.GetLocalRole() == ROLE_Authority)
 	{
-		UActorComponent* ComponentInstance = NewObject<UActorComponent>(&Actor, NAME_None, RF_NoFlags, &ComponentTemplate);
+		const EObjectFlags InstanceFlags = ComponentTemplate.GetFlags() | RF_Transient;
+
+		UActorComponent* ComponentInstance = NewObject<UActorComponent>(&Actor, ComponentTemplate.GetFName(), InstanceFlags, &ComponentTemplate);
 
 		return ComponentInstance;
 	}
