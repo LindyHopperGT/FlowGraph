@@ -21,12 +21,15 @@ public:
 	// Tries to find the component by name on the given actor
 	UActorComponent* TryResolveComponent(const AActor& InActor, bool bWarnIfFailed = true);
 
+	// In some cases, the component can be resolved directly
+	void SetResolvedComponentDirect(UActorComponent& Component);
+
 	// Returns a the resolved component
 	//  (assumes TryResolveComponent() was called previously)
 	UActorComponent* GetResolvedComponent() const { return ResolvedComponent; }
 
 	// Accessors
-	bool IsConfigured() const { return ComponentName.IsValid(); }
+	bool IsConfigured() const { return !ComponentName.IsNone(); }
 	bool IsResolved() const;
 
 	static UActorComponent* TryResolveComponentByName(const AActor& InActor, const FName& InComponentName);

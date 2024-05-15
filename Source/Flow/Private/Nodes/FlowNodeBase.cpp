@@ -549,6 +549,25 @@ void UFlowNodeBase::ForEachAddOnConst(FConstFlowNodeAddOnFunction Function) cons
 	}
 }
 
+void UFlowNodeBase::ForEachAddOnForClassConst(const UClass& InterfaceOrClass, FConstFlowNodeAddOnFunction Function) const
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn))
+		{
+			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+			// or an interface (the UClass version) that its UClass implements 
+			if (AddOn->IsA(&InterfaceOrClass) ||
+				AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
+			{
+				Function(*AddOn);
+			}
+
+			AddOn->ForEachAddOnForClassConst(InterfaceOrClass, Function);
+		}
+	}
+}
+
 void UFlowNodeBase::ForEachAddOn(FFlowNodeAddOnFunction Function) const
 {
 	for (UFlowNodeAddOn* AddOn : AddOns)
@@ -558,6 +577,25 @@ void UFlowNodeBase::ForEachAddOn(FFlowNodeAddOnFunction Function) const
 			Function(*AddOn);
 
 			AddOn->ForEachAddOn(Function);
+		}
+	}
+}
+
+void UFlowNodeBase::ForEachAddOnForClass(const UClass& InterfaceOrClass, FFlowNodeAddOnFunction Function) const
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn))
+		{
+			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+			// or an interface (the UClass version) that its UClass implements 
+			if (AddOn->IsA(&InterfaceOrClass) || 
+				AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
+			{
+				Function(*AddOn);
+			}
+
+			AddOn->ForEachAddOnForClass(InterfaceOrClass, Function);
 		}
 	}
 }

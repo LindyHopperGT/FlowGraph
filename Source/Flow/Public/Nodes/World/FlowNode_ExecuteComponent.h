@@ -5,11 +5,33 @@
 #include "Types/FlowActorOwnerComponentRef.h"
 
 #include "Nodes/FlowNode.h"
+#include "Types/FlowInjectComponentsHelper.h"
 
 #include "FlowNode_ExecuteComponent.generated.h"
 
 // Forward Declarations
 class IFlowOwnerInterface;
+class UFlowInjectComponentsManager;
+
+UENUM()
+enum class EExecuteComponentSource : uint8
+{
+	Undetermined,
+
+	BindToExisting,
+	InjectFromTemplate,
+	InjectFromClass,
+
+	Max UMETA(Hidden),
+
+	UsesInjectManagerFirst = InjectFromTemplate UMETA(Hidden),
+	UsesInjectManagerLast = InjectFromClass UMETA(Hidden),
+};
+
+namespace EExecuteComponentSource_Classifiers
+{
+	FORCEINLINE bool DoesComponentSourceUseInjectManager(EExecuteComponentSource Source) { return Source >= EExecuteComponentSource::UsesInjectManagerFirst && Source <= EExecuteComponentSource::UsesInjectManagerLast; }
+}
 
 /**
  * Execute a UActorComponent on the owning actor as if it was a flow subgraph
@@ -36,6 +58,7 @@ public:
 
 #if WITH_EDITOR
 	// UObject
+	virtual void PostLoad() override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
 
@@ -46,13 +69,17 @@ public:
 	virtual FString GetStatusString() const override;
 	// --
 #endif // WITH_EDITOR
-
+	
 protected:
 
 #if WITH_EDITOR
 	void RefreshPins();
 	const UActorComponent* TryGetExpectedComponent() const;
+
+	void RefreshComponentSource();
 #endif // WITH_EDITOR
+
+	bool TryInjectComponent();
 
 	UActorComponent* TryResolveComponent();
 	TSubclassOf<AActor> TryGetExpectedActorOwnerClass() const;
@@ -61,16 +88,22 @@ protected:
 
 	// Executable Component (by name) on the expected Flow owning Actor
 	//  (the component must implement the IFlowExecutableComponentInterface)
-	UPROPERTY(EditAnywhere, Category = "Flow Executable Component", meta = (DisplayName = "Component to Execute", MustImplement = "FlowCoreExecutableInterface,FlowExternalExecutableInterface", EditCondition = "!bIsInjectedComponent"))
+	UPROPERTY(EditAnywhere, Category = "Flow Executable Component", meta = (DisplayName = "Component to Execute", MustImplement = "FlowCoreExecutableInterface,FlowExternalExecutableInterface", EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::BindToExisting || ComponentSource == EExecuteComponentSource::Undetermined"))
 	FFlowActorOwnerComponentRef ComponentRef;
 
-	// Alternative, optional, injected component.  
-	// If not found, it will be silently skipped by triggering the 1st output pin.
-	UPROPERTY(EditAnywhere, Category = "Flow Executable Component", meta = (DisplayName = "Optional Injected Component", EditCondition = "bIsInjectedComponent"))
-	FName InjectedComponentName;
+	// Component (template) to inject on the spawned actor, may be configured inline
+	UPROPERTY(EditAnywhere, Instanced, Category = Configuration, DisplayName = "Inject & Execute Component (from Template)", meta = (MustImplement = "FlowCoreExecutableInterface,FlowExternalExecutableInterface", EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromTemplate || ComponentSource == EExecuteComponentSource::Undetermined"))
+	TObjectPtr<UActorComponent> ComponentTemplate = nullptr;
 
-	// Enable specifying the component by manually-entered name to be dynamically
-	// linked at runtime to a dynamically injected component.
-	UPROPERTY(EditAnywhere, Category = "Flow Executable Component");
-	bool bIsInjectedComponent;
+	// Component (class) to inject on the spawned actor
+	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Inject & Execute Component (by Class)", meta = (MustImplement = "FlowCoreExecutableInterface,FlowExternalExecutableInterface", EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromClass || ComponentSource == EExecuteComponentSource::Undetermined"))
+	TSubclassOf<UActorComponent> ComponentClass = nullptr;
+
+	// Manager object to inject and remove components from the Flow owning Actor
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowInjectComponentsManager> InjectComponentsManager = nullptr;
+
+	// Inject component(s) onto the owning Actor
+	UPROPERTY()
+	EExecuteComponentSource ComponentSource = EExecuteComponentSource::Undetermined;
 };

@@ -21,6 +21,13 @@ UActorComponent* FFlowActorOwnerComponentRef::TryResolveComponent(const AActor& 
 	return ResolvedComponent;
 }
 
+void FFlowActorOwnerComponentRef::SetResolvedComponentDirect(UActorComponent& Component)
+{
+	ComponentName = Component.GetFName();
+
+	ResolvedComponent = &Component;
+}
+
 UActorComponent* FFlowActorOwnerComponentRef::TryResolveComponentByName(const AActor& InActor, const FName& InComponentName)
 {
 	constexpr bool bIncludeFromChildActors = false;

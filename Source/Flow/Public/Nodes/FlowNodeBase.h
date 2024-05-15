@@ -75,6 +75,14 @@ public:
 	// Call a Function for all of this object's AddOns (including all AddOn's AddOns, ie recursively)
 	void ForEachAddOnConst(FConstFlowNodeAddOnFunction Function) const;
 	void ForEachAddOn(FFlowNodeAddOnFunction Function) const;
+
+	template <typename TInterfaceOrClass>
+	void ForEachAddOnForClassConst(FConstFlowNodeAddOnFunction Function) const { ForEachAddOnForClassConst(*TInterfaceOrClass::StaticClass(), Function); }
+	void ForEachAddOnForClassConst(const UClass& InterfaceOrClass, FConstFlowNodeAddOnFunction Function) const;
+
+	template <typename TInterfaceOrClass>
+	void ForEachAddOnForClass(FFlowNodeAddOnFunction Function) const { ForEachAddOnForClass(*TInterfaceOrClass::StaticClass(), Function); }
+	void ForEachAddOnForClass(const UClass& InterfaceOrClass, FFlowNodeAddOnFunction Function) const;
 	// --
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
@@ -222,3 +230,4 @@ public:
 
 #endif // WITH_EDITORONLY_DATA
 };
+

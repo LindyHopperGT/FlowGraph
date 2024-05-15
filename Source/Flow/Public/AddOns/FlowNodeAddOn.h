@@ -66,10 +66,10 @@ protected:
 
 	// Input pins to add to the owning flow node
 	// If defined, ExecuteInput will only be executed for these inputs
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlowNodeAddOn")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> InputPins;
 
 	// Output pins to add to the owning flow node
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FlowNodeAddOn")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
 	TArray<FFlowPin> OutputPins;
 };
