@@ -193,6 +193,10 @@ void UFlowNode_ExecuteComponent::ExecuteInput(const FName& PinName)
 			IFlowCoreExecutableInterface::Execute_K2_ExecuteInput(ResolvedComp, PinName);
 		}
 	}
+	else
+	{
+		LogError(FString::Printf(TEXT("Could not ExecuteInput %s, because the component was missing or could not be resolved."), *PinName.ToString()));
+	}
 }
 
 bool UFlowNode_ExecuteComponent::TryInjectComponent()
@@ -230,6 +234,25 @@ bool UFlowNode_ExecuteComponent::TryInjectComponent()
 		{
 			if (IsValid(ComponentClass))
 			{
+				if (bReuseExistingComponent)
+				{
+					// Look for the component class existing already on the actor, for potential re-use
+
+					UActorComponent* ExistingComponent = ActorOwner->FindComponentByClass(ComponentClass);
+					if (IsValid(ExistingComponent))
+					{
+						// Set the ComponentRef directly (for later lookup via TryResolveComponent)
+						ComponentRef.SetResolvedComponentDirect(*ExistingComponent);
+
+						return true;
+					}
+
+					if (!bAllowInjectComponent)
+					{
+						return false;
+					}
+				}
+
 				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass))
 				{
 					ComponentInstances.Add(ComponentInstance);
@@ -486,7 +509,7 @@ FText UFlowNode_ExecuteComponent::GetNodeTitle() const
 					ComponentNameString.RemoveFromEnd(TEXT("_C"));
 					const FText ComponentNameText = FText::FromString(ComponentNameString);
 
-					return FText::Format(LOCTEXT("ExecuteComponent", "Inject & Execute {0}"), { ComponentNameText });
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), { ComponentNameText });
 				}
 			}
 			break;
@@ -499,7 +522,7 @@ FText UFlowNode_ExecuteComponent::GetNodeTitle() const
 					ComponentClassString.RemoveFromEnd(TEXT("_C"));
 					const FText ComponentNameText = FText::FromString(ComponentClassString);
 
-					return FText::Format(LOCTEXT("ExecuteComponent", "Inject & Execute {0}"), { ComponentNameText });
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), { ComponentNameText });
 				}
 			}
 			break;
@@ -510,5 +533,59 @@ FText UFlowNode_ExecuteComponent::GetNodeTitle() const
 }
 
 #endif // WITH_EDITOR
+
+void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
+{
+#if WITH_EDITOR
+	FText ComponentNameText;
+
+	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
+	if (!bUseAdaptiveNodeTitles)
+	{
+
+		static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
+		switch (ComponentSource)
+		{
+		case EExecuteComponentSource::Undetermined:
+			break;
+
+		case EExecuteComponentSource::BindToExisting:
+			{
+				if (!ComponentRef.ComponentName.IsNone())
+				{
+					ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromTemplate:
+			{
+				if (IsValid(ComponentTemplate))
+				{
+					FString ComponentNameString = ComponentTemplate->GetName();
+					ComponentNameString.RemoveFromEnd(TEXT("_C"));
+
+					ComponentNameText = FText::FromString(ComponentNameString);
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				if (IsValid(ComponentClass))
+				{
+					FString ComponentClassString = ComponentClass->GetName();
+					ComponentClassString.RemoveFromEnd(TEXT("_C"));
+
+					ComponentNameText = FText::FromString(ComponentClassString);
+				}
+			}
+			break;
+		}
+	}
+
+	SetNodeConfigText(ComponentNameText);
+#endif // WITH_EDITOR
+}
 
 #undef LOCTEXT_NAMESPACE

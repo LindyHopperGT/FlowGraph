@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Types/FlowInjectComponentsManager.h"
+#include "Types/FlowInjectComponentsHelper.h"
 #include "Components/ActorComponent.h"
 #include "GameFramework/Actor.h"
 #include "FlowLogChannels.h"
@@ -57,13 +58,7 @@ void UFlowInjectComponentsManager::RemoveInjectedComponents()
 
 void UFlowInjectComponentsManager::AddAndRegisterComponent(AActor& Actor, UActorComponent& ComponentInstance)
 {
-	// Following pattern from UGameFrameworkComponentManager::CreateComponentOnInstance()
-	if (USceneComponent* SceneComponentInstance = Cast<USceneComponent>(&ComponentInstance))
-	{
-		SceneComponentInstance->SetupAttachment(Actor.GetRootComponent());
-	}
-
-	ComponentInstance.RegisterComponent();
+	FFlowInjectComponentsHelper::InjectCreatedComponent(Actor, ComponentInstance);
 
 	if (bRemoveInjectedComponentsWhenDeinitializing)
 	{
@@ -82,9 +77,7 @@ void UFlowInjectComponentsManager::RemoveAndUnregisterComponent(AActor& Actor, U
 
 	UnregisterOnDestroyedDelegate(Actor);
 
-	// Following pattern from UGameFrameworkComponentManager::DestroyInstancedComponent()
-	ComponentInstance.DestroyComponent();
-	ComponentInstance.SetFlags(RF_Transient);
+	FFlowInjectComponentsHelper::DestroyInjectedComponent(Actor, ComponentInstance);
 }
 
 void UFlowInjectComponentsManager::RegisterOnDestroyedDelegate(AActor& Actor)

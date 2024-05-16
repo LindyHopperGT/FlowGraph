@@ -65,6 +65,8 @@ void UFlowNodeBase::FixNode(UEdGraphNode* NewGraphNode)
 void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
 {
 	GraphNode = NewGraphNode;
+
+	UpdateNodeConfigText();
 }
 
 void UFlowNodeBase::SetupForEditing(UEdGraphNode& EdGraphNode)

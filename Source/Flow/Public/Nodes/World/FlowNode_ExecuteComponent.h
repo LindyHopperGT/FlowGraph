@@ -56,6 +56,10 @@ public:
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
 
+	// UFlowNodeBase
+	virtual void UpdateNodeConfigText_Implementation() override;
+	// --
+
 #if WITH_EDITOR
 	// UObject
 	virtual void PostLoad() override;
@@ -102,6 +106,15 @@ protected:
 	// Manager object to inject and remove components from the Flow owning Actor
 	UPROPERTY(Transient)
 	TObjectPtr<UFlowInjectComponentsManager> InjectComponentsManager = nullptr;
+
+	// Look for the component (by class) on the Actor and re-use it (rather than injecting)
+	// if the component already exists.
+	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Re-use existing component if found", meta = (EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromClass"))
+	bool bReuseExistingComponent = true;
+
+	// Allow injecting the component, if it cannot be found on the Actor
+	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Allow injecting component", meta = (EditConditionHides, EditCondition = "bReuseExistingComponent"))
+	bool bAllowInjectComponent = true;
 
 	// Inject component(s) onto the owning Actor
 	UPROPERTY()

@@ -78,3 +78,21 @@ UActorComponent* FFlowInjectComponentsHelper::TryCreateComponentInstanceForActor
 
 	return nullptr;
 }
+
+void FFlowInjectComponentsHelper::InjectCreatedComponent(AActor& Actor, UActorComponent& ComponentInstance)
+{
+	// Following pattern from UGameFrameworkComponentManager::CreateComponentOnInstance()
+	if (USceneComponent* SceneComponentInstance = Cast<USceneComponent>(&ComponentInstance))
+	{
+		SceneComponentInstance->SetupAttachment(Actor.GetRootComponent());
+	}
+
+	ComponentInstance.RegisterComponent();
+}
+
+void FFlowInjectComponentsHelper::DestroyInjectedComponent(AActor& Actor, UActorComponent& ComponentInstance)
+{
+	// Following pattern from UGameFrameworkComponentManager::DestroyInstancedComponent()
+	ComponentInstance.DestroyComponent();
+	ComponentInstance.SetFlags(RF_Transient);
+}
