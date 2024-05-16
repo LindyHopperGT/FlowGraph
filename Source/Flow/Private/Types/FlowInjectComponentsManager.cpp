@@ -28,7 +28,7 @@ void UFlowInjectComponentsManager::InjectComponentsOnActor(AActor& Actor, const 
 	{
 		if (IsValid(ComponentInstance))
 		{
-			AddAndRegisterComponent(Actor, *ComponentInstance);
+			InjectComponentOnActor(Actor, *ComponentInstance);
 		}
 	}
 }
@@ -89,7 +89,7 @@ void UFlowInjectComponentsManager::RemoveAndUnregisterComponent(AActor& Actor, U
 
 void UFlowInjectComponentsManager::RegisterOnDestroyedDelegate(AActor& Actor)
 {
-	Actor.OnDestroyed.AddDynamic(this, &UFlowInjectComponentsManager::OnActorDestroyed);
+	Actor.OnDestroyed.AddUniqueDynamic(this, &UFlowInjectComponentsManager::OnActorDestroyed);
 }
 
 void UFlowInjectComponentsManager::UnregisterOnDestroyedDelegate(AActor& Actor)

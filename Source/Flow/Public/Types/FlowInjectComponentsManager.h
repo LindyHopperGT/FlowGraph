@@ -32,7 +32,8 @@ public:
 
 	FLOW_API void InitializeRuntime();
 	FLOW_API void ShutdownRuntime();
-
+	
+	FLOW_API FORCEINLINE void InjectComponentOnActor(AActor& Actor, UActorComponent& ComponentInstance) { AddAndRegisterComponent(Actor, ComponentInstance); }
 	FLOW_API void InjectComponentsOnActor(AActor& Actor, const TArray<UActorComponent*>& ComponentInstances);
 
 	FLOW_API void RemoveAllInjectedComponentsAndStopMonitoringActor(AActor& Actor);
