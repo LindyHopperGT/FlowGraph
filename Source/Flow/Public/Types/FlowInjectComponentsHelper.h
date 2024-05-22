@@ -19,7 +19,7 @@ public:
 
 	// Static functions to create a component for injection:
 	static FLOW_API UActorComponent* TryCreateComponentInstanceForActorFromTemplate(AActor& Actor, UActorComponent& ComponentTemplate);
-	static FLOW_API UActorComponent* TryCreateComponentInstanceForActorFromClass(AActor& Actor, TSubclassOf<UActorComponent> ComponentClass);
+	static FLOW_API UActorComponent* TryCreateComponentInstanceForActorFromClass(AActor& Actor, TSubclassOf<UActorComponent> ComponentClass, const FName& InstanceBaseName);
 
 	// After creating using one of the above two functions, inject into the actor:
 	static FLOW_API void InjectCreatedComponent(AActor& Actor, UActorComponent& ComponentInstance);

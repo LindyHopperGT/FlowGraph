@@ -253,7 +253,8 @@ bool UFlowNode_ExecuteComponent::TryInjectComponent()
 					}
 				}
 
-				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass))
+				const FName InstanceBaseName = ComponentClass->GetFName();
+				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass, InstanceBaseName))
 				{
 					ComponentInstances.Add(ComponentInstance);
 				}

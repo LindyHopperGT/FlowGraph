@@ -113,7 +113,7 @@ protected:
 	bool bReuseExistingComponent = true;
 
 	// Allow injecting the component, if it cannot be found on the Actor
-	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Allow injecting component", meta = (EditConditionHides, EditCondition = "bReuseExistingComponent"))
+	UPROPERTY(EditAnywhere, Category = Configuration, DisplayName = "Allow injecting component", meta = (EditConditionHides, EditCondition = "ComponentSource == EExecuteComponentSource::InjectFromClass && bReuseExistingComponent"))
 	bool bAllowInjectComponent = true;
 
 	// Inject component(s) onto the owning Actor

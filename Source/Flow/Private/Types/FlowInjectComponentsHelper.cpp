@@ -41,7 +41,8 @@ TArray<UActorComponent*> FFlowInjectComponentsHelper::CreateComponentInstancesFo
 			continue;
 		}
 
-		if (UActorComponent* ComponentInstance = TryCreateComponentInstanceForActorFromClass(Actor, ComponentClass))
+		const FName InstanceBaseName = ComponentClass->GetFName();
+		if (UActorComponent* ComponentInstance = TryCreateComponentInstanceForActorFromClass(Actor, ComponentClass, InstanceBaseName))
 		{
 			ComponentInstances.Add(ComponentInstance);
 		}
@@ -66,12 +67,13 @@ UActorComponent* FFlowInjectComponentsHelper::TryCreateComponentInstanceForActor
 	return nullptr;
 }
 
-UActorComponent* FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(AActor& Actor, TSubclassOf<UActorComponent> ComponentClass)
+UActorComponent* FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(AActor& Actor, TSubclassOf<UActorComponent> ComponentClass, const FName& InstanceBaseName)
 {
 	// Following pattern from UGameFrameworkComponentManager::CreateComponentOnInstance()
 	if (ComponentClass && (!ComponentClass->GetDefaultObject<UActorComponent>()->GetIsReplicated() || Actor.GetLocalRole() == ROLE_Authority))
 	{
-		UActorComponent* ComponentInstance = NewObject<UActorComponent>(&Actor, ComponentClass, ComponentClass->GetFName());
+		const FName UniqueName = MakeUniqueObjectName(&Actor, ComponentClass, InstanceBaseName);
+		UActorComponent* ComponentInstance = NewObject<UActorComponent>(&Actor, ComponentClass, UniqueName);
 
 		return ComponentInstance;
 	}
