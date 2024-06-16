@@ -1377,6 +1377,8 @@ void UFlowGraphNode::FindDiffs(UEdGraphNode* OtherNode, FDiffResults& Results)
 		Diff.Diff = EDiffType::NODE_PROPERTY;
 		Diff.Node1 = this;
 		Diff.Node2 = OtherNode;
+		Diff.Object1 = NodeInstance;
+		Diff.Object2 = OtherGraphNode->NodeInstance;
 		Diff.ToolTip = LOCTEXT("DIF_NodeInstancePropertyToolTip", "A property of the node instance has changed");
 		Diff.Category = EDiffType::MODIFICATION;
 
