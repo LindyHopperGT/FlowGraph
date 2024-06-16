@@ -71,7 +71,6 @@ public:
 	void UnlockUpdates();
 
 protected:
-
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 

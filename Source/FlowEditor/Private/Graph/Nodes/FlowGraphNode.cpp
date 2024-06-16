@@ -179,36 +179,14 @@ void UFlowGraphNode::SubscribeToExternalChanges()
 	if (NodeInstance)
 	{
 		NodeInstance->OnReconstructionRequested.BindUObject(this, &UFlowGraphNode::OnExternalChange);
-
-		// blueprint nodes
-		if (NodeInstance->GetClass()->ClassGeneratedBy && GEditor)
-		{
-			GEditor->OnBlueprintPreCompile().AddUObject(this, &UFlowGraphNode::OnBlueprintPreCompile);
-			GEditor->OnBlueprintCompiled().AddUObject(this, &UFlowGraphNode::OnBlueprintCompiled);
-		}
 	}
-}
-
-void UFlowGraphNode::OnBlueprintPreCompile(UBlueprint* Blueprint)
-{
-	if (Blueprint && Blueprint == NodeInstance->GetClass()->ClassGeneratedBy)
-	{
-		bBlueprintCompilationPending = true;
-	}
-}
-
-void UFlowGraphNode::OnBlueprintCompiled()
-{
-	if (bBlueprintCompilationPending)
-	{
-		OnExternalChange();
-	}
-
-	bBlueprintCompilationPending = false;
 }
 
 void UFlowGraphNode::OnExternalChange()
 {
+	// Do not create transaction here, since this function triggers from modifying UFlowNode's property, which itself already made inside of transaction.
+	Modify();
+
 	bNeedsFullReconstruction = true;
 
 	ReconstructNode();

@@ -43,8 +43,6 @@ public:
 	// --
 #endif // WITH_EDITOR
 
-	UFlowNode_CallOwnerFunction();
-
 	UClass* GetRequiredParamsClass() const;
 	UClass* GetExistingParamsClass() const;
 
@@ -58,11 +56,6 @@ public:
 	static UClass* GetParamsClassForFunction(const UFunction& Function);
 
 protected:
-
-#if WITH_EDITOR
-	void OnChangedParamsObject();
-#endif // WITH_EDITOR
-
 	// UFlowNode
 	virtual void ExecuteInput(const FName& PinName) override;
 	// --
@@ -76,7 +69,6 @@ protected:
 	static bool DoesFunctionHaveNameReturnType(const UFunction& Function);
 
 protected:
-
 	// Function reference on the expected owner to call
 	// DEPRECATED - Sunsetting this feature from FlowGraph with the next release.  Custom FlowNodes are a better mechanism to use
 	UPROPERTY(EditAnywhere, Category = "Call Owner", meta = (DisplayName = "DEPRECATED - Function"))

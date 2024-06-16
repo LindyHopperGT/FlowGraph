@@ -96,7 +96,6 @@ protected:
 	virtual FReply OnAddFlowPin(const EEdGraphPinDirection Direction);
 
 protected:
-
 	/** adds a sub node widget inside current node */
 	void AddSubNodeWidget(TSharedPtr<SGraphNode> NewSubNodeWidget);
 	
@@ -125,6 +124,8 @@ protected:
 	void CreateOrRebuildSubNodeBox(TSharedPtr<SVerticalBox> MainBox);
 
 	bool IsFlowGraphNodeSelected(UFlowGraphNode* Node) const;
+
+	static int32 ValidPinsCount(const TArray<FFlowPin>& Pins);
 
 protected:
 	// The FlowGraphNode this slate widget is representing

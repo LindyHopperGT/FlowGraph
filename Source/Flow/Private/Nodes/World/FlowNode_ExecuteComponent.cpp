@@ -1,7 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/World/FlowNode_ExecuteComponent.h"
-#include "Interfaces/FlowOwnerInterface.h"
 #include "Interfaces/FlowCoreExecutableInterface.h"
 #include "Interfaces/FlowExternalExecutableInterface.h"
 #include "Interfaces/FlowContextPinSupplierInterface.h"
@@ -30,7 +29,7 @@ void UFlowNode_ExecuteComponent::InitializeInstance()
 {
 	Super::InitializeInstance();
 
-	(void) TryInjectComponent();
+	(void)TryInjectComponent();
 
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
 	{
@@ -218,53 +217,53 @@ bool UFlowNode_ExecuteComponent::TryInjectComponent()
 	static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 	switch (ComponentSource)
 	{
-	case EExecuteComponentSource::InjectFromTemplate:
-		{
-			if (IsValid(ComponentTemplate))
+		case EExecuteComponentSource::InjectFromTemplate:
 			{
-				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromTemplate(*ActorOwner, *ComponentTemplate))
+				if (IsValid(ComponentTemplate))
 				{
-					ComponentInstances.Add(ComponentInstance);
-				}
-			}
-		}
-		break;
-
-	case EExecuteComponentSource::InjectFromClass:
-		{
-			if (IsValid(ComponentClass))
-			{
-				if (bReuseExistingComponent)
-				{
-					// Look for the component class existing already on the actor, for potential re-use
-
-					UActorComponent* ExistingComponent = ActorOwner->FindComponentByClass(ComponentClass);
-					if (IsValid(ExistingComponent))
+					if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromTemplate(*ActorOwner, *ComponentTemplate))
 					{
-						// Set the ComponentRef directly (for later lookup via TryResolveComponent)
-						ComponentRef.SetResolvedComponentDirect(*ExistingComponent);
-
-						return true;
-					}
-
-					if (!bAllowInjectComponent)
-					{
-						return false;
+						ComponentInstances.Add(ComponentInstance);
 					}
 				}
+			}
+			break;
 
-				const FName InstanceBaseName = ComponentClass->GetFName();
-				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass, InstanceBaseName))
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				if (IsValid(ComponentClass))
 				{
-					ComponentInstances.Add(ComponentInstance);
+					if (bReuseExistingComponent)
+					{
+						// Look for the component class existing already on the actor, for potential re-use
+
+						UActorComponent* ExistingComponent = ActorOwner->FindComponentByClass(ComponentClass);
+						if (IsValid(ExistingComponent))
+						{
+							// Set the ComponentRef directly (for later lookup via TryResolveComponent)
+							ComponentRef.SetResolvedComponentDirect(*ExistingComponent);
+
+							return true;
+						}
+
+						if (!bAllowInjectComponent)
+						{
+							return false;
+						}
+					}
+
+					const FName InstanceBaseName = ComponentClass->GetFName();
+					if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass, InstanceBaseName))
+					{
+						ComponentInstances.Add(ComponentInstance);
+					}
 				}
 			}
-		}
-		break;
+			break;
 
-	default:
-		checkNoEntry();
-		return false;
+		default:
+			checkNoEntry();
+			return false;
 	}
 
 	// Create the manager object if we're injecting a component
@@ -312,35 +311,29 @@ UActorComponent* UFlowNode_ExecuteComponent::TryResolveComponent()
 #if WITH_EDITOR
 const UActorComponent* UFlowNode_ExecuteComponent::TryGetExpectedComponent() const
 {
-	TSubclassOf<AActor> ExpectedOwnerClass = TryGetExpectedActorOwnerClass();
+	const TSubclassOf<AActor> ExpectedOwnerClass = TryGetExpectedActorOwnerClass();
 
 	static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 	switch (ComponentSource)
 	{
-	default:
-	case EExecuteComponentSource::Undetermined:
-		{
+		case EExecuteComponentSource::Undetermined:
+			{
+				return nullptr;
+			}
+		case EExecuteComponentSource::BindToExisting:
+			{
+				return AActor::GetActorClassDefaultComponentByName(ExpectedOwnerClass, ComponentRef.ComponentName);
+			}
+		case EExecuteComponentSource::InjectFromTemplate:
+			{
+				return ComponentTemplate;
+			}
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				return IsValid(ComponentClass) ? ComponentClass->GetDefaultObject<UActorComponent>() : nullptr;
+			}
+		default:
 			return nullptr;
-		}
-		break;
-
-	case EExecuteComponentSource::BindToExisting:
-		{
-			return AActor::GetActorClassDefaultComponentByName(ExpectedOwnerClass, ComponentRef.ComponentName);
-		}
-		break;
-
-	case EExecuteComponentSource::InjectFromTemplate:
-		{
-			return ComponentTemplate;
-		}
-		break;
-
-	case EExecuteComponentSource::InjectFromClass:
-		{
-			return IsValid(ComponentClass) ? ComponentClass->GetDefaultObject<UActorComponent>() : nullptr;
-		}
-		break;
 	}
 }
 
@@ -421,7 +414,7 @@ EDataValidationResult UFlowNode_ExecuteComponent::ValidateNode()
 		return EDataValidationResult::Invalid;
 	}
 
-	TSubclassOf<AActor> ExpectedActorOwnerClass = TryGetExpectedActorOwnerClass();
+	const TSubclassOf<AActor> ExpectedActorOwnerClass = TryGetExpectedActorOwnerClass();
 	if (!IsValid(ExpectedActorOwnerClass))
 	{
 		ValidationLog.Error<UFlowNode>(TEXT("Invalid or null Expected Actor Owner Class for this Flow Asset"), this);
@@ -481,52 +474,51 @@ TSubclassOf<AActor> UFlowNode_ExecuteComponent::TryGetExpectedActorOwnerClass() 
 
 FText UFlowNode_ExecuteComponent::GetNodeTitle() const
 {
-	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
-
-	if (bUseAdaptiveNodeTitles)
+	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles)
 	{
 		static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 		switch (ComponentSource)
 		{
-		case EExecuteComponentSource::Undetermined:
-			break;
+			case EExecuteComponentSource::Undetermined:
+				break;
 
-		case EExecuteComponentSource::BindToExisting:
-			{
-				if (!ComponentRef.ComponentName.IsNone())
+			case EExecuteComponentSource::BindToExisting:
 				{
-					const FText ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+					if (!ComponentRef.ComponentName.IsNone())
+					{
+						const FText ComponentNameText = FText::FromName(ComponentRef.ComponentName);
 
-					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), { ComponentNameText });
+						return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
+					}
 				}
-			}
-			break;
+				break;
 
-		case EExecuteComponentSource::InjectFromTemplate:
-			{
-				if (IsValid(ComponentTemplate))
+			case EExecuteComponentSource::InjectFromTemplate:
 				{
-					FString ComponentNameString = ComponentTemplate->GetName();
-					ComponentNameString.RemoveFromEnd(TEXT("_C"));
-					const FText ComponentNameText = FText::FromString(ComponentNameString);
+					if (IsValid(ComponentTemplate))
+					{
+						FString ComponentNameString = ComponentTemplate->GetName();
+						ComponentNameString.RemoveFromEnd(TEXT("_C"));
+						const FText ComponentNameText = FText::FromString(ComponentNameString);
 
-					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), { ComponentNameText });
+						return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
+					}
 				}
-			}
-			break;
+				break;
 
-		case EExecuteComponentSource::InjectFromClass:
-			{
-				if (IsValid(ComponentClass))
+			case EExecuteComponentSource::InjectFromClass:
 				{
-					FString ComponentClassString = ComponentClass->GetName();
-					ComponentClassString.RemoveFromEnd(TEXT("_C"));
-					const FText ComponentNameText = FText::FromString(ComponentClassString);
+					if (IsValid(ComponentClass))
+					{
+						FString ComponentClassString = ComponentClass->GetName();
+						ComponentClassString.RemoveFromEnd(TEXT("_C"));
+						const FText ComponentNameText = FText::FromString(ComponentClassString);
 
-					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), { ComponentNameText });
+						return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
+					}
 				}
-			}
-			break;
+				break;
+			default: ;
 		}
 	}
 
@@ -543,45 +535,43 @@ void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
 	const bool bUseAdaptiveNodeTitles = UFlowSettings::Get()->bUseAdaptiveNodeTitles;
 	if (!bUseAdaptiveNodeTitles)
 	{
-
 		static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 		switch (ComponentSource)
 		{
-		case EExecuteComponentSource::Undetermined:
-			break;
-
-		case EExecuteComponentSource::BindToExisting:
-			{
-				if (!ComponentRef.ComponentName.IsNone())
+			case EExecuteComponentSource::Undetermined:
+				break;
+			case EExecuteComponentSource::BindToExisting:
 				{
-					ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+					if (!ComponentRef.ComponentName.IsNone())
+					{
+						ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+					}
 				}
-			}
-			break;
-
-		case EExecuteComponentSource::InjectFromTemplate:
-			{
-				if (IsValid(ComponentTemplate))
+				break;
+			case EExecuteComponentSource::InjectFromTemplate:
 				{
-					FString ComponentNameString = ComponentTemplate->GetName();
-					ComponentNameString.RemoveFromEnd(TEXT("_C"));
+					if (IsValid(ComponentTemplate))
+					{
+						FString ComponentNameString = ComponentTemplate->GetName();
+						ComponentNameString.RemoveFromEnd(TEXT("_C"));
 
-					ComponentNameText = FText::FromString(ComponentNameString);
+						ComponentNameText = FText::FromString(ComponentNameString);
+					}
 				}
-			}
-			break;
-
-		case EExecuteComponentSource::InjectFromClass:
-			{
-				if (IsValid(ComponentClass))
+				break;
+			case EExecuteComponentSource::InjectFromClass:
 				{
-					FString ComponentClassString = ComponentClass->GetName();
-					ComponentClassString.RemoveFromEnd(TEXT("_C"));
+					if (IsValid(ComponentClass))
+					{
+						FString ComponentClassString = ComponentClass->GetName();
+						ComponentClassString.RemoveFromEnd(TEXT("_C"));
 
-					ComponentNameText = FText::FromString(ComponentClassString);
+						ComponentNameText = FText::FromString(ComponentClassString);
+					}
 				}
-			}
-			break;
+				break;
+			case EExecuteComponentSource::Max:
+				break;
 		}
 	}
 
