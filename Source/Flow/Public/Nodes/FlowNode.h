@@ -23,6 +23,7 @@ class FLOW_API UFlowNode
 	, public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
+
 	friend class SFlowGraphNode;
 	friend class UFlowAsset;
 	friend class UFlowGraphNode;
@@ -172,6 +173,7 @@ public:
 
 //////////////////////////////////////////////////////////////////////////
 // Debugger
+
 protected:
 	static FString MissingIdentityTag;
 	static FString MissingNotifyTag;

@@ -112,7 +112,7 @@ void UFlowNode::AddOutputPins(TArray<FFlowPin> Pins)
 
 bool UFlowNode::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
 {
-	bool bIsChanged = false;
+	bool bIsChanged;
 
 	TArray<FFlowPin> NewPins;
 

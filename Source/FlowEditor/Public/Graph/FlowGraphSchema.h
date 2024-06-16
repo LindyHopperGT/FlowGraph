@@ -59,7 +59,7 @@ public:
 		// --
 
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();
-	static TSubclassOf<UEdGraphNode> GetAssignedGraphNodeClass(TSubclassOf<UFlowNodeBase> FlowNodeClass);
+	static TSubclassOf<UEdGraphNode> GetAssignedGraphNodeClass(const TSubclassOf<UFlowNodeBase>& FlowNodeClass);
 
 	static bool IsPIESimulating();
 
@@ -69,11 +69,7 @@ protected:
 private:
 	static void ApplyNodeOrAddOnFilter(const UFlowAsset* AssetClassDefaults, const UClass* FlowNodeClass, TArray<UFlowNodeBase*>& FilteredNodes);
 	static void GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBuilder, const UFlowAsset* EditedFlowAsset, const FString& CategoryName);
-
-	static TArray<UFlowNodeBase*> GetFilteredPlaceableNodesOrAddOns(
-		const UFlowAsset* EditedFlowAsset,
-		const TArray<UClass*>& InNativeNodesOrAddOns,
-		const TMap<FName, FAssetData>& InBlueprintNodesOrAddOns);
+	static TArray<UFlowNodeBase*> GetFilteredPlaceableNodesOrAddOns(const UFlowAsset* EditedFlowAsset, const TArray<UClass*>& InNativeNodesOrAddOns, const TMap<FName, FAssetData>& InBlueprintNodesOrAddOns);
 
 	static void GetCommentAction(FGraphActionMenuBuilder& ActionMenuBuilder, const UEdGraph* CurrentGraph = nullptr);
 
@@ -83,18 +79,12 @@ private:
 	static void OnBlueprintCompiled();
 	static void OnHotReload(EReloadCompleteReason ReloadCompleteReason);
 
-	static void GatherNativeNodesOrAddOns(
-		TSubclassOf<UFlowNodeBase> FlowNodeBaseClass,
-		TArray<UClass*>& InOutNodesOrAddOnsArray);
+	static void GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass, TArray<UClass*>& InOutNodesOrAddOnsArray);
 	static void GatherNodes();
 
 	static void OnAssetAdded(const FAssetData& AssetData);
 	static void AddAsset(const FAssetData& AssetData, const bool bBatch);
-
-	static bool ShouldAddToBlueprintFlowNodesMap(
-		const FAssetData& AssetData,
-		TSubclassOf<UBlueprint> BlueprintClass,
-		TSubclassOf<UFlowNodeBase> FlowNodeBaseClass);
+	static bool ShouldAddToBlueprintFlowNodesMap(const FAssetData& AssetData, const TSubclassOf<UBlueprint>& BlueprintClass, const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass);
 
 	static void OnAssetRemoved(const FAssetData& AssetData);
 

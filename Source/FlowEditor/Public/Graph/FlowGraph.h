@@ -72,7 +72,7 @@ public:
 
 protected:
 
-	void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
+	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
 
 	static FString GetDeprecationMessage(const UClass* Class);

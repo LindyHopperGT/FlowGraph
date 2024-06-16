@@ -29,7 +29,7 @@ void UFlowNodeAddOn::TriggerFirstOutput(const bool bFinish)
 	}
 }
 
-void UFlowNodeAddOn::TriggerOutput(const FName PinName, const bool bFinish , const EFlowPinActivationType ActivationType)
+void UFlowNodeAddOn::TriggerOutput(const FName PinName, const bool bFinish, const EFlowPinActivationType ActivationType)
 {
 	if (ensure(FlowNode))
 	{
