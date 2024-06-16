@@ -1,7 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/FlowNode.h"
-#include "Interfaces/FlowOwnerInterface.h"
 #include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowAsset.h"
@@ -82,14 +81,7 @@ bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
 		return true;
 	}
 
-	if (const FFlowPin* FoundInputFlowPin = FindFlowPinByName(PinName, InputPins))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return FindFlowPinByName(PinName, InputPins) ? true : false;
 }
 
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)
@@ -112,7 +104,7 @@ void UFlowNode::AddOutputPins(TArray<FFlowPin> Pins)
 
 bool UFlowNode::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
 {
-	bool bIsChanged = false;
+	bool bIsChanged;
 
 	TArray<FFlowPin> NewPins;
 

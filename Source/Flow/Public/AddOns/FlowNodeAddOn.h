@@ -8,9 +8,11 @@
 
 #include "FlowNodeAddOn.generated.h"
 
-// Forward Declarations
 class UFlowNode;
 
+/**
+ * A Flow Node AddOn allows user to extend given node instance in the graph with additional logic.
+ */
 UCLASS(Abstract, MinimalApi, EditInlineNew, Blueprintable)
 class UFlowNodeAddOn
 	: public UFlowNodeBase
@@ -18,12 +20,26 @@ class UFlowNodeAddOn
 {
 	GENERATED_BODY()
 
-public:
+protected:
+	// The FlowNode that contains this AddOn
+	// (accessible only when initialized, runtime only)
+	UPROPERTY(Transient)
+	TObjectPtr<UFlowNode> FlowNode;
 
+	// Input pins to add to the owning flow node
+	// If defined, ExecuteInput will only be executed for these inputs
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
+	TArray<FFlowPin> InputPins;
+
+	// Output pins to add to the owning flow node
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
+	TArray<FFlowPin> OutputPins;
+	
+public:
 	// UFlowNodeBase
 
-	// AddOns may opt-in to be eligible for a given parent
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure)
+	// AddOns may opt in to be eligible for a given parent
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "FlowNodeAddOn")
 	FLOW_API EFlowAddOnAcceptResult AcceptFlowNodeAddOnParent(const UFlowNodeBase* ParentTemplate) const;
 
 	FLOW_API virtual UFlowNode* GetFlowNodeSelfOrOwner() override { return FlowNode; }
@@ -56,20 +72,4 @@ public:
 
 protected:
 	void CacheFlowNode();
-
-protected:
-
-	// The FlowNode that contains this AddOn
-	// (accessible only when initialized, runtime only)
-	UPROPERTY(Transient)
-	TObjectPtr<UFlowNode> FlowNode;
-
-	// Input pins to add to the owning flow node
-	// If defined, ExecuteInput will only be executed for these inputs
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
-	TArray<FFlowPin> InputPins;
-
-	// Output pins to add to the owning flow node
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FlowNodeAddOn")
-	TArray<FFlowPin> OutputPins;
 };

@@ -208,7 +208,7 @@ void UFlowGraph::OnLoaded()
 {
 	check(GEditor);
 
-	// Setup all of the Nodes in the graph for editing
+	// Setup all the Nodes in the graph for editing
 	for (UEdGraphNode* EdNode : Nodes)
 	{
 		UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(EdNode);

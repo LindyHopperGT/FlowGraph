@@ -29,7 +29,7 @@ void UFlowNodeAddOn::TriggerFirstOutput(const bool bFinish)
 	}
 }
 
-void UFlowNodeAddOn::TriggerOutput(const FName PinName, const bool bFinish , const EFlowPinActivationType ActivationType)
+void UFlowNodeAddOn::TriggerOutput(const FName PinName, const bool bFinish, const EFlowPinActivationType ActivationType)
 {
 	if (ensure(FlowNode))
 	{
@@ -47,8 +47,7 @@ void UFlowNodeAddOn::Finish()
 
 EFlowAddOnAcceptResult UFlowNodeAddOn::AcceptFlowNodeAddOnParent_Implementation(const UFlowNodeBase* ParentTemplate) const
 {
-	// Subclasses may override this function to opt-in to parent classes
-
+	// Subclasses may override this function to opt in to parent classes
 	return EFlowAddOnAcceptResult::Undetermined;
 }
 
@@ -69,14 +68,7 @@ bool UFlowNodeAddOn::IsSupportedInputPinName(const FName& PinName) const
 		return true;
 	}
 
-	if (const FFlowPin* FoundFlowPin = FindFlowPinByName(PinName, InputPins))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return FindFlowPinByName(PinName, InputPins) ? true : false;
 }
 
 void UFlowNodeAddOn::CacheFlowNode()

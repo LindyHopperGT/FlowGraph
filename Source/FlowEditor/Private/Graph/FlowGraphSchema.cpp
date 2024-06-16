@@ -11,7 +11,6 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 
 #include "FlowAsset.h"
-#include "FlowEditorModule.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/FlowNodeBlueprint.h"
@@ -177,9 +176,6 @@ const FPinConnectionResponse UFlowGraphSchema::CanMergeNodes(const UEdGraphNode*
 
 	const UFlowGraphNode* FlowGraphNodeA = Cast<UFlowGraphNode>(NodeA);
 	const UFlowGraphNode* FlowGraphNodeB = Cast<UFlowGraphNode>(NodeB);
-
-	const bool bNodeAIsSubnode = FlowGraphNodeA && FlowGraphNodeA->IsSubNode();
-	const bool bNodeBIsSubnode = FlowGraphNodeB && FlowGraphNodeB->IsSubNode();
 
 	FString ReasonString;
 	if (FlowGraphNodeA && FlowGraphNodeB)
@@ -360,7 +356,7 @@ TArray<TSharedPtr<FString>> UFlowGraphSchema::GetFlowNodeCategories()
 	return Result;
 }
 
-TSubclassOf<UEdGraphNode> UFlowGraphSchema::GetAssignedGraphNodeClass(TSubclassOf<UFlowNodeBase> FlowNodeClass)
+TSubclassOf<UEdGraphNode> UFlowGraphSchema::GetAssignedGraphNodeClass(const TSubclassOf<UFlowNodeBase>& FlowNodeClass)
 {
 	TArray<TSubclassOf<UFlowNodeBase>> FoundParentClasses;
 	UClass* ReturnClass = nullptr;
@@ -447,10 +443,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 	}
 }
 
-TArray<UFlowNodeBase*> UFlowGraphSchema::GetFilteredPlaceableNodesOrAddOns(
-	const UFlowAsset* EditedFlowAsset,
-	const TArray<UClass*>& InNativeNodesOrAddOns,
-	const TMap<FName, FAssetData>& InBlueprintNodesOrAddOns)
+TArray<UFlowNodeBase*> UFlowGraphSchema::GetFilteredPlaceableNodesOrAddOns(const UFlowAsset* EditedFlowAsset, const TArray<UClass*>& InNativeNodesOrAddOns, const TMap<FName, FAssetData>& InBlueprintNodesOrAddOns)
 {
 	if (!bInitialGatherPerformed)
 	{
@@ -530,7 +523,7 @@ bool UFlowGraphSchema::IsAddOnAllowedForSelectedObjects(const TArray<UObject*>& 
 			return false;
 		}
 
-		UFlowNodeBase* FlowNodeOuter = Cast<UFlowNodeBase>(FlowGraphNode->GetFlowNodeBase());
+		const UFlowNodeBase* FlowNodeOuter = Cast<UFlowNodeBase>(FlowGraphNode->GetFlowNodeBase());
 		if (!IsValid(FlowNodeOuter))
 		{
 			continue;
@@ -607,9 +600,7 @@ void UFlowGraphSchema::OnHotReload(EReloadCompleteReason ReloadCompleteReason)
 	GatherNodes();
 }
 
-void UFlowGraphSchema::GatherNativeNodesOrAddOns(
-	TSubclassOf<UFlowNodeBase> FlowNodeBaseClass,
-	TArray<UClass*>& InOutNodesOrAddOnsArray)
+void UFlowGraphSchema::GatherNativeNodesOrAddOns(const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass, TArray<UClass*>& InOutNodesOrAddOnsArray)
 {
 	// collect C++ Nodes or AddOns once per editor session
 	if (InOutNodesOrAddOnsArray.Num() > 0)
@@ -719,7 +710,7 @@ void UFlowGraphSchema::AddAsset(const FAssetData& AssetData, const bool bBatch)
 	}
 }
 
-bool UFlowGraphSchema::ShouldAddToBlueprintFlowNodesMap(const FAssetData& AssetData, TSubclassOf<UBlueprint> BlueprintClass, TSubclassOf<UFlowNodeBase> FlowNodeBaseClass)
+bool UFlowGraphSchema::ShouldAddToBlueprintFlowNodesMap(const FAssetData& AssetData, const TSubclassOf<UBlueprint>& BlueprintClass, const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass)
 {
 	if (!AssetData.GetClass()->IsChildOf(BlueprintClass))
 	{

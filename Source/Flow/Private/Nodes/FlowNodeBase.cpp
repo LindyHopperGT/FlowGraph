@@ -5,7 +5,6 @@
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowAsset.h"
 #include "FlowLogChannels.h"
-#include "FlowSettings.h"
 #include "FlowSubsystem.h"
 #include "FlowTypes.h"
 
@@ -29,123 +28,198 @@
 
 UFlowNodeBase::UFlowNodeBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, GraphNode(nullptr)
+#if WITH_EDITORONLY_DATA
+	, bCanDelete(true)
+	, bCanDuplicate(true)
+	, bNodeDeprecated(false)
+	, NodeStyle(EFlowNodeStyle::Default)
+	, NodeColor(FLinearColor::Black)
+#endif
 {
+}
+
+UWorld* UFlowNodeBase::GetWorld() const
+{
+	if (const UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		if (const UObject* FlowAssetOwner = FlowAsset->GetOwner())
+		{
+			return FlowAssetOwner->GetWorld();
+		}
+	}
+
+	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
+	{
+		return FlowSubsystem->GetWorld();
+	}
+
+	return nullptr;
+}
+
+void UFlowNodeBase::InitializeInstance()
+{
+	IFlowCoreExecutableInterface::InitializeInstance();
+
+	if (!AddOns.IsEmpty())
+	{
+		TArray<UFlowNodeAddOn*> SourceAddOns = AddOns;
+		AddOns.Reset();
+
+		for (UFlowNodeAddOn* SourceAddOn : SourceAddOns)
+		{
+			// Create a new instance of each AddOn
+			UFlowNodeAddOn* NewAddOnInstance = NewObject<UFlowNodeAddOn>(this, SourceAddOn->GetClass(), NAME_None, RF_Transient, SourceAddOn, false, nullptr);
+			AddOns.Add(NewAddOnInstance);
+		}
+
+		for (UFlowNodeAddOn* AddOn : AddOns)
+		{
+			// Initialize all the AddOn instances after they are all allocated
+			AddOn->InitializeInstance();
+		}
+	}
+}
+
+void UFlowNodeBase::DeinitializeInstance()
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->DeinitializeInstance();
+	}
+
+	IFlowCoreExecutableInterface::DeinitializeInstance();
+}
+
+void UFlowNodeBase::PreloadContent()
+{
+	IFlowCoreExecutableInterface::PreloadContent();
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->PreloadContent();
+	}
+}
+
+void UFlowNodeBase::FlushContent()
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->FlushContent();
+	}
+
+	IFlowCoreExecutableInterface::FlushContent();
+}
+
+void UFlowNodeBase::OnActivate()
+{
+	IFlowCoreExecutableInterface::OnActivate();
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->OnActivate();
+	}
+}
+
+void UFlowNodeBase::ExecuteInput(const FName& PinName)
+{
+	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
+	// To ensure that Nodes and AddOns only get the input pins signalled that they expect,
+	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
+
+	if (IsSupportedInputPinName(PinName))
+	{
+		IFlowCoreExecutableInterface::ExecuteInput(PinName);
+	}
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->ExecuteInput(PinName);
+	}
+}
+
+void UFlowNodeBase::ForceFinishNode()
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->ForceFinishNode();
+	}
+
+	IFlowCoreExecutableInterface::ForceFinishNode();
+}
+
+void UFlowNodeBase::Cleanup()
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->Cleanup();
+	}
+
+	IFlowCoreExecutableInterface::Cleanup();
+}
+
+const FFlowPin* UFlowNodeBase::FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins)
+{
+	return FlowPins.FindByPredicate([&PinName](const FFlowPin& FlowPin)
+	{
+		return FlowPin.PinName == PinName;
+	});
 }
 
 #if WITH_EDITOR
-void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+TArray<FFlowPin> UFlowNodeBase::GetContextInputs() const
 {
-	Super::PostEditChangeProperty(PropertyChangedEvent);
+	TArray<FFlowPin> ContextInputs = IFlowContextPinSupplierInterface::GetContextInputs();
+	TArray<FFlowPin> AddOnInputs;
 
-	if (!PropertyChangedEvent.Property)
+	for (const UFlowNodeAddOn* AddOn : AddOns)
 	{
-		return;
+		AddOnInputs.Append(AddOn->GetContextInputs());
 	}
 
-	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, AddOns))
+	if (!AddOnInputs.IsEmpty())
 	{
-		// Potentially need to rebuild the pins from the AddOns of this node
-		OnReconstructionRequested.ExecuteIfBound();
-	}
-
-	UpdateNodeConfigText();
-}
-
-void UFlowNodeBase::FixNode(UEdGraphNode* NewGraphNode)
-{
-	// Fix any node pointers that may be out of date
-	if (NewGraphNode)
-	{
-		GraphNode = NewGraphNode;
-	}
-}
-
-void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
-{
-	GraphNode = NewGraphNode;
-
-	UpdateNodeConfigText();
-}
-
-void UFlowNodeBase::SetupForEditing(UEdGraphNode& EdGraphNode)
-{
-	SetGraphNode(&EdGraphNode);
-
-	// Refresh the Config text when setting up this FlowNodeBase for editing
-	UpdateNodeConfigText();
-}
-
-FString UFlowNodeBase::GetNodeCategory() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintCategory = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintCategory;
-		if (!BlueprintCategory.IsEmpty())
+		for (const FFlowPin& FlowPin : AddOnInputs)
 		{
-			return BlueprintCategory;
+			ContextInputs.AddUnique(FlowPin);
 		}
 	}
 
-	return Category;
+	return ContextInputs;
 }
 
-FText UFlowNodeBase::GetNodeTitle() const
+TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 {
-	if (GetClass()->ClassGeneratedBy)
+	TArray<FFlowPin> ContextOutputs = IFlowContextPinSupplierInterface::GetContextOutputs();
+	TArray<FFlowPin> AddOnOutputs;
+
+	for (const UFlowNodeAddOn* AddOn : AddOns)
 	{
-		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
-		if (!BlueprintTitle.IsEmpty())
+		AddOnOutputs.Append(AddOn->GetContextOutputs());
+	}
+
+	if (!AddOnOutputs.IsEmpty())
+	{
+		for (const FFlowPin& FlowPin : AddOnOutputs)
 		{
-			return FText::FromString(BlueprintTitle);
+			ContextOutputs.AddUnique(FlowPin);
 		}
 	}
 
-	return GetClass()->GetDisplayNameText();
+	return ContextOutputs;
 }
-
-FText UFlowNodeBase::GetNodeToolTip() const
-{
-	if (GetClass()->ClassGeneratedBy)
-	{
-		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
-		if (!BlueprintToolTip.IsEmpty())
-		{
-			return FText::FromString(BlueprintToolTip);
-		}
-	}
-
-	return GetClass()->GetToolTipText();
-}
-
-FText UFlowNodeBase::GetNodeConfigText() const
-{
-	return DevNodeConfigText;
-}
-
-bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
-{
-	if (NodeStyle == EFlowNodeStyle::Custom)
-	{
-		OutColor = NodeColor;
-		return true;
-	}
-
-	return false;
-}
-
-FString UFlowNodeBase::GetNodeDescription() const
-{
-	return K2_GetNodeDescription();
-}
-#endif
+#endif // WITH_EDITOR
 
 UFlowAsset* UFlowNodeBase::GetFlowAsset() const
 {
 	// In the case of an AddOn, we want our containing FlowNode's Outer, not our own
 	const UFlowNode* FlowNode = GetFlowNodeSelfOrOwner();
 	return FlowNode && FlowNode->GetOuter() ? Cast<UFlowAsset>(FlowNode->GetOuter()) : Cast<UFlowAsset>(GetOuter());
+}
+
+const UFlowNode* UFlowNodeBase::GetFlowNodeSelfOrOwner() const
+{
+	return const_cast<UFlowNodeBase*>(this)->GetFlowNodeSelfOrOwner();
 }
 
 UFlowSubsystem* UFlowNodeBase::GetFlowSubsystem() const
@@ -166,8 +240,7 @@ AActor* UFlowNodeBase::TryGetRootFlowActorOwner() const
 
 		if (!IsValid(OwningActor))
 		{
-			// Check if the if the immediate parent is an UActorComponent
-			//  and return that Component's Owning actor
+			// Check if the immediate parent is an UActorComponent and return that Component's Owning actor
 			if (const UActorComponent* OwningComponent = Cast<UActorComponent>(RootFlowOwner))
 			{
 				OwningActor = OwningComponent->GetOwner();
@@ -223,7 +296,7 @@ IFlowOwnerInterface* UFlowNodeBase::GetFlowOwnerInterface() const
 	return nullptr;
 }
 
-IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const
+IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceFromRootFlowOwner(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass)
 {
 	const UClass* RootFlowOwnerClass = RootFlowOwner.GetClass();
 	if (!IsValid(RootFlowOwnerClass))
@@ -240,7 +313,7 @@ IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceFromRootFlowOwner(UO
 	return CastChecked<IFlowOwnerInterface>(&RootFlowOwner);
 }
 
-IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass) const
+IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootFlowOwner, const UClass& ExpectedOwnerClass)
 {
 	// Special case if the immediate owner is a component, also consider the component's owning actor
 	const UActorComponent* FlowComponent = Cast<UActorComponent>(&RootFlowOwner);
@@ -264,6 +337,220 @@ IFlowOwnerInterface* UFlowNodeBase::TryGetFlowOwnerInterfaceActor(UObject& RootF
 	return CastChecked<IFlowOwnerInterface>(ActorOwner);
 }
 
+EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate) const
+{
+	// Subclasses may override this function to allow AddOn children classes
+	return EFlowAddOnAcceptResult::Undetermined;
+}
+
+#if WITH_EDITOR
+EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate) const
+{
+	if (!IsValid(AddOnTemplate))
+	{
+		return EFlowAddOnAcceptResult::Reject;
+	}
+
+	static_assert(static_cast<__underlying_type(EFlowAddOnAcceptResult)>(EFlowAddOnAcceptResult::Max) == 3, "This code may need updating if the enum values change");
+
+	EFlowAddOnAcceptResult CombinedResult = EFlowAddOnAcceptResult::Undetermined;
+
+	const EFlowAddOnAcceptResult AsChildResult = AcceptFlowNodeAddOnChild(AddOnTemplate); // Potential parents of AddOns are allowed to decide their eligible AddOn children
+	CombinedResult = CombineFlowAddOnAcceptResult(AsChildResult, CombinedResult);
+
+	if (CombinedResult == EFlowAddOnAcceptResult::Reject)
+	{
+		return EFlowAddOnAcceptResult::Reject;
+	}
+
+	// FlowNodeAddOns are allowed to opt in to their parent
+	const EFlowAddOnAcceptResult AsParentResult = AddOnTemplate->AcceptFlowNodeAddOnParent(this);
+
+	if (AsParentResult != EFlowAddOnAcceptResult::Reject &&
+		AddOnTemplate->IsA<UFlowNode>())
+	{
+		const FString Message = FString::Printf(TEXT("%s::AcceptFlowNodeAddOnParent must always Reject for UFlowNode subclasses"), *GetClass()->GetName());
+		GetFlowAsset()->GetTemplateAsset()->LogError(Message, const_cast<UFlowNodeBase*>(this));
+
+		return EFlowAddOnAcceptResult::Reject;
+	}
+
+	CombinedResult = CombineFlowAddOnAcceptResult(AsParentResult, CombinedResult);
+
+	return CombinedResult;
+}
+#endif // WITH_EDITOR
+
+void UFlowNodeBase::ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function) const
+{
+	for (const UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn))
+		{
+			Function(*AddOn);
+
+			AddOn->ForEachAddOnConst(Function);
+		}
+	}
+}
+
+void UFlowNodeBase::ForEachAddOn(const FFlowNodeAddOnFunction& Function) const
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn))
+		{
+			Function(*AddOn);
+
+			AddOn->ForEachAddOn(Function);
+		}
+	}
+}
+
+void UFlowNodeBase::ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function) const
+{
+	for (const UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn))
+		{
+			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+			// or an interface (the UClass version) that its UClass implements 
+			if (AddOn->IsA(&InterfaceOrClass) || AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
+			{
+				Function(*AddOn);
+			}
+
+			AddOn->ForEachAddOnForClassConst(InterfaceOrClass, Function);
+		}
+	}
+}
+
+void UFlowNodeBase::ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const
+{
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		if (IsValid(AddOn))
+		{
+			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+			// or an interface (the UClass version) that its UClass implements 
+			if (AddOn->IsA(&InterfaceOrClass) || AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
+			{
+				Function(*AddOn);
+			}
+
+			AddOn->ForEachAddOnForClass(InterfaceOrClass, Function);
+		}
+	}
+}
+
+#if WITH_EDITOR
+void UFlowNodeBase::SetGraphNode(UEdGraphNode* NewGraphNode)
+{
+	GraphNode = NewGraphNode;
+
+	UpdateNodeConfigText();
+}
+
+void UFlowNodeBase::SetupForEditing(UEdGraphNode& EdGraphNode)
+{
+	SetGraphNode(&EdGraphNode);
+
+	// Refresh the Config text when setting up this FlowNodeBase for editing
+	UpdateNodeConfigText();
+}
+
+void UFlowNodeBase::FixNode(UEdGraphNode* NewGraphNode)
+{
+	// Fix any node pointers that may be out of date
+	if (NewGraphNode)
+	{
+		GraphNode = NewGraphNode;
+	}
+}
+
+void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (!PropertyChangedEvent.Property)
+	{
+		return;
+	}
+
+	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, AddOns))
+	{
+		// Potentially need to rebuild the pins from the AddOns of this node
+		OnReconstructionRequested.ExecuteIfBound();
+	}
+
+	UpdateNodeConfigText();
+}
+
+FString UFlowNodeBase::GetNodeCategory() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintCategory = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintCategory;
+		if (!BlueprintCategory.IsEmpty())
+		{
+			return BlueprintCategory;
+		}
+	}
+
+	return Category;
+}
+
+EFlowNodeStyle UFlowNodeBase::GetNodeStyle() const
+{
+	return NodeStyle;
+}
+
+bool UFlowNodeBase::GetDynamicTitleColor(FLinearColor& OutColor) const
+{
+	if (NodeStyle == EFlowNodeStyle::Custom)
+	{
+		OutColor = NodeColor;
+		return true;
+	}
+
+	return false;
+}
+
+FText UFlowNodeBase::GetNodeTitle() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+
+	return GetClass()->GetDisplayNameText();
+}
+
+FText UFlowNodeBase::GetNodeToolTip() const
+{
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintToolTip = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDescription;
+		if (!BlueprintToolTip.IsEmpty())
+		{
+			return FText::FromString(BlueprintToolTip);
+		}
+	}
+
+	return GetClass()->GetToolTipText();
+}
+
+FText UFlowNodeBase::GetNodeConfigText() const
+{
+	return DevNodeConfigText;
+}
+#endif // WITH_EDITOR
+
 void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 {
 #if WITH_EDITOR
@@ -280,23 +567,12 @@ void UFlowNodeBase::UpdateNodeConfigText_Implementation()
 {
 }
 
-UWorld* UFlowNodeBase::GetWorld() const
+#if WITH_EDITOR
+FString UFlowNodeBase::GetNodeDescription() const
 {
-	if (UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		if (UObject* FlowAssetOwner = FlowAsset->GetOwner())
-		{
-			return FlowAssetOwner->GetWorld();
-		}
-	}
-
-	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
-	{
-		return FlowSubsystem->GetWorld();
-	}
-
-	return nullptr;
+	return K2_GetNodeDescription();
 }
+#endif // WITH_EDITOR
 
 void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
 {
@@ -336,6 +612,11 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 #endif
 }
 
+void UFlowNodeBase::LogErrorConst(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
+{
+	const_cast<UFlowNodeBase*>(this)->LogError(Message, OnScreenMessageType);
+}
+
 void UFlowNodeBase::LogWarning(FString Message)
 {
 #if !UE_BUILD_SHIPPING
@@ -350,6 +631,11 @@ void UFlowNodeBase::LogWarning(FString Message)
 #endif
 	}
 #endif
+}
+
+void UFlowNodeBase::LogWarningConst(FString Message) const
+{
+	const_cast<UFlowNodeBase*>(this)->LogWarning(Message);
 }
 
 void UFlowNodeBase::LogNote(FString Message)
@@ -368,6 +654,11 @@ void UFlowNodeBase::LogNote(FString Message)
 #endif
 }
 
+void UFlowNodeBase::LogNoteConst(FString Message) const
+{
+	const_cast<UFlowNodeBase*>(this)->LogNote(Message);
+}
+
 #if !UE_BUILD_SHIPPING
 bool UFlowNodeBase::BuildMessage(FString& Message) const
 {
@@ -381,267 +672,4 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 
 	return false;
 }
-
 #endif
-
-EFlowAddOnAcceptResult UFlowNodeBase::AcceptFlowNodeAddOnChild_Implementation(const UFlowNodeAddOn* AddOnTemplate) const
-{
-	// Subclasses may override this function to allow AddOn children classes
-	return EFlowAddOnAcceptResult::Undetermined;
-}
-
-#if WITH_EDITOR
-EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowNodeAddOn* AddOnTemplate) const
-{
-	if (!IsValid(AddOnTemplate))
-	{
-		return EFlowAddOnAcceptResult::Reject;
-	}
-
-	static_assert(static_cast<__underlying_type(EFlowAddOnAcceptResult)>(EFlowAddOnAcceptResult::Max) == 3, "This code may need updating if the enum values change");
-
-	EFlowAddOnAcceptResult CombinedResult = EFlowAddOnAcceptResult::Undetermined;
-
-	// Potential parents of AddOns are allowed to decide their eligible AddOn children
-	const EFlowAddOnAcceptResult AsChildResult = AcceptFlowNodeAddOnChild(AddOnTemplate);
-
-	CombinedResult = CombineFlowAddOnAcceptResult(AsChildResult, CombinedResult);
-	if (CombinedResult == EFlowAddOnAcceptResult::Reject)
-	{
-		return EFlowAddOnAcceptResult::Reject;
-	}
-
-	// FlowNodeAddOns are allowed to opt-in to their parent
-	const EFlowAddOnAcceptResult AsParentResult = AddOnTemplate->AcceptFlowNodeAddOnParent(this);
-
-	if (AsParentResult != EFlowAddOnAcceptResult::Reject && 
-		AddOnTemplate->IsA<UFlowNode>())
-	{
-		const FString Message = FString::Printf(TEXT("%s::AcceptFlowNodeAddOnParent must always Reject for UFlowNode subclasses"), *GetClass()->GetName());
-		GetFlowAsset()->GetTemplateAsset()->LogError(Message, const_cast<UFlowNodeBase*>(this));
-
-		return EFlowAddOnAcceptResult::Reject;
-	}
-
-	CombinedResult = CombineFlowAddOnAcceptResult(AsParentResult, CombinedResult);
-
-	return CombinedResult;
-}
-#endif // WITH_EDITOR
-
-void UFlowNodeBase::InitializeInstance()
-{
-	IFlowCoreExecutableInterface::InitializeInstance();
-
-	if (!AddOns.IsEmpty())
-	{
-		TArray<UFlowNodeAddOn*> SourceAddOns = AddOns;
-		AddOns.Reset();
-
-		for (UFlowNodeAddOn* SourceAddOn : SourceAddOns)
-		{
-			// Create a new instance of each AddOn
-			UFlowNodeAddOn* NewAddOnInstance = NewObject<UFlowNodeAddOn>(this, SourceAddOn->GetClass(), NAME_None, RF_Transient, SourceAddOn, false, nullptr);
-			AddOns.Add(NewAddOnInstance);
-		}
-
-		for (UFlowNodeAddOn* AddOn : AddOns)
-		{
-			// Initialize all of the AddOn instances after they are all allocated
-			AddOn->InitializeInstance();
-		}
-	}
-}
-
-void UFlowNodeBase::DeinitializeInstance()
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->DeinitializeInstance();
-	}
-
-	IFlowCoreExecutableInterface::DeinitializeInstance();
-}
-
-void UFlowNodeBase::PreloadContent()
-{
-	IFlowCoreExecutableInterface::PreloadContent();
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->PreloadContent();
-	}
-}
-
-void UFlowNodeBase::FlushContent()
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->FlushContent();
-	}
-
-	IFlowCoreExecutableInterface::FlushContent();
-}
-
-void UFlowNodeBase::OnActivate()
-{
-	IFlowCoreExecutableInterface::OnActivate();
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->OnActivate();
-	}
-}
-
-void UFlowNodeBase::Cleanup()
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->Cleanup();
-	}
-
-	IFlowCoreExecutableInterface::Cleanup();
-}
-
-void UFlowNodeBase::ForceFinishNode()
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->ForceFinishNode();
-	}
-
-	IFlowCoreExecutableInterface::ForceFinishNode();
-}
-
-void UFlowNodeBase::ExecuteInput(const FName& PinName)
-{
-	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
-	// To ensure that Nodes and AddOns only get the input pins signalled that they expect,
-	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
-
-	if (IsSupportedInputPinName(PinName))
-	{
-		IFlowCoreExecutableInterface::ExecuteInput(PinName);
-	}
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->ExecuteInput(PinName);
-	}
-}
-
-const FFlowPin* UFlowNodeBase::FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins)
-{
-	return FlowPins.FindByPredicate([&PinName](const FFlowPin& FlowPin)
-		{
-			return FlowPin.PinName == PinName;
-		});
-}
-
-void UFlowNodeBase::ForEachAddOnConst(FConstFlowNodeAddOnFunction Function) const
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		if (IsValid(AddOn))
-		{
-			Function(*AddOn);
-
-			AddOn->ForEachAddOnConst(Function);
-		}
-	}
-}
-
-void UFlowNodeBase::ForEachAddOnForClassConst(const UClass& InterfaceOrClass, FConstFlowNodeAddOnFunction Function) const
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		if (IsValid(AddOn))
-		{
-			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
-			// or an interface (the UClass version) that its UClass implements 
-			if (AddOn->IsA(&InterfaceOrClass) ||
-				AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
-			{
-				Function(*AddOn);
-			}
-
-			AddOn->ForEachAddOnForClassConst(InterfaceOrClass, Function);
-		}
-	}
-}
-
-void UFlowNodeBase::ForEachAddOn(FFlowNodeAddOnFunction Function) const
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		if (IsValid(AddOn))
-		{
-			Function(*AddOn);
-
-			AddOn->ForEachAddOn(Function);
-		}
-	}
-}
-
-void UFlowNodeBase::ForEachAddOnForClass(const UClass& InterfaceOrClass, FFlowNodeAddOnFunction Function) const
-{
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		if (IsValid(AddOn))
-		{
-			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
-			// or an interface (the UClass version) that its UClass implements 
-			if (AddOn->IsA(&InterfaceOrClass) || 
-				AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
-			{
-				Function(*AddOn);
-			}
-
-			AddOn->ForEachAddOnForClass(InterfaceOrClass, Function);
-		}
-	}
-}
-
-#if WITH_EDITOR
-TArray<FFlowPin> UFlowNodeBase::GetContextInputs() const
-{
-	TArray<FFlowPin> ContextInputs = IFlowContextPinSupplierInterface::GetContextInputs();
-	TArray<FFlowPin> AddOnInputs;
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOnInputs.Append(AddOn->GetContextInputs());
-	}
-
-	if (!AddOnInputs.IsEmpty())
-	{
-		for (const FFlowPin& FlowPin : AddOnInputs)
-		{
-			ContextInputs.AddUnique(FlowPin);
-		}
-	}
-
-	return ContextInputs;
-}
-
-TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
-{
-	TArray<FFlowPin> ContextOutputs = IFlowContextPinSupplierInterface::GetContextOutputs();
-	TArray<FFlowPin> AddOnOutputs;
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOnOutputs.Append(AddOn->GetContextOutputs());
-	}
-
-	if (!AddOnOutputs.IsEmpty())
-	{
-		for (const FFlowPin& FlowPin : AddOnOutputs)
-		{
-			ContextOutputs.AddUnique(FlowPin);
-		}
-	}
-
-	return ContextOutputs;
-}
-#endif // WITH_EDITOR
