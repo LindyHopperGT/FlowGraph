@@ -6,6 +6,7 @@
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "FlowActorOwnerComponentFilters.h"
+#include "Pre_5_3_GetActorClassDefaultComponents.h"
 
 #include "UObject/UnrealType.h"
 #include "GameFramework/Actor.h"
@@ -61,7 +62,12 @@ UClass* FFlowActorOwnerComponentRefCustomization::TryGetExpectedOwnerClass() con
 TArray<FName> FFlowActorOwnerComponentRefCustomization::GetFlowActorOwnerComponents(TSubclassOf<AActor> ExpectedActorOwnerClass) const
 {
 	TArray<const UActorComponent*> AllComponents;
+
+#if USE_PRE_5_3_GET_ACTOR_CLASS_DEFAULT_COMPONENTS
+	Pre_5_3_GetActorClassDefaultComponents<UActorComponent>(ExpectedActorOwnerClass, AllComponents);
+#else
 	AActor::GetActorClassDefaultComponents<UActorComponent>(ExpectedActorOwnerClass, AllComponents);
+#endif
 
 	// Array for components that pass the metadata filter
 	TArray<FName> PassedComponentNames;
