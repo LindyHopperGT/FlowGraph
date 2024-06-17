@@ -31,8 +31,8 @@ typedef TFunction<void(UFlowNodeAddOn&)> FFlowNodeAddOnFunction;
 UCLASS(Abstract, BlueprintType, HideCategories = Object)
 class FLOW_API UFlowNodeBase
 	: public UObject
-	  , public IFlowCoreExecutableInterface
-	  , public IFlowContextPinSupplierInterface
+	, public IFlowCoreExecutableInterface
+	, public IFlowContextPinSupplierInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -274,20 +274,20 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
 
-	// LogError from constant function (allowing this to be modified only to log the error itself)
-	FORCEINLINE void LogErrorConst(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
+	// LogError from constant function (allowing 'this' to be modified only to log the error itself)
+	void LogErrorConst(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogWarning(FString Message);
 
-	// LogWarning from constant function (allowing this to be modified only to log the warning itself)
-	FORCEINLINE void LogWarningConst(FString Message) const;
+	// LogWarning from constant function (allowing 'this' to be modified only to log the warning itself)
+	void LogWarningConst(FString Message) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogNote(FString Message);
 
-	// LogNote from constant function (allowing this to be modified only to log the note itself)
-	FORCEINLINE void LogNoteConst(FString Message) const;
+	// LogNote from constant function (allowing 'this' to be modified only to log the note itself)
+	void LogNoteConst(FString Message) const;
 
 #if !UE_BUILD_SHIPPING
 protected:
