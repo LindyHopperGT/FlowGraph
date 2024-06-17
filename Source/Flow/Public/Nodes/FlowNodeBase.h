@@ -28,7 +28,7 @@ typedef TFunction<void(UFlowNodeAddOn&)> FFlowNodeAddOnFunction;
 /**
  * The base class for UFlowNode and UFlowNodeAddOn, with their shared functionality
  */
-UCLASS(Abstract, HideCategories = Object)
+UCLASS(Abstract, BlueprintType, HideCategories = Object)
 class FLOW_API UFlowNodeBase
 	: public UObject
 	  , public IFlowCoreExecutableInterface
@@ -62,6 +62,27 @@ public:
 	virtual void ForceFinishNode() override;
 	virtual void Cleanup() override;
 	// --
+
+	// Finish execution of node, it will call Cleanup
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	virtual void Finish() PURE_VIRTUAL(Finish)
+
+	// Simply trigger the first Output Pin, convenient to use if node has only one output
+	UFUNCTION(BlueprintCallable, Category = "FlowNode")
+	virtual void TriggerFirstOutput(const bool bFinish) PURE_VIRTUAL(TriggerFirstOutput)
+
+	// Cause a specific output to be triggered (by PinName)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
+	virtual void TriggerOutput(const FName PinName, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default) PURE_VIRTUAL(TriggerOutput)
+
+	// TriggerOutput convenience aliases
+	void TriggerOutput(const FString& PinName, const bool bFinish = false);
+	void TriggerOutput(const FText& PinName, const bool bFinish = false);
+	void TriggerOutput(const TCHAR* PinName, const bool bFinish = false);
+
+	// Cause a specific output to be triggered (by PinHandle)
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (HidePin = "ActivationType"))
+	virtual void TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
 //////////////////////////////////////////////////////////////////////////
 // Pins	

@@ -29,7 +29,7 @@ void UFlowNode_ExecuteComponent::InitializeInstance()
 {
 	Super::InitializeInstance();
 
-	(void)TryInjectComponent();
+	(void) TryInjectComponent();
 
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
 	{
@@ -111,17 +111,15 @@ void UFlowNode_ExecuteComponent::OnActivate()
 
 	if (UActorComponent* ResolvedComp = TryResolveComponent())
 	{
-		IFlowNativeExecutableInterface* ThisAsNativeExecutorProxy = CastChecked<IFlowNativeExecutableInterface>(this);
-
 		if (IFlowExternalExecutableInterface* ComponentAsExternalExecutable = Cast<IFlowExternalExecutableInterface>(ResolvedComp))
 		{
 			// By convention, we must call the PreActivateExternalFlowExecutable() before OnActivate 
 			// when we (this node) are acting as the proxy for an IFlowExternalExecutableInterface object
-			ComponentAsExternalExecutable->PreActivateExternalFlowExecutable(*ThisAsNativeExecutorProxy);
+			ComponentAsExternalExecutable->PreActivateExternalFlowExecutable(*this);
 		}
 		else if (ResolvedComp->Implements<UFlowCoreExecutableInterface>())
 		{
-			IFlowExternalExecutableInterface::Execute_K2_PreActivateExternalFlowExecutable(ResolvedComp, TScriptInterface<IFlowNativeExecutableInterface>(this));
+			IFlowExternalExecutableInterface::Execute_K2_PreActivateExternalFlowExecutable(ResolvedComp, this);
 		}
 		else
 		{
@@ -217,53 +215,53 @@ bool UFlowNode_ExecuteComponent::TryInjectComponent()
 	static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 	switch (ComponentSource)
 	{
-		case EExecuteComponentSource::InjectFromTemplate:
+	case EExecuteComponentSource::InjectFromTemplate:
+		{
+			if (IsValid(ComponentTemplate))
 			{
-				if (IsValid(ComponentTemplate))
+				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromTemplate(*ActorOwner, *ComponentTemplate))
 				{
-					if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromTemplate(*ActorOwner, *ComponentTemplate))
-					{
-						ComponentInstances.Add(ComponentInstance);
-					}
+					ComponentInstances.Add(ComponentInstance);
 				}
 			}
-			break;
+		}
+		break;
 
-		case EExecuteComponentSource::InjectFromClass:
+	case EExecuteComponentSource::InjectFromClass:
+		{
+			if (IsValid(ComponentClass))
 			{
-				if (IsValid(ComponentClass))
+				if (bReuseExistingComponent)
 				{
-					if (bReuseExistingComponent)
+					// Look for the component class existing already on the actor, for potential re-use
+
+					UActorComponent* ExistingComponent = ActorOwner->FindComponentByClass(ComponentClass);
+					if (IsValid(ExistingComponent))
 					{
-						// Look for the component class existing already on the actor, for potential re-use
+						// Set the ComponentRef directly (for later lookup via TryResolveComponent)
+						ComponentRef.SetResolvedComponentDirect(*ExistingComponent);
 
-						UActorComponent* ExistingComponent = ActorOwner->FindComponentByClass(ComponentClass);
-						if (IsValid(ExistingComponent))
-						{
-							// Set the ComponentRef directly (for later lookup via TryResolveComponent)
-							ComponentRef.SetResolvedComponentDirect(*ExistingComponent);
-
-							return true;
-						}
-
-						if (!bAllowInjectComponent)
-						{
-							return false;
-						}
+						return true;
 					}
 
-					const FName InstanceBaseName = ComponentClass->GetFName();
-					if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass, InstanceBaseName))
+					if (!bAllowInjectComponent)
 					{
-						ComponentInstances.Add(ComponentInstance);
+						return false;
 					}
 				}
-			}
-			break;
 
-		default:
-			checkNoEntry();
-			return false;
+				const FName InstanceBaseName = ComponentClass->GetFName();
+				if (UActorComponent* ComponentInstance = FFlowInjectComponentsHelper::TryCreateComponentInstanceForActorFromClass(*ActorOwner, *ComponentClass, InstanceBaseName))
+				{
+					ComponentInstances.Add(ComponentInstance);
+				}
+			}
+		}
+		break;
+
+	default:
+		checkNoEntry();
+		return false;
 	}
 
 	// Create the manager object if we're injecting a component
@@ -316,24 +314,25 @@ const UActorComponent* UFlowNode_ExecuteComponent::TryGetExpectedComponent() con
 	static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 	switch (ComponentSource)
 	{
-		case EExecuteComponentSource::Undetermined:
-			{
-				return nullptr;
-			}
-		case EExecuteComponentSource::BindToExisting:
-			{
-				return AActor::GetActorClassDefaultComponentByName(ExpectedOwnerClass, ComponentRef.ComponentName);
-			}
-		case EExecuteComponentSource::InjectFromTemplate:
-			{
-				return ComponentTemplate;
-			}
-		case EExecuteComponentSource::InjectFromClass:
-			{
-				return IsValid(ComponentClass) ? ComponentClass->GetDefaultObject<UActorComponent>() : nullptr;
-			}
-		default:
+	case EExecuteComponentSource::Undetermined:
+		{
 			return nullptr;
+		}
+	case EExecuteComponentSource::BindToExisting:
+		{
+			return AActor::GetActorClassDefaultComponentByName(ExpectedOwnerClass, ComponentRef.ComponentName);
+		}
+	case EExecuteComponentSource::InjectFromTemplate:
+		{
+			return ComponentTemplate;
+		}
+	case EExecuteComponentSource::InjectFromClass:
+		{
+			return IsValid(ComponentClass) ? ComponentClass->GetDefaultObject<UActorComponent>() : nullptr;
+		}
+
+	default:
+		return nullptr;
 	}
 }
 
@@ -479,46 +478,47 @@ FText UFlowNode_ExecuteComponent::GetNodeTitle() const
 		static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 		switch (ComponentSource)
 		{
-			case EExecuteComponentSource::Undetermined:
-				break;
+		case EExecuteComponentSource::Undetermined:
+			break;
 
-			case EExecuteComponentSource::BindToExisting:
+		case EExecuteComponentSource::BindToExisting:
+			{
+				if (!ComponentRef.ComponentName.IsNone())
 				{
-					if (!ComponentRef.ComponentName.IsNone())
-					{
-						const FText ComponentNameText = FText::FromName(ComponentRef.ComponentName);
+					const FText ComponentNameText = FText::FromName(ComponentRef.ComponentName);
 
-						return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
-					}
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
 				}
-				break;
+			}
+			break;
 
-			case EExecuteComponentSource::InjectFromTemplate:
+		case EExecuteComponentSource::InjectFromTemplate:
+			{
+				if (IsValid(ComponentTemplate))
 				{
-					if (IsValid(ComponentTemplate))
-					{
-						FString ComponentNameString = ComponentTemplate->GetName();
-						ComponentNameString.RemoveFromEnd(TEXT("_C"));
-						const FText ComponentNameText = FText::FromString(ComponentNameString);
+					FString ComponentNameString = ComponentTemplate->GetName();
+					ComponentNameString.RemoveFromEnd(TEXT("_C"));
+					const FText ComponentNameText = FText::FromString(ComponentNameString);
 
-						return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
-					}
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
 				}
-				break;
+			}
+			break;
 
-			case EExecuteComponentSource::InjectFromClass:
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				if (IsValid(ComponentClass))
 				{
-					if (IsValid(ComponentClass))
-					{
-						FString ComponentClassString = ComponentClass->GetName();
-						ComponentClassString.RemoveFromEnd(TEXT("_C"));
-						const FText ComponentNameText = FText::FromString(ComponentClassString);
+					FString ComponentClassString = ComponentClass->GetName();
+					ComponentClassString.RemoveFromEnd(TEXT("_C"));
+					const FText ComponentNameText = FText::FromString(ComponentClassString);
 
-						return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
-					}
+					return FText::Format(LOCTEXT("ExecuteComponent", "Execute {0}"), {ComponentNameText});
 				}
-				break;
-			default: ;
+			}
+			break;
+
+		default: break;
 		}
 	}
 
@@ -538,40 +538,43 @@ void UFlowNode_ExecuteComponent::UpdateNodeConfigText_Implementation()
 		static_assert(static_cast<int32>(EExecuteComponentSource::Max) == 4, TEXT("Update this code if the enum changes"));
 		switch (ComponentSource)
 		{
-			case EExecuteComponentSource::Undetermined:
-				break;
-			case EExecuteComponentSource::BindToExisting:
-				{
-					if (!ComponentRef.ComponentName.IsNone())
-					{
-						ComponentNameText = FText::FromName(ComponentRef.ComponentName);
-					}
-				}
-				break;
-			case EExecuteComponentSource::InjectFromTemplate:
-				{
-					if (IsValid(ComponentTemplate))
-					{
-						FString ComponentNameString = ComponentTemplate->GetName();
-						ComponentNameString.RemoveFromEnd(TEXT("_C"));
+		case EExecuteComponentSource::Undetermined:
+			break;
 
-						ComponentNameText = FText::FromString(ComponentNameString);
-					}
-				}
-				break;
-			case EExecuteComponentSource::InjectFromClass:
+		case EExecuteComponentSource::BindToExisting:
+			{
+				if (!ComponentRef.ComponentName.IsNone())
 				{
-					if (IsValid(ComponentClass))
-					{
-						FString ComponentClassString = ComponentClass->GetName();
-						ComponentClassString.RemoveFromEnd(TEXT("_C"));
-
-						ComponentNameText = FText::FromString(ComponentClassString);
-					}
+					ComponentNameText = FText::FromName(ComponentRef.ComponentName);
 				}
-				break;
-			case EExecuteComponentSource::Max:
-				break;
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromTemplate:
+			{
+				if (IsValid(ComponentTemplate))
+				{
+					FString ComponentNameString = ComponentTemplate->GetName();
+					ComponentNameString.RemoveFromEnd(TEXT("_C"));
+
+					ComponentNameText = FText::FromString(ComponentNameString);
+				}
+			}
+			break;
+
+		case EExecuteComponentSource::InjectFromClass:
+			{
+				if (IsValid(ComponentClass))
+				{
+					FString ComponentClassString = ComponentClass->GetName();
+					ComponentClassString.RemoveFromEnd(TEXT("_C"));
+
+					ComponentNameText = FText::FromString(ComponentClassString);
+				}
+			}
+			break;
+
+		default: break;
 		}
 	}
 

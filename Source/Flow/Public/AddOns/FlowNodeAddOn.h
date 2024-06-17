@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Nodes/FlowNodeBase.h"
-#include "Interfaces/FlowNativeExecutableInterface.h"
 #include "Nodes/FlowPin.h"
 
 #include "FlowNodeAddOn.generated.h"
@@ -14,9 +13,7 @@ class UFlowNode;
  * A Flow Node AddOn allows user to extend given node instance in the graph with additional logic.
  */
 UCLASS(Abstract, MinimalApi, EditInlineNew, Blueprintable)
-class UFlowNodeAddOn
-	: public UFlowNodeBase
-	, public IFlowNativeExecutableInterface
+class UFlowNodeAddOn : public UFlowNodeBase
 {
 	GENERATED_BODY()
 
@@ -44,17 +41,15 @@ public:
 
 	FLOW_API virtual UFlowNode* GetFlowNodeSelfOrOwner() override { return FlowNode; }
 	FLOW_API virtual bool IsSupportedInputPinName(const FName& PinName) const override;
+
+	FLOW_API virtual void TriggerFirstOutput(const bool bFinish) override;
+	FLOW_API virtual void TriggerOutput(const FName PinName, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default) override;
+	FLOW_API virtual void Finish() override;
 	// --
 
 	// IFlowCoreExecutableInterface
 	FLOW_API virtual void InitializeInstance() override;
 	FLOW_API virtual void DeinitializeInstance() override;
-	// --
-
-	// IFlowNativeExecutableInterface
-	FLOW_API virtual void TriggerFirstOutput(const bool bFinish) override;
-	FLOW_API virtual void TriggerOutput(const FName PinName, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default) override;
-	FLOW_API virtual void Finish() override;
 	// --
 
 	// UFlowNodeAddOn

@@ -158,6 +158,26 @@ void UFlowNodeBase::Cleanup()
 	IFlowCoreExecutableInterface::Cleanup();
 }
 
+void UFlowNodeBase::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType)
+{
+	TriggerOutput(Pin.PinName, bFinish, ActivationType);
+}
+
+void UFlowNodeBase::TriggerOutput(const FString& PinName, const bool bFinish)
+{
+	TriggerOutput(FName(PinName), bFinish);
+}
+
+void UFlowNodeBase::TriggerOutput(const FText& PinName, const bool bFinish)
+{
+	TriggerOutput(FName(PinName.ToString()), bFinish);
+}
+
+void UFlowNodeBase::TriggerOutput(const TCHAR* PinName, const bool bFinish)
+{
+	TriggerOutput(FName(PinName), bFinish);
+}
+
 const FFlowPin* UFlowNodeBase::FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins)
 {
 	return FlowPins.FindByPredicate([&PinName](const FFlowPin& FlowPin)

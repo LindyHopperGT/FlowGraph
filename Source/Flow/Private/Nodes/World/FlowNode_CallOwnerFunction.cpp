@@ -63,7 +63,7 @@ void UFlowNode_CallOwnerFunction::ExecuteInput(const FName& PinName)
 
 	Params->PostExecute();
 
-	(void)TryExecuteOutputPin(ResultOutputName);
+	(void) TryExecuteOutputPin(ResultOutputName);
 }
 
 bool UFlowNode_CallOwnerFunction::TryExecuteOutputPin(const FName& OutputName)

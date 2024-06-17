@@ -81,7 +81,14 @@ bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
 		return true;
 	}
 
-	return FindFlowPinByName(PinName, InputPins) ? true : false;
+	if (const FFlowPin* FoundInputFlowPin = FindFlowPinByName(PinName, InputPins))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)

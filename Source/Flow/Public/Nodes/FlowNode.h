@@ -8,7 +8,6 @@
 
 #include "FlowNodeBase.h"
 #include "FlowTypes.h"
-#include "Interfaces/FlowNativeExecutableInterface.h"
 #include "Nodes/FlowPin.h"
 
 #include "FlowNode.generated.h"
@@ -19,7 +18,6 @@
 UCLASS(Abstract, Blueprintable, HideCategories = Object)
 class FLOW_API UFlowNode 
 	: public UFlowNodeBase
-	, public IFlowNativeExecutableInterface
 	, public IVisualLoggerDebugSnapshotInterface
 {
 	GENERATED_UCLASS_BODY()
@@ -209,7 +207,6 @@ protected:
 	// Trigger execution of input pin
 	void TriggerInput(const FName& PinName, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default);
 
-	// IFlowNativeExecutableInterface
 protected:
 	void Deactivate();
 
@@ -217,7 +214,6 @@ protected:
 	virtual void TriggerOutput(FName PinName, const bool bFinish = false, const EFlowPinActivationType ActivationType = EFlowPinActivationType::Default) override;
 public:
 	virtual void Finish() override;
-	// --
 
 private:
 	void ResetRecords();

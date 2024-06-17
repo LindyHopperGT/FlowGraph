@@ -12,6 +12,7 @@
 #include "Graph/Nodes/FlowGraphNode.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
+#include "Framework/Application/SlateApplication.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "IDetailsView.h"

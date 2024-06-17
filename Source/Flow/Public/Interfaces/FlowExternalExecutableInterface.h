@@ -7,8 +7,7 @@
 
 #include "FlowExternalExecutableInterface.generated.h"
 
-// Forward Declarations
-class IFlowNativeExecutableInterface;
+class UFlowNodeBase;
 
 // Implemented by external objects that can execute within a flow graph
 // via a FlowNode or FlowNodeAddOn proxy
@@ -28,6 +27,6 @@ public:
 	// external executable object in the flow graph.  This is primarily done so that the external element has a 
 	// handle to call TriggerOutput() and Finish() when it has completed its work.
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", DisplayName = "PreActivateExternalFlowExecutable")
-	void K2_PreActivateExternalFlowExecutable(const TScriptInterface<IFlowNativeExecutableInterface>& NativeExecutorProxy);
-	virtual void PreActivateExternalFlowExecutable(IFlowNativeExecutableInterface& NativeExecutorProxy);
+	void K2_PreActivateExternalFlowExecutable(const UFlowNodeBase* FlowNodeBase);
+	virtual void PreActivateExternalFlowExecutable(UFlowNodeBase& FlowNodeBase);
 };
