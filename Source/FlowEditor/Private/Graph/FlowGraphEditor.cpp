@@ -391,7 +391,7 @@ void SFlowGraphEditor::ReconnectExecPins(const UFlowGraphNode* Node)
 		{
 			if (InputPin)
 			{
-				// more that one connected input pins - do not reconnect anything
+				// more than one connected input pins - do not reconnect anything
 				return;
 			}
 
@@ -413,7 +413,7 @@ void SFlowGraphEditor::ReconnectExecPins(const UFlowGraphNode* Node)
 		{
 			if (OutputPin)
 			{
-				// more that one connected output pins - do not reconnect anything
+				// more than one connected output pins - do not reconnect anything
 				return;
 			}
 
@@ -461,9 +461,15 @@ void SFlowGraphEditor::DeleteSelectedNodes()
 		{
 			if (const UFlowGraphNode* FlowGraphNode = Cast<UFlowGraphNode>(Node))
 			{
-				if (UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase()))
+				if (const UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase()))
 				{
 					const FGuid NodeGuid = FlowNode->GetGuid();
+					
+					// If the user is pressing shift then try and reconnect the pins
+					if (FSlateApplication::Get().GetModifierKeys().IsShiftDown())
+					{
+						ReconnectExecPins(FlowGraphNode);
+					}
 
 					GetCurrentGraph()->GetSchema()->BreakNodeLinks(*Node);
 					Node->DestroyNode();

@@ -63,10 +63,6 @@ public:
 
 private:
 	void SubscribeToExternalChanges();
-
-	void OnBlueprintPreCompile(UBlueprint* Blueprint);
-	void OnBlueprintCompiled();
-
 	void OnExternalChange();
 
 public:

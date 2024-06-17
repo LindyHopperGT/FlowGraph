@@ -1,7 +1,6 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/FlowNode.h"
-#include "Interfaces/FlowOwnerInterface.h"
 #include "AddOns/FlowNodeAddOn.h"
 
 #include "FlowAsset.h"
@@ -54,9 +53,9 @@ void UFlowNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 	}
 
 	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins))
+	const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || PropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins)
+		|| MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, InputPins) || MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode, OutputPins))
 	{
 		// Potentially need to rebuild the pins from the this node
 		OnReconstructionRequested.ExecuteIfBound();
@@ -82,14 +81,7 @@ bool UFlowNode::IsSupportedInputPinName(const FName& PinName) const
 		return true;
 	}
 
-	if (const FFlowPin* FoundInputFlowPin = FindFlowPinByName(PinName, InputPins))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return FindFlowPinByName(PinName, InputPins) ? true : false;
 }
 
 void UFlowNode::AddInputPins(TArray<FFlowPin> Pins)

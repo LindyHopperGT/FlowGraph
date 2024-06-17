@@ -63,7 +63,7 @@ void UFlowNode_CallOwnerFunction::ExecuteInput(const FName& PinName)
 
 	Params->PostExecute();
 
-	(void) TryExecuteOutputPin(ResultOutputName);
+	(void)TryExecuteOutputPin(ResultOutputName);
 }
 
 bool UFlowNode_CallOwnerFunction::TryExecuteOutputPin(const FName& OutputName)
@@ -133,7 +133,7 @@ void UFlowNode_CallOwnerFunction::PostEditChangeProperty(struct FPropertyChanged
 
 	if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_CallOwnerFunction, Params))
 	{
-		OnChangedParamsObject();
+		OnReconstructionRequested.ExecuteIfBound();
 	}
 
 	const FName PropertyName = PropertyChangedEvent.Property->GetFName();
@@ -141,29 +141,8 @@ void UFlowNode_CallOwnerFunction::PostEditChangeProperty(struct FPropertyChanged
 	{
 		if (TryAllocateParamsInstance())
 		{
-			OnChangedParamsObject();
+			OnReconstructionRequested.ExecuteIfBound();
 		}
-	}
-}
-
-void UFlowNode_CallOwnerFunction::OnChangedParamsObject()
-{
-	bool bChangedPins = false;
-
-	if (IsValid(Params))
-	{
-		bChangedPins = RebuildPinArray(Params->GetInputNames(), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(Params->GetOutputNames(), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-	else
-	{
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultInputPin.PinName, 1), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultOutputPin.PinName, 1), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-
-	if (bChangedPins)
-	{
-		OnReconstructionRequested.ExecuteIfBound();
 	}
 }
 
@@ -342,11 +321,14 @@ bool UFlowNode_CallOwnerFunction::TryAllocateParamsInstance()
 	}
 
 	const UClass* ExistingParamsClass = GetExistingParamsClass();
-	UClass* RequiredParamsClass = GetRequiredParamsClass();
+	const UClass* RequiredParamsClass = GetRequiredParamsClass();
 
-	const bool bNeedsAllocateParams = 
-		!IsValid(ExistingParamsClass) ||
-		ExistingParamsClass != RequiredParamsClass;
+	if (!IsValid(RequiredParamsClass))
+	{
+		return false;
+	}
+
+	const bool bNeedsAllocateParams = !IsValid(ExistingParamsClass) || ExistingParamsClass != RequiredParamsClass;
 
 	if (!bNeedsAllocateParams)
 	{
@@ -367,14 +349,14 @@ UClass* UFlowNode_CallOwnerFunction::GetRequiredParamsClass() const
 	const UClass* ExpectedOwnerClass = TryGetExpectedOwnerClass();
 	if (!IsValid(ExpectedOwnerClass))
 	{
-		return UFlowOwnerFunctionParams::StaticClass();
+		return nullptr;
 	}
 
 	const FName FunctionNameAsName = FunctionRef.GetFunctionName();
 
 	if (FunctionNameAsName.IsNone())
 	{
-		return UFlowOwnerFunctionParams::StaticClass();
+		return nullptr;
 	}
 
 	UClass* RequiredParamsClass = GetParamsClassForFunctionName(*ExpectedOwnerClass, FunctionNameAsName);
@@ -422,7 +404,7 @@ FText UFlowNode_CallOwnerFunction::GetNodeTitle() const
 	{
 		const FText FunctionNameText = FText::FromName(FunctionRef.FunctionName);
 
-		return FText::Format(LOCTEXT("CallOwnerFunction", "Call {0}"), { FunctionNameText });
+		return FText::Format(LOCTEXT("CallOwnerFunction", "Call {0}"), {FunctionNameText});
 	}
 	else
 	{
