@@ -84,7 +84,8 @@ public:
 protected:
 	void RegisterWithFlowSubsystem();
 	void UnregisterWithFlowSubsystem();
-	
+	virtual void BeginRootFlow(bool bComponentLoadedFromSaveGame);
+
 private:
 	UFUNCTION()
 	void OnRep_AddedIdentityTags();
