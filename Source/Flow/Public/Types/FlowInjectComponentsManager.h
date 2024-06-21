@@ -6,7 +6,6 @@
 
 #include "FlowInjectComponentsManager.generated.h"
 
-class AActor;
 class UActorComponent;
 class UFlowNodeBase;
 
