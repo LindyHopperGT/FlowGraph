@@ -576,9 +576,9 @@ void UFlowNodeBase::SetNodeConfigText(const FText& NodeConfigText)
 #if WITH_EDITOR
 	if (!NodeConfigText.EqualTo(DevNodeConfigText))
 	{
-		DevNodeConfigText = NodeConfigText;
-
 		Modify();
+
+		DevNodeConfigText = NodeConfigText;
 	}
 #endif // WITH_EDITOR
 }
