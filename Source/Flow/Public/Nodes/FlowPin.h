@@ -2,9 +2,10 @@
 
 #pragma once
 
+#include "UObject/ObjectMacros.h"
 #include "FlowPin.generated.h"
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FLOW_API FFlowPin
 {
 	GENERATED_BODY()

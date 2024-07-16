@@ -4,7 +4,7 @@
 
 #include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
 
-#include "FlowOwnerFunctionRef.h"
+#include "Types/FlowOwnerFunctionRef.h"
 
 
 // Forward Declaration
@@ -27,16 +27,16 @@ public:
 
 protected:
 
-	//~Begin IPropertyTypeCustomization
+	// IPropertyTypeCustomization
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils) override;
-	//~End IPropertyTypeCustomization
+	// --
 
-	//~Begin ICuratedNamePropertyCustomization
+	// ICuratedNamePropertyCustomization
 	virtual TSharedPtr<IPropertyHandle> GetCuratedNamePropertyHandle() const override;
 	virtual void SetCuratedName(const FName& NewName) override;
-	virtual FName GetCuratedName() const override;
+	virtual bool TryGetCuratedName(FName& OutName) const override;
 	virtual TArray<FName> GetCuratedNameOptions() const override;
-	//~End ICuratedNamePropertyCustomization
+	// --
 
 	// Accessor to return the actual struct being edited
 	FORCEINLINE FFlowOwnerFunctionRef* GetFlowOwnerFunctionRef() const

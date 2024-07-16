@@ -37,7 +37,7 @@ public:
 	
 protected:
 	/** The Flow Asset being edited */
-	UFlowAsset* FlowAsset;
+	TObjectPtr<UFlowAsset> FlowAsset;
 
 	TSharedPtr<class FFlowAssetToolbar> AssetToolbar;
 
@@ -101,6 +101,8 @@ public:
 	// FAssetEditorToolkit
 	virtual void InitToolMenuContext(FToolMenuContext& MenuContext) override;
 	virtual void PostRegenerateMenusAndToolbars() override;
+	virtual void SaveAsset_Execute() override;
+	virtual void SaveAssetAs_Execute() override;
 	// --
 
 	bool IsTabFocused(const FTabId& TabId) const;
@@ -115,6 +117,8 @@ private:
 #endif
 	TSharedRef<SDockTab> SpawnTab_ValidationLog(const FSpawnTabArgs& Args) const;
 
+	void DoPresaveAssetUpdate();
+
 public:
 	/** Edits the specified FlowAsset object */
 	void InitFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<class IToolkitHost>& InitToolkitHost, UObject* ObjectToEdit);
@@ -124,6 +128,7 @@ protected:
 	virtual void BindToolbarCommands();
 	
 	virtual void RefreshAsset();
+	virtual void RefreshDetails();
 
 private:
 	void ValidateAsset_Internal();
@@ -150,7 +155,7 @@ public:
 	virtual void ClearSelectionStateFor(const FName SelectionOwner);
 	FName GetUISelectionState() const;
 
-	virtual void OnSelectedNodesChanged(const TSet<UObject*>& Nodes) {}
+	virtual void OnSelectedNodesChanged(const TSet<UObject*>& Nodes);
 
 #if ENABLE_JUMP_TO_INNER_OBJECT
 	// FAssetEditorToolkit

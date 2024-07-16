@@ -3,8 +3,7 @@
 #include "Asset/FlowAssetEditor.h"
 
 #include "FlowEditorCommands.h"
-#include "FlowEditorModule.h"
-#include "FlowMessageLog.h"
+#include "FlowEditorLogChannels.h"
 
 #include "Asset/FlowAssetEditorContext.h"
 #include "Asset/FlowAssetToolbar.h"
@@ -188,6 +187,31 @@ void FFlowAssetEditor::PostRegenerateMenusAndToolbars()
 	SetMenuOverlay(MenuOverlayBox);
 }
 
+void FFlowAssetEditor::SaveAsset_Execute()
+{
+	DoPresaveAssetUpdate();
+
+	FAssetEditorToolkit::SaveAsset_Execute();
+}
+void FFlowAssetEditor::SaveAssetAs_Execute()
+{
+	DoPresaveAssetUpdate();
+
+	FAssetEditorToolkit::SaveAssetAs_Execute();
+}
+
+void FFlowAssetEditor::DoPresaveAssetUpdate()
+{
+	if (IsValid(FlowAsset))
+	{
+		UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
+		if (IsValid(FlowGraph))
+		{
+			FlowGraph->OnSave();
+		}
+	}
+}
+
 bool FFlowAssetEditor::IsTabFocused(const FTabId& TabId) const
 {
 	if (const TSharedPtr<SDockTab> CurrentGraphTab = GetToolkitHost()->GetTabManager()->FindExistingLiveTab(TabId))
@@ -278,11 +302,19 @@ void FFlowAssetEditor::InitFlowAssetEditor(const EToolkitMode::Type Mode, const 
 {
 	FlowAsset = CastChecked<UFlowAsset>(ObjectToEdit);
 
+	UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
+	if (IsValid(FlowGraph))
+	{
+		// Call the OnLoaded event for the flowgraph that is being edited
+		FlowGraph->OnLoaded();
+	}
+
 	// Support undo/redo
 	FlowAsset->SetFlags(RF_Transactional);
 	GEditor->RegisterForUndo(this);
 
 	UFlowGraphSchema::SubscribeToAssetChanges();
+	FlowAsset->OnDetailsRefreshRequested.BindThreadSafeSP(this, &FFlowAssetEditor::RefreshDetails);
 
 	BindToolbarCommands();
 	CreateToolbar();
@@ -402,6 +434,14 @@ void FFlowAssetEditor::RefreshAsset()
 {
 	// attempt to refresh graph, fix common issues automatically
 	CastChecked<UFlowGraph>(FlowAsset->GetGraph())->RefreshGraph();
+}
+
+void FFlowAssetEditor::RefreshDetails()
+{
+	if (DetailsView.IsValid())
+	{
+		DetailsView->ForceRefresh();
+	}
 }
 
 void FFlowAssetEditor::ValidateAsset_Internal()
@@ -532,12 +572,16 @@ FName FFlowAssetEditor::GetUISelectionState() const
 	return CurrentUISelection;
 }
 
+void FFlowAssetEditor::OnSelectedNodesChanged(const TSet<UObject*>& Nodes)
+{
+}
+
 #if ENABLE_JUMP_TO_INNER_OBJECT
 void FFlowAssetEditor::JumpToInnerObject(UObject* InnerObject)
 {
-	if (const UFlowNode* FlowNode = Cast<UFlowNode>(InnerObject))
+	if (const UFlowNodeBase* FlowNodeBase = Cast<UFlowNodeBase>(InnerObject))
 	{
-		GraphEditor->JumpToNode(FlowNode->GetGraphNode(), true);
+		GraphEditor->JumpToNode(FlowNodeBase->GetGraphNode(), true);
 	}
 	else if (const UEdGraphNode* GraphNode = Cast<UEdGraphNode>(InnerObject))
 	{

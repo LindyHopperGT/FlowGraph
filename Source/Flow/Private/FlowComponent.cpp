@@ -3,7 +3,7 @@
 #include "FlowComponent.h"
 
 #include "FlowAsset.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
 
@@ -12,8 +12,11 @@
 #include "Engine/ViewportStatsSubsystem.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowComponent)
 
 UFlowComponent::UFlowComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -32,12 +35,24 @@ void UFlowComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+#if WITH_PUSH_MODEL
+	FDoRepLifetimeParams Params;
+	Params.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, AddedIdentityTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, RemovedIdentityTags, Params);
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, RecentlySentNotifyTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, NotifyTagsFromGraph, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, NotifyTagsFromAnotherComponent, Params);
+#else
 	DOREPLIFETIME(UFlowComponent, AddedIdentityTags);
 	DOREPLIFETIME(UFlowComponent, RemovedIdentityTags);
 
 	DOREPLIFETIME(UFlowComponent, RecentlySentNotifyTags);
 	DOREPLIFETIME(UFlowComponent, NotifyTagsFromGraph);
 	DOREPLIFETIME(UFlowComponent, NotifyTagsFromAnotherComponent);
+#endif
 }
 
 void UFlowComponent::BeginPlay()
@@ -59,16 +74,21 @@ void UFlowComponent::RegisterWithFlowSubsystem()
 
 		FlowSubsystem->RegisterComponent(this);
 
-		if (RootFlow)
+		BeginRootFlow(bComponentLoadedFromSaveGame);
+	}
+}
+
+void UFlowComponent::BeginRootFlow(bool bComponentLoadedFromSaveGame)
+{
+	if (RootFlow)
+	{
+		if (bComponentLoadedFromSaveGame)
 		{
-			if (bComponentLoadedFromSaveGame)
-			{
-				LoadRootFlow();
-			}
-			else if (bAutoStartRootFlow)
-			{
-				StartRootFlow();
-			}
+			LoadRootFlow();
+		}
+		else if (bAutoStartRootFlow)
+		{
+			StartRootFlow();
 		}
 	}
 }
@@ -107,6 +127,9 @@ void UFlowComponent::AddIdentityTag(const FGameplayTag Tag, const EFlowNetMode N
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
 			{
 				AddedIdentityTags = FGameplayTagContainer(Tag);
+#if WITH_PUSH_MODEL
+				MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, AddedIdentityTags, this);
+#endif
 			}
 		}
 	}
@@ -139,6 +162,9 @@ void UFlowComponent::AddIdentityTags(FGameplayTagContainer Tags, const EFlowNetM
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
 			{
 				AddedIdentityTags = ValidatedTags;
+#if WITH_PUSH_MODEL
+				MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, AddedIdentityTags, this);
+#endif
 			}
 		}
 	}
@@ -162,6 +188,9 @@ void UFlowComponent::RemoveIdentityTag(const FGameplayTag Tag, const EFlowNetMod
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
 			{
 				RemovedIdentityTags = FGameplayTagContainer(Tag);
+#if WITH_PUSH_MODEL
+				MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, RemovedIdentityTags, this);
+#endif
 			}
 		}
 	}
@@ -194,6 +223,9 @@ void UFlowComponent::RemoveIdentityTags(FGameplayTagContainer Tags, const EFlowN
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
 			{
 				RemovedIdentityTags = ValidatedTags;
+#if WITH_PUSH_MODEL
+				MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, RemovedIdentityTags, this);
+#endif
 			}
 		}
 	}
@@ -265,6 +297,12 @@ void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag, const EFlowNetMod
 		// save recently notify, this allow for the retroactive check in nodes
 		// if retroactive check wouldn't be performed, this is only used by the network replication
 		RecentlySentNotifyTags = FGameplayTagContainer(NotifyTag);
+#if WITH_PUSH_MODEL
+		if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
+		{
+			MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, RecentlySentNotifyTags, this);
+		}
+#endif
 
 		OnRep_SentNotifyTags();
 	}
@@ -288,6 +326,12 @@ void UFlowComponent::BulkNotifyGraph(const FGameplayTagContainer NotifyTags, con
 			// save recently notify, this allow for the retroactive check in nodes
 			// if retroactive check wouldn't be performed, this is only used by the network replication
 			RecentlySentNotifyTags = ValidatedTags;
+#if WITH_PUSH_MODEL
+			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
+			{
+				MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, RecentlySentNotifyTags, this);
+			}
+#endif
 
 			OnRep_SentNotifyTags();
 		}
@@ -325,6 +369,9 @@ void UFlowComponent::NotifyFromGraph(const FGameplayTagContainer& NotifyTags, co
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
 			{
 				NotifyTagsFromGraph = ValidatedTags;
+#if WITH_PUSH_MODEL
+				MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, NotifyTagsFromGraph, this);
+#endif
 			}
 		}
 	}
@@ -354,6 +401,9 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 		{
 			NotifyTagsFromAnotherComponent.Empty();
 			NotifyTagsFromAnotherComponent.Add(FNotifyTagReplication(ActorTag, NotifyTag));
+#if WITH_PUSH_MODEL
+			MARK_PROPERTY_DIRTY_FROM_NAME(UFlowComponent, NotifyTagsFromAnotherComponent, this);
+#endif
 		}
 	}
 }

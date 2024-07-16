@@ -1,19 +1,20 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "Nodes/World/FlowNode_CallOwnerFunction.h"
+
 #include "FlowAsset.h"
-#include "FlowModule.h"
-#include "FlowOwnerInterface.h"
-#include "FlowOwnerFunctionParams.h"
+#include "FlowLogChannels.h"
+#include "Interfaces/FlowOwnerInterface.h"
+#include "Types/FlowOwnerFunctionParams.h"
 #include "FlowSettings.h"
 
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_CallOwnerFunction)
 
 #define LOCTEXT_NAMESPACE "FlowNode"
 
-// UFlowNode_CallOwnerFunction Implementation
-
-UFlowNode_CallOwnerFunction::UFlowNode_CallOwnerFunction()
-	: Super()
+UFlowNode_CallOwnerFunction::UFlowNode_CallOwnerFunction(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+	, Params(nullptr)
 {
 #if WITH_EDITOR
 	NodeStyle = EFlowNodeStyle::Default;
@@ -40,8 +41,8 @@ void UFlowNode_CallOwnerFunction::ExecuteInput(const FName& PinName)
 		return;
 	}
 
-	UObject* FlowOwnerObject = CastChecked<UObject>(FlowOwnerInterface);
-	UClass* FlowOwnerClass = FlowOwnerObject->GetClass();
+	const UObject* FlowOwnerObject = CastChecked<UObject>(FlowOwnerInterface);
+	const UClass* FlowOwnerClass = FlowOwnerObject->GetClass();
 	check(IsValid(FlowOwnerClass));
 
 	if (!FunctionRef.TryResolveFunction(*FlowOwnerClass))
@@ -98,9 +99,9 @@ void UFlowNode_CallOwnerFunction::PostLoad()
 	check(ParamsProperty);
 
 	// NOTE (gtaylor) This fixes corruption in FlowNodes that could have been caused with
-	//  a previous version of the code (which was inadvisedly calling SetPropertyClass)
-	//  to restore the correct PropertyClass for this node.  
-	//  (it could be removed in a future release, once all assets have been updated)
+	// a previous version of the code (which was inadvisedly calling SetPropertyClass)
+	// to restore the correct PropertyClass for this node.  
+	// (it could be removed in a future release, once all assets have been updated)
 	if (ParamsProperty->PropertyClass != UFlowOwnerFunctionParams::StaticClass())
 	{
 		ParamsProperty->SetPropertyClass(UFlowOwnerFunctionParams::StaticClass());
@@ -132,7 +133,7 @@ void UFlowNode_CallOwnerFunction::PostEditChangeProperty(struct FPropertyChanged
 
 	if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UFlowNode_CallOwnerFunction, Params))
 	{
-		OnChangedParamsObject();
+		OnReconstructionRequested.ExecuteIfBound();
 	}
 
 	const FName PropertyName = PropertyChangedEvent.Property->GetFName();
@@ -140,85 +141,9 @@ void UFlowNode_CallOwnerFunction::PostEditChangeProperty(struct FPropertyChanged
 	{
 		if (TryAllocateParamsInstance())
 		{
-			OnChangedParamsObject();
+			OnReconstructionRequested.ExecuteIfBound();
 		}
 	}
-}
-
-void UFlowNode_CallOwnerFunction::OnChangedParamsObject()
-{
-	bool bChangedPins = false;
-
-	if (IsValid(Params))
-	{
-		bChangedPins = RebuildPinArray(Params->GetInputNames(), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(Params->GetOutputNames(), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-	else
-	{
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultInputPin.PinName, 1), InputPins, DefaultInputPin) || bChangedPins;
-		bChangedPins = RebuildPinArray(TArray<FName>(&DefaultOutputPin.PinName, 1), OutputPins, DefaultOutputPin) || bChangedPins;
-	}
-
-	if (bChangedPins)
-	{
-		OnReconstructionRequested.ExecuteIfBound();
-	}
-}
-
-bool UFlowNode_CallOwnerFunction::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)
-{
-	bool bIsChanged = false;
-
-	TArray<FFlowPin> NewPins;
-
-	if (NewPinNames.Num() == 0)
-	{
-		bIsChanged = true;
-
-		NewPins.Reserve(1);
-
-		NewPins.Add(DefaultPin);
-	}
-	else
-	{
-		const bool bIsSameNum = (NewPinNames.Num() == InOutPins.Num());
-
-		bIsChanged = !bIsSameNum;
-
-		NewPins.Reserve(NewPinNames.Num());
-
-		for (int32 NewPinIndex = 0; NewPinIndex < NewPinNames.Num(); ++NewPinIndex)
-		{
-			const FName& NewPinName = NewPinNames[NewPinIndex];
-			NewPins.Add(FFlowPin(NewPinName));
-
-			if (bIsSameNum)
-			{
-				bIsChanged = bIsChanged || (NewPinName != InOutPins[NewPinIndex].PinName);
-			}
-		}
-	}
-
-	if (bIsChanged)
-	{
-		InOutPins.Reset();
-
-		check(NewPins.Num() > 0);
-
-		if (&InOutPins == &InputPins)
-		{
-			AddInputPins(NewPins);
-		}
-		else
-		{
-			checkf(&InOutPins == &OutputPins, TEXT("Only expected to be called with one or the other of the pin arrays"));
-
-			AddOutputPins(NewPins);
-		}
-	}
-
-	return bIsChanged;
 }
 
 EDataValidationResult UFlowNode_CallOwnerFunction::ValidateNode()
@@ -396,11 +321,14 @@ bool UFlowNode_CallOwnerFunction::TryAllocateParamsInstance()
 	}
 
 	const UClass* ExistingParamsClass = GetExistingParamsClass();
-	UClass* RequiredParamsClass = GetRequiredParamsClass();
+	const UClass* RequiredParamsClass = GetRequiredParamsClass();
 
-	const bool bNeedsAllocateParams = 
-		!IsValid(ExistingParamsClass) ||
-		ExistingParamsClass != RequiredParamsClass;
+	if (!IsValid(RequiredParamsClass))
+	{
+		return false;
+	}
+
+	const bool bNeedsAllocateParams = !IsValid(ExistingParamsClass) || ExistingParamsClass != RequiredParamsClass;
 
 	if (!bNeedsAllocateParams)
 	{
@@ -421,14 +349,14 @@ UClass* UFlowNode_CallOwnerFunction::GetRequiredParamsClass() const
 	const UClass* ExpectedOwnerClass = TryGetExpectedOwnerClass();
 	if (!IsValid(ExpectedOwnerClass))
 	{
-		return UFlowOwnerFunctionParams::StaticClass();
+		return nullptr;
 	}
 
 	const FName FunctionNameAsName = FunctionRef.GetFunctionName();
 
 	if (FunctionNameAsName.IsNone())
 	{
-		return UFlowOwnerFunctionParams::StaticClass();
+		return nullptr;
 	}
 
 	UClass* RequiredParamsClass = GetParamsClassForFunctionName(*ExpectedOwnerClass, FunctionNameAsName);
@@ -476,7 +404,7 @@ FText UFlowNode_CallOwnerFunction::GetNodeTitle() const
 	{
 		const FText FunctionNameText = FText::FromName(FunctionRef.FunctionName);
 
-		return FText::Format(LOCTEXT("CallOwnerFunction", "Call {0}"), { FunctionNameText });
+		return FText::Format(LOCTEXT("CallOwnerFunction", "Call {0}"), {FunctionNameText});
 	}
 	else
 	{

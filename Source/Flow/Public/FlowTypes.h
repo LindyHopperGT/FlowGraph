@@ -91,3 +91,32 @@ enum class EFlowOnScreenMessageType : uint8
 	Temporary,
 	Permanent
 };
+
+UENUM(BlueprintType)
+enum class EFlowAddOnAcceptResult : uint8
+{
+	// Note that these enum values are ordered by priority, where greater numerical values are higher priority
+	// (see CombineFlowAddOnAcceptResult)
+
+	// No result from the current operation
+	Undetermined,
+
+	// Accept, if all other conditions are met
+	TentativeAccept,
+
+	// Reject the AddOn outright, regardless if previously TentativelyAccept-ed
+	Reject,
+
+	Max UMETA(Hidden),
+	Invalid UMETA(Hidden),
+	Min = Undetermined UMETA(Hidden),
+};
+
+FORCEINLINE_DEBUGGABLE EFlowAddOnAcceptResult CombineFlowAddOnAcceptResult(EFlowAddOnAcceptResult Result0, EFlowAddOnAcceptResult Result1)
+{
+	const __underlying_type(EFlowAddOnAcceptResult) Result0AsInt = static_cast<__underlying_type(EFlowAddOnAcceptResult)>(Result0);
+	const __underlying_type(EFlowAddOnAcceptResult) Result1AsInt = static_cast<__underlying_type(EFlowAddOnAcceptResult)>(Result1);
+
+	// Prioritize the higher numerical value enum value
+	return static_cast<EFlowAddOnAcceptResult>(FMath::Max(Result0AsInt, Result1AsInt));
+}

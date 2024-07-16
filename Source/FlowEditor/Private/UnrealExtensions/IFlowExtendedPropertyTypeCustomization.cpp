@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 // NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-//  If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
+// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
 #include "UnrealExtensions/IFlowExtendedPropertyTypeCustomization.h"
 
@@ -56,7 +56,7 @@ void IFlowExtendedPropertyTypeCustomization::CreateHeaderRowWidget(FDetailWidget
 		];
 }
 
-void IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged()
+void IFlowExtendedPropertyTypeCustomization::OnAnyChildPropertyChanged() const
 {
 	RefreshHeader();
 }

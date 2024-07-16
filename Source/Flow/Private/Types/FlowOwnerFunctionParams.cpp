@@ -1,11 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "FlowOwnerFunctionParams.h"
+#include "Types/FlowOwnerFunctionParams.h"
 #include "Nodes/FlowNode.h"
 #include "Nodes/World/FlowNode_CallOwnerFunction.h"
-
-
-// UFlowOwnerFunctionParams Implementation
 
 UFlowOwnerFunctionParams::UFlowOwnerFunctionParams()
 	: Super()

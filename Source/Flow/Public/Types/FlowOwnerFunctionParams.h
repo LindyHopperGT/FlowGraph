@@ -2,14 +2,10 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "FlowOwnerFunctionParams.generated.h"
-
 
 // Forward Declarations
 class UFlowNode_CallOwnerFunction;
-
 
 UCLASS(BlueprintType, Blueprintable, EditInlineNew)
 class FLOW_API UFlowOwnerFunctionParams : public UObject
@@ -63,7 +59,6 @@ protected:
 
 	// CallOwnerObjectFunction node that is executing this set of function params.
 	//  Valid only if called between PreExecute() and PostExecute(), inclusive
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "FlowOwnerFunction")
 	UFlowNode_CallOwnerFunction* SourceNode = nullptr;
 
 	// This is the Name from the Input Pin that caused this node to Execute.

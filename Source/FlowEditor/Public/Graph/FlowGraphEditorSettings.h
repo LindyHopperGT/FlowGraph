@@ -23,6 +23,10 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 
 	static UFlowGraphEditorSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphEditorSettings>(); }
 
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
 	// Double-clicking a Flow Node might open relevant asset/code editor
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
 	EFlowNodeDoubleClickTarget NodeDoubleClickTarget;
@@ -48,6 +52,11 @@ class FLOWEDITOR_API UFlowGraphEditorSettings : public UDeveloperSettings
 	
 	UPROPERTY(config, EditAnywhere, Category = "Nodes", meta = (EditCondition = "bShowSubGraphPreview"))
 	FVector2D SubGraphPreviewSize;
+
+	/** Enable hot reload for native flow nodes?
+	 * WARNING: hot reload can easily crash the editor and you can lose progress */
+	UPROPERTY(EditAnywhere, Config, Category = "Nodes", AdvancedDisplay)
+	bool bHotReloadNativeNodes;
 
 	UPROPERTY(EditAnywhere, config, Category = "Wires")
 	bool bHighlightInputWiresOfSelectedNodes;

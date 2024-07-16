@@ -7,11 +7,9 @@
 
 #include "FlowOwnerFunctionRef.generated.h"
 
-
 // Forward Declarations
 class UFlowOwnerFunctionParams;
 class IFlowOwnerInterface;
-
 
 // Similar to FAnimNodeFunctionRef, providing a FName-based function binding
 //  that is resolved at runtime

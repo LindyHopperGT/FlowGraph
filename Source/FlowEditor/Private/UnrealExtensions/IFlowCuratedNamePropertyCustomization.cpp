@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 // NOTE (gtaylor) This class is planned for submission to Epic to include in baseline UE.
-//  If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
+// If/when that happens, we will want to remove this version and update to the latest one in the PropertyModule
 
 #include "UnrealExtensions/IFlowCuratedNamePropertyCustomization.h"
 
@@ -11,12 +11,10 @@
 #include "IDetailPropertyRow.h"
 #include "IDetailChildrenBuilder.h"
 #include "Internationalization/Text.h"
+#include "IPropertyUtilities.h"
 #include "PropertyHandle.h"
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Text/STextBlock.h"
-
-
-// IFlowCuratedNamePropertyCustomization Implementation
 
 TSharedPtr<FText> IFlowCuratedNamePropertyCustomization::NoneAsText = nullptr;
 
@@ -38,18 +36,23 @@ void IFlowCuratedNamePropertyCustomization::Initialize()
 	check(!CachedTextSelected.IsValid());
 	check(CachedTextList.IsEmpty());
 
-	const FName CuratedName = GetCuratedName();
-	const bool bChangedValue = TrySetCuratedNameWithSideEffects(CuratedName);
+	FName CuratedName;
+	if (TryGetCuratedName(CuratedName))
+	{
+		const bool bChangedValue = TrySetCuratedNameWithSideEffects(CuratedName);
 
-	check(bChangedValue);
-	check(CachedTextSelected.IsValid());
-	check(CachedTextList.Num() == 1);
+		check(bChangedValue);
+		check(CachedTextSelected.IsValid());
+		check(CachedTextList.Num() == 1);
+	}
 }
 
-void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils & StructCustomizationUtils)
+void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	// Do one-time setup first
 	Initialize();
+
+	CachedPropertyUtils = StructCustomizationUtils.GetPropertyUtilities();
 
 	// Replace the default HeaderRow widget with one of our own
 	HeaderRow
@@ -59,11 +62,11 @@ void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetR
 			.Text(BuildHeaderText())
 		]
 		.ValueContent()
-		.MaxDesiredWidth(250.0f)			
+		.MaxDesiredWidth(250.0f)
 		[
 			SAssignNew(TextListWidget, SComboBox<TSharedPtr<FText>>)
 			.OptionsSource(&CachedTextList)
-			.OnGenerateWidget(this, &IFlowCuratedNamePropertyCustomization::GenerateTextListWidget)
+			.OnGenerateWidget_Static(&IFlowCuratedNamePropertyCustomization::GenerateTextListWidget)
 			.OnComboBoxOpening(this, &IFlowCuratedNamePropertyCustomization::OnTextListComboBoxOpening)
 			.OnSelectionChanged(this, &IFlowCuratedNamePropertyCustomization::OnTextSelected)
 			[
@@ -71,7 +74,7 @@ void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetR
 				.Text(this, &IFlowCuratedNamePropertyCustomization::GetCachedText)
 				.Font(IDetailLayoutBuilder::GetDetailFont())
 				.ToolTipText(this, &IFlowCuratedNamePropertyCustomization::GetCachedText)
-			] 
+			]
 		];
 
 	// Hook-up the ResetToDefault overrides
@@ -86,11 +89,20 @@ void IFlowCuratedNamePropertyCustomization::CreateHeaderRowWidget(FDetailWidgetR
 	FResetToDefaultOverride ResetOverride = FResetToDefaultOverride::Create(IsResetVisible, ResetHandler);
 
 	HeaderRow.OverrideResetToDefault(ResetOverride);
+
+	// Replacement IsEnabled Attribute
+	TAttribute<bool> IsEnabledAttribute = TAttribute<bool>::CreateSP(this, &IFlowCuratedNamePropertyCustomization::CustomIsEnabled);
+	HeaderRow.IsEnabled(IsEnabledAttribute);
 }
 
 bool IFlowCuratedNamePropertyCustomization::CustomIsResetToDefaultVisible(TSharedPtr<IPropertyHandle> Property) const
 {
-	const FName CuratedName = GetCuratedName();
+	FName CuratedName;
+	if (!TryGetCuratedName(CuratedName))
+	{
+		return false;
+	}
+
 	return !CuratedName.IsNone();
 }
 
@@ -102,9 +114,25 @@ void IFlowCuratedNamePropertyCustomization::CustomResetToDefault(TSharedPtr<IPro
 	}
 }
 
+bool IFlowCuratedNamePropertyCustomization::CustomIsEnabled() const
+{
+	if (StructPropertyHandle->IsEditConst())
+	{
+		return false;
+	}
+
+	if (CachedPropertyUtils && !CachedPropertyUtils->IsPropertyEditingEnabled())
+	{
+		return false;
+	}
+
+	return true;
+}
+
 bool IFlowCuratedNamePropertyCustomization::TrySetCuratedNameWithSideEffects(const FName& NewName)
 {
-	const FName ExistingName = GetCuratedName();
+	FName ExistingName;
+	(void) TryGetCuratedName(ExistingName);
 
 	if (ExistingName != NewName)
 	{
@@ -115,25 +143,29 @@ bool IFlowCuratedNamePropertyCustomization::TrySetCuratedNameWithSideEffects(con
 	// Ensure the FText representations are up to date
 
 	TSharedPtr<FText> NewText = FindCachedOrCreateText(NewName);
-
 	const bool bIsChanged = (NewText != CachedTextSelected);
 
 	CachedTextSelected = NewText;
-	
+
 	InsertAtHeadOfCachedTextList(CachedTextSelected);
 
 	// Set the Name property to the new value
 	check(CachedNameHandle.IsValid());
 	CachedNameHandle->SetValue(NewName);
-	
+
 	return bIsChanged;
 }
 
 FText IFlowCuratedNamePropertyCustomization::GetCachedText() const
 {
-	check(CachedTextSelected.IsValid());
-
-	return *CachedTextSelected.Get();
+	if (CachedTextSelected.IsValid())
+	{
+		return *CachedTextSelected.Get();
+	}
+	else
+	{
+		return FText();
+	}
 }
 
 TSharedRef<SWidget> IFlowCuratedNamePropertyCustomization::GenerateTextListWidget(TSharedPtr<FText> InItem)
@@ -147,14 +179,20 @@ TSharedRef<SWidget> IFlowCuratedNamePropertyCustomization::GenerateTextListWidge
 
 void IFlowCuratedNamePropertyCustomization::OnTextListComboBoxOpening()
 {
-	check(CachedTextSelected.IsValid());
+	if (!CachedTextSelected.IsValid())
+	{
+		return;
+	}
 
 	// Create a dictionary of Names to their shared FTexts
 	//  (to preserve the shared FText objects, if they already exist)
 	TMap<FName, TSharedPtr<FText>> MapNameToText;
 
-	const FName CurrentName = GetCuratedName();
-	MapNameToText.Add(CurrentName, CachedTextSelected);
+	FName CurrentName;
+	if (TryGetCuratedName(CurrentName))
+	{
+		MapNameToText.Add(CurrentName, CachedTextSelected);
+	}
 
 	for (TSharedPtr<FText>& Text : CachedTextList)
 	{
@@ -182,7 +220,7 @@ void IFlowCuratedNamePropertyCustomization::OnTextListComboBoxOpening()
 	}
 
 	// Ensure "None" is in the list (if CurrentName is not None)
-	if (!CurrentName.IsNone())
+	if (!CurrentName.IsNone() && (CuratedNameOptions.IsEmpty() || AllowNameNoneIfOtherOptionsExist()))
 	{
 		check(!CachedTextList.Contains(NoneAsText));
 
@@ -252,7 +290,7 @@ void IFlowCuratedNamePropertyCustomization::AddToCachedTextList(TSharedPtr<FText
 	CachedTextList.AddUnique(Text);
 }
 
-void IFlowCuratedNamePropertyCustomization::RepaintTextListWidget()
+void IFlowCuratedNamePropertyCustomization::RepaintTextListWidget() const
 {
 	if (TextListWidget.IsValid())
 	{

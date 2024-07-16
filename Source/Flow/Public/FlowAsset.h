@@ -2,10 +2,13 @@
 
 #pragma once
 
-#include "FlowMessageLog.h"
 #include "FlowSave.h"
 #include "FlowTypes.h"
 #include "Nodes/FlowNode.h"
+
+#if WITH_EDITOR
+#include "FlowMessageLog.h"
+#endif
 
 #include "UObject/ObjectKey.h"
 #include "FlowAsset.generated.h"
@@ -43,6 +46,8 @@ UCLASS(BlueprintType, hideCategories = Object)
 class FLOW_API UFlowAsset : public UObject
 {
 	GENERATED_UCLASS_BODY()
+
+public:	
 	friend class UFlowNode;
 	friend class UFlowNode_CustomOutput;
 	friend class UFlowNode_SubGraph;
@@ -56,7 +61,7 @@ class FLOW_API UFlowAsset : public UObject
 	FGuid AssetGuid;
 
 	// Set it to False, if this asset is instantiated as Root Flow for owner that doesn't live in the world
-	// This allow to SaveGame support works properly, if owner of Root Flow would be Game Instance or its subsystem
+	// This allows to SaveGame support works properly, if owner of Root Flow would be Game Instance or its subsystem
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow Asset")
 	bool bWorldBound;
 
@@ -64,6 +69,7 @@ class FLOW_API UFlowAsset : public UObject
 // Graph
 
 #if WITH_EDITOR
+public:	
 	friend class UFlowGraph;
 
 	// UObject
@@ -73,13 +79,16 @@ class FLOW_API UFlowAsset : public UObject
 	virtual void PostLoad() override;
 	// --
 
-	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
-
-	// Returns whether the node class is allowed in this flow asset
-	bool IsNodeClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
+public:
+	FSimpleDelegate OnDetailsRefreshRequested;
 
 	static FString ValidationError_NodeClassNotAllowed;
 	static FString ValidationError_NullNodeInstance;
+
+	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
+
+	// Returns whether the node class is allowed in this flow asset
+	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
 
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
@@ -92,7 +101,7 @@ protected:
 
 private:
 	UPROPERTY()
-	UEdGraph* FlowGraph;
+	TObjectPtr<UEdGraph> FlowGraph;
 
 	static TSharedPtr<IFlowGraphInterface> FlowGraphInterface;
 #endif
@@ -259,14 +268,14 @@ public:
 	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
 	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
-	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
+	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, const UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
 
 	FRuntimeMessageEvent& OnRuntimeMessageAdded() { return RuntimeMessageEvent; }
 	FRuntimeMessageEvent RuntimeMessageEvent;
 
 private:
 	void BroadcastDebuggerRefresh() const;
-	void BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message);
+	void BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message) const;
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -407,8 +416,8 @@ public:
 
 #if WITH_EDITOR
 public:
-	void LogError(const FString& MessageToLog, UFlowNode* Node);
-	void LogWarning(const FString& MessageToLog, UFlowNode* Node);
-	void LogNote(const FString& MessageToLog, UFlowNode* Node);
+	void LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const;
+	void LogWarning(const FString& MessageToLog, const UFlowNodeBase* Node) const;
+	void LogNote(const FString& MessageToLog, const UFlowNodeBase* Node) const;
 #endif
 };

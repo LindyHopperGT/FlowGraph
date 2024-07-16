@@ -1,15 +1,12 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
-#include "FlowOwnerFunctionRef.h"
-#include "FlowOwnerFunctionParams.h"
-#include "FlowModule.h"
-#include "FlowOwnerInterface.h"
+#include "Types/FlowOwnerFunctionRef.h"
+#include "Types/FlowOwnerFunctionParams.h"
+#include "Interfaces/FlowOwnerInterface.h"
+#include "FlowLogChannels.h"
 
 #include "UObject/Class.h"
 #include "Logging/LogMacros.h"
-
-
-// FFlowOwnerFunctionRef Implementation
 
 UFunction* FFlowOwnerFunctionRef::TryResolveFunction(const UClass& InClass)
 {

@@ -2,12 +2,11 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Engine/Blueprint.h"
 #include "FlowNodeBlueprint.generated.h"
 
 /**
- * A specialized blueprint class required for customizing Asset Type Actions
+ * Flow Node Blueprint class
  */
 UCLASS(BlueprintType)
 class FLOW_API UFlowNodeBlueprint : public UBlueprint
@@ -17,7 +16,6 @@ class FLOW_API UFlowNodeBlueprint : public UBlueprint
 #if WITH_EDITOR
 	// UBlueprint
 	virtual bool SupportedByDefaultBlueprintFactory() const override { return false; }
-
 	virtual bool SupportsDelegates() const override { return false; }
 	// --
 #endif

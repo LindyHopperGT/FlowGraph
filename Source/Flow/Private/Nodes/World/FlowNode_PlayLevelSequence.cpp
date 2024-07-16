@@ -3,16 +3,21 @@
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "FlowAsset.h"
-#include "FlowModule.h"
+#include "FlowLogChannels.h"
 #include "FlowSubsystem.h"
 #include "LevelSequence/FlowLevelSequencePlayer.h"
+
+#if WITH_EDITOR
 #include "MovieScene/MovieSceneFlowTrack.h"
 #include "MovieScene/MovieSceneFlowTriggerSection.h"
+#endif
 
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "VisualLogger/VisualLogger.h"
+
+#include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_PlayLevelSequence)
 
 FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackStarted;
 FFlowNodeLevelSequenceEvent UFlowNode_PlayLevelSequence::OnPlaybackCompleted;
@@ -49,7 +54,7 @@ UFlowNode_PlayLevelSequence::UFlowNode_PlayLevelSequence(const FObjectInitialize
 }
 
 #if WITH_EDITOR
-TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
+TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 {
 	if (Sequence.IsNull())
 	{
@@ -58,7 +63,8 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
 
 	TArray<FFlowPin> Pins = {};
 
-	Sequence = Sequence.LoadSynchronous();
+	Sequence.LoadSynchronous();
+
 	if (Sequence && Sequence->GetMovieScene())
 	{
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 2
@@ -75,7 +81,7 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs()
 					{
 						for (const FString& EventName : FlowSection->GetAllEntryPoints())
 						{
-							if (!EventName.IsEmpty())
+							if (!EventName.IsEmpty() && !Pins.Contains(EventName))
 							{
 								Pins.Emplace(EventName);
 							}

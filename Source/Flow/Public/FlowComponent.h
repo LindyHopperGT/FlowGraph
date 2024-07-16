@@ -7,7 +7,7 @@
 
 #include "FlowSave.h"
 #include "FlowTypes.h"
-#include "FlowOwnerInterface.h"
+#include "Interfaces/FlowOwnerInterface.h"
 #include "FlowComponent.generated.h"
 
 class UFlowAsset;
@@ -84,7 +84,8 @@ public:
 protected:
 	void RegisterWithFlowSubsystem();
 	void UnregisterWithFlowSubsystem();
-	
+	virtual void BeginRootFlow(bool bComponentLoadedFromSaveGame);
+
 private:
 	UFUNCTION()
 	void OnRep_AddedIdentityTags();

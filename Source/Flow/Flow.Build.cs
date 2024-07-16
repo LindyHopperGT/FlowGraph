@@ -22,6 +22,7 @@ public class Flow : ModuleRules
 			"GameplayTags",
 			"MovieScene",
 			"MovieSceneTracks",
+			"NetCore",
 			"Slate",
 			"SlateCore"
 		});

@@ -24,9 +24,9 @@ protected:
 	TMap<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>> RuntimeLogs;
 
 	void OnInstancedTemplateAdded(UFlowAsset* FlowAsset);
-	void OnInstancedTemplateRemoved(UFlowAsset* FlowAsset);
+	void OnInstancedTemplateRemoved(UFlowAsset* FlowAsset) const;
 	
-	void OnRuntimeMessageAdded(UFlowAsset* FlowAsset, const TSharedRef<FTokenizedMessage>& Message) const;
+	void OnRuntimeMessageAdded(const UFlowAsset* FlowAsset, const TSharedRef<FTokenizedMessage>& Message) const;
 	
 	void OnBeginPIE(const bool bIsSimulating);
 	void OnEndPIE(const bool bIsSimulating);

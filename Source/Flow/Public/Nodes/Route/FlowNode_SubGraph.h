@@ -63,15 +63,16 @@ protected:
 
 #if WITH_EDITOR
 public:
+	// IFlowContextPinSupplierInterface
+	virtual bool SupportsContextPins() const override { return true; }
+	virtual TArray<FFlowPin> GetContextInputs() const override;
+	virtual TArray<FFlowPin> GetContextOutputs() const override;
+	// --
+
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
 	virtual EDataValidationResult ValidateNode() override;
 	
-	virtual bool SupportsContextPins() const override { return true; }
-
-	virtual TArray<FFlowPin> GetContextInputs() override;
-	virtual TArray<FFlowPin> GetContextOutputs() override;
-
 	// UObject
 	virtual void PostLoad() override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
