@@ -43,6 +43,8 @@ private:
 	void InitializeDetailsDiffFromNode(UEdGraphNode* Node, const UObject* Object, const FFlowGraphToDiff& GraphToDiff);
 
 public:
+	//the tree entry for this diff object, which can be the parent tree node to other changes such as property changes,
+	//added/removed add-ons, moves or comments.
 	TSharedPtr<FBlueprintDifferenceTreeEntry> DiffTreeEntry;
 	TSharedPtr<FDiffResultItem> DiffResult;
 
