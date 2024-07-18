@@ -1176,7 +1176,7 @@ void UFlowGraphNode::PostEditUndo()
 	}
 }
 
-void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase)  const
+void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const
 {
 	if (UFlowGraph* FlowGraph = GetFlowGraph())
 	{

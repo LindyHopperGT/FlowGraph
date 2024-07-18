@@ -268,9 +268,11 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 			Children.Push(FlowNodeDiff->DiffTreeEntry);
 		}
 
-		//generate property diffs.
+		//find and generate  property diffs.
 		TArray<FSingleObjectDiffEntry> PropertyDiffsArray;
 		FlowNodeDiff->DiffProperties(PropertyDiffsArray);
+
+		//generate property diff tree entries.
 		for (const auto& PropertyDiffEntry : PropertyDiffsArray)
 		{
 			check(FlowNodeDiff.IsValid());

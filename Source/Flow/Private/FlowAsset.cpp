@@ -110,7 +110,6 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 		if (IsValid(Node.Value))
 		{
 			FText FailureReason;
-
 			if (!IsNodeOrAddOnClassAllowed(Node.Value->GetClass(), &FailureReason))
 			{
 				const FString ErrorMsg = 
