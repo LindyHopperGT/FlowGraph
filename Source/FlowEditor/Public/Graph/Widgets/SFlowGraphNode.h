@@ -71,8 +71,6 @@ protected:
 	virtual void CreateBelowPinControls(TSharedPtr<SVerticalBox> MainBox) override;
 	virtual const FSlateBrush* GetNodeBodyBrush() const override;
 
-	virtual void CreateStandardPinWidget(UEdGraphPin* Pin) override;
-
 	virtual void CreateInputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	virtual void CreateOutputSideAddButton(TSharedPtr<SVerticalBox> OutputBox) override;
 	// --
@@ -124,8 +122,6 @@ protected:
 	void CreateOrRebuildSubNodeBox(TSharedPtr<SVerticalBox> MainBox);
 
 	bool IsFlowGraphNodeSelected(UFlowGraphNode* Node) const;
-
-	static int32 ValidPinsCount(const TArray<FFlowPin>& Pins);
 
 protected:
 	// The FlowGraphNode this slate widget is representing

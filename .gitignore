@@ -12,3 +12,5 @@
 *.patch_*
 *.pdb
 *.target
+Source/Flow/Public/Interfaces/FlowNativeExecutableInterface.h
+Source/Flow/Private/Interfaces/FlowNativeExecutableInterface.cpp

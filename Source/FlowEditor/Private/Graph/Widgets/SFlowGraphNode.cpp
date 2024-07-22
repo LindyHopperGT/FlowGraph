@@ -734,35 +734,6 @@ TSharedPtr<SWidget> SFlowGraphNode::GetEnabledStateWidget() const
 	return TSharedPtr<SWidget>();
 }
 
-void SFlowGraphNode::CreateStandardPinWidget(UEdGraphPin* Pin)
-{
-	const TSharedPtr<SGraphPin> NewPin = SNew(SFlowGraphPinExec, Pin);
-
-	UFlowNode* FlowNode = Cast<UFlowNode>(FlowGraphNode->GetFlowNodeBase());
-
-	if (!UFlowGraphSettings::Get()->bShowDefaultPinNames && IsValid(FlowNode))
-	{
-		if (Pin->Direction == EGPD_Input)
-		{
-			// Pin array can have pins with name None, which will not be created. We need to check if array have only one valid pin
-			if (ValidPinsCount(FlowNode->GetInputPins()) == 1 && Pin->PinName == UFlowNode::DefaultInputPin.PinName)
-			{
-				NewPin->SetShowLabel(false);
-			}
-		}
-		else
-		{
-			// Pin array can have pins with name None, which will not be created. We need to check if array have only one valid pin
-			if (ValidPinsCount(FlowNode->GetOutputPins()) == 1 && Pin->PinName == UFlowNode::DefaultOutputPin.PinName)
-			{
-				NewPin->SetShowLabel(false);
-			}
-		}
-	}
-
-	this->AddPin(NewPin.ToSharedRef());
-}
-
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 TSharedPtr<SToolTip> SFlowGraphNode::GetComplexTooltip()
@@ -1235,20 +1206,6 @@ void SFlowGraphNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel)
 			OwnerPanel->AttachGraphEvents(ChildWidget);
 		}
 	}
-}
-
-int32 SFlowGraphNode::ValidPinsCount(const TArray<FFlowPin>& Pins)
-{
-	int32 Count = 0;
-	for (const FFlowPin& Pin : Pins)
-	{
-		if (Pin.IsValid())
-		{
-			Count += 1;
-		}
-	}
-
-	return Count;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -184,6 +184,18 @@ public:
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
 	// --
 
+	// @return true, if pins cannot be connected due to node's inner logic, put message for user in OutReason
+	virtual bool IsConnectionDisallowed(const UEdGraphPin* MyPin, const UEdGraphPin* OtherPin, FString& OutReason) const { return false; }
+
+	// Function to determine acceptance for 'wildcard' data pin types (eg., singular, array, set, map)
+	// NOTE (gtaylor) The data pins feature is under construction
+	bool DoesWildcardPinAcceptContainer(const UEdGraphPin* Pin) const;
+
+protected:
+	// Gets the PinCategory from the FlowPin
+	// (accounting for FFlowPin structs that predate the PinCategory field)
+	const FName& GetPinCategoryFromFlowPin(const FFlowPin& FlowPin) const;
+
 //////////////////////////////////////////////////////////////////////////
 // Breakpoints
 

@@ -7,6 +7,7 @@
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowAssetIndexer.h"
 #include "Graph/FlowGraphConnectionDrawingPolicy.h"
+#include "Graph/FlowGraphPinFactory.h"
 #include "Graph/FlowGraphSettings.h"
 #include "Utils/SLevelEditorFlow.h"
 #include "MovieScene/FlowTrackEditor.h"
@@ -57,6 +58,7 @@ void FFlowEditorModule::StartupModule()
 
 	// register visual utilities
 	FEdGraphUtilities::RegisterVisualPinConnectionFactory(MakeShareable(new FFlowGraphConnectionDrawingPolicyFactory));
+	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowGraphPinFactory()));
 	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowInputPinHandleFactory()));
 	FEdGraphUtilities::RegisterVisualPinFactory(MakeShareable(new FFlowOutputPinHandleFactory()));
 
@@ -83,6 +85,9 @@ void FFlowEditorModule::StartupModule()
 		RegisterAssetIndexers();
 	}
 	ModulesChangedHandle = FModuleManager::Get().OnModulesChanged().AddRaw(this, &FFlowEditorModule::ModulesChangesCallback);
+
+	// run one-time asserts that cannot be asserted statically
+	UFlowK2SchemaSubclassForAccess::AssertPinCategoryNames();
 }
 
 void FFlowEditorModule::ShutdownModule()

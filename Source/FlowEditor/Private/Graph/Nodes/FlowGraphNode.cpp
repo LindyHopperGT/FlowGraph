@@ -774,7 +774,12 @@ void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /
 		return;
 	}
 
-	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	const FName PinCategory = GetPinCategoryFromFlowPin(FlowPin);
+	const FName PinSubCategory = NAME_None;
+	UObject* PinSubCategoryObject = FlowPin.PinSubCategoryObject.Get();
+	constexpr bool bIsReference = false;
+
+	const FEdGraphPinType PinType = FEdGraphPinType(PinCategory, PinSubCategory, PinSubCategoryObject, EPinContainerType::None, bIsReference, FEdGraphTerminalType());
 	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, FlowPin.PinName, Index);
 	check(NewPin);
 
@@ -796,7 +801,12 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 		return;
 	}
 
-	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	const FName PinCategory = GetPinCategoryFromFlowPin(FlowPin);
+	const FName PinSubCategory = NAME_None;
+	UObject* PinSubCategoryObject = FlowPin.PinSubCategoryObject.Get();
+	constexpr bool bIsReference = false;
+
+	const FEdGraphPinType PinType = FEdGraphPinType(PinCategory, PinSubCategory, PinSubCategoryObject, EPinContainerType::None, bIsReference, FEdGraphTerminalType());
 	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, FlowPin.PinName, Index);
 	check(NewPin);
 
@@ -1029,6 +1039,37 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 			}
 		}
 	}
+}
+
+bool UFlowGraphNode::DoesWildcardPinAcceptContainer(const UEdGraphPin* Pin) const
+{
+	check(Pin);
+
+	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
+	if (IsValid(FlowNode))
+	{
+		if (Pin->Direction == EGPD_Input)
+		{
+			return FlowNode->DoesInputWildcardPinAcceptArray(Pin);
+		}
+		else if (Pin->Direction == EGPD_Output)
+		{
+			return FlowNode->DoesOutputWildcardPinAcceptContainer(Pin);
+		}
+	}
+
+	return false;
+}
+
+const FName& UFlowGraphNode::GetPinCategoryFromFlowPin(const FFlowPin& FlowPin) const
+{
+	// backward-compatibility for FlowPins that were created before they had a PinCategory property
+	if (FlowPin.PinCategory == NAME_None)
+	{
+		return FFlowPin::PinCategoryDefault;
+	}
+
+	return FlowPin.PinCategory;
 }
 
 void UFlowGraphNode::OnInputTriggered(const int32 Index)

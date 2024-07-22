@@ -115,10 +115,10 @@ protected:
 	uint8 CountNumberedInputs() const;
 	uint8 CountNumberedOutputs() const;
 
+public:
 	const TArray<FFlowPin>& GetInputPins() const { return InputPins; }
 	const TArray<FFlowPin>& GetOutputPins() const { return OutputPins; }
 
-public:
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	TArray<FName> GetInputNames() const;
 
@@ -135,6 +135,11 @@ public:
 
 	void RemoveUserInput(const FName& PinName);
 	void RemoveUserOutput(const FName& PinName);
+
+	// Functions to determine acceptance for 'wildcard' data pin types (eg., singular, array, set, map)
+	// TODO (gtaylor) The data pins feature is under construction
+	bool DoesInputWildcardPinAcceptArray(const UEdGraphPin* Pin) const { return true; }
+	bool DoesOutputWildcardPinAcceptContainer(const UEdGraphPin* Pin) const { return true; }
 #endif
 
 protected:

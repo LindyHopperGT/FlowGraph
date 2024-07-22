@@ -11,15 +11,50 @@ struct FLOW_API FFlowPin
 	GENERATED_BODY()
 
 	// A logical name, used during execution of pin
-	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
 	FName PinName;
 
 	// An optional Display Name, you can use it to override PinName without the need to update graph connections
-	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
 	FText PinFriendlyName;
 
-	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
 	FString PinToolTip;
+
+	/** Category of pin type */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	FName PinCategory = PinCategoryDefault;
+
+	/** Sub-category object */
+	UPROPERTY()
+	TWeakObjectPtr<UObject> PinSubCategoryObject;
+
+	// PinCategory aliases for those defined in UEdGraphSchema_K2
+	static inline FName PC_Exec = TEXT("exec");
+	static inline FName PC_Boolean = TEXT("bool");
+	static inline FName PC_Byte = TEXT("byte");
+	static inline FName PC_Class = TEXT("class");
+	static inline FName PC_Int = TEXT("int");
+	static inline FName PC_Int64 = TEXT("int64");
+	static inline FName PC_Float = TEXT("float");
+	static inline FName PC_Double = TEXT("double");
+	static inline FName PC_Real = TEXT("real");
+	static inline FName PC_Name = TEXT("name");
+	static inline FName PC_Delegate = TEXT("delegate");
+	static inline FName PC_MCDelegate = TEXT("mcdelegate");
+	static inline FName PC_Object = TEXT("object");
+	static inline FName PC_Interface = TEXT("interface");
+	static inline FName PC_String = TEXT("string");
+	static inline FName PC_Text = TEXT("text");
+	static inline FName PC_Struct = TEXT("struct");
+	static inline FName PC_Wildcard = TEXT("wildcard");
+	static inline FName PC_FieldPath = TEXT("fieldpath");
+	static inline FName PC_Enum = TEXT("enum");
+	static inline FName PC_SoftObject = TEXT("softobject");
+	static inline FName PC_SoftClass = TEXT("softclass");
+
+	// Default pin type in Flow is the "Exec" pin type
+	static inline FName PinCategoryDefault = PC_Exec;
 
 	static inline FName AnyPinName = TEXT("AnyPinName");
 
@@ -106,6 +141,37 @@ struct FLOW_API FFlowPin
 	{
 		return GetTypeHash(FlowPin.PinName);
 	}
+
+	// FFlowPin instance signatures for "trait" functions
+	FORCEINLINE bool IsExecPin() const { return IsExecPin(*this); }
+	FORCEINLINE static bool IsExecPin(const FFlowPin& FlowPin) { return IsExecPinCategory(FlowPin.PinCategory); }
+	//--
+
+	// PinCategory "trait" functions:
+	FORCEINLINE static bool IsExecPinCategory(const FName& PC) { return PC == PC_Exec; }
+	FORCEINLINE static bool IsDataPinCategory(const FName& PC) { return PC != PC_Exec; }
+	FORCEINLINE static bool IsIndexPinCategory(const FName& PC) { return IsConvertableToInt64PinCategory(PC); }
+	FORCEINLINE static bool IsNumericPinCategory(const FName& PC) { return IsConvertableToInt64PinCategory(PC) || IsConvertableToDoublePinCategory(PC); }
+	FORCEINLINE static bool IsTextBasedPinCategory(const FName& PC) { return PC == PC_Name || PC == PC_String || PC == PC_Text; }
+	FORCEINLINE static bool IsDelegatePinCategory(const FName& PC) { return PC == PC_Delegate || PC == PC_MCDelegate; }
+	FORCEINLINE static bool IsWildcardPinCategory(const FName& PC) { return PC == PC_Wildcard; }
+
+	// This pin's data a composite type? (ie, struct or class)
+	FORCEINLINE static bool IsCompositePinCategory(const FName& PC) { return PC == PC_Class || PC == PC_Object || PC == PC_Struct; }
+
+	// Is the PinSubCategoryObject field valid for this pin?
+	FORCEINLINE static bool IsSubtypeSupportedPinCategory(const FName& PC) { return IsCompositePinCategory(PC) || PC == PC_Interface; }
+
+	// IsConvertable trait functions:
+	FORCEINLINE static bool IsConvertableToDoublePinCategory(const FName& PC) { return PC == PC_Double || PC == PC_Float || PC == PC_Real; }
+	FORCEINLINE static bool IsConvertableToInt64PinCategory(const FName& PC) { return PC == PC_Boolean || PC == PC_Byte || PC == PC_Int || PC == PC_Int64; }
+	FORCEINLINE static bool IsConvertableToObjectPinCategory(const FName& PC) { return PC == PC_Object || PC == PC_SoftObject; }
+	FORCEINLINE static bool IsConvertableToClassPinCategory(const FName& PC) { return PC == PC_Class || PC == PC_SoftClass; }
+	FORCEINLINE static bool IsConvertableToBoolPinCategory(const FName& PC) 
+		{ return IsConvertableToInt64PinCategory(PC) || IsConvertableToObjectPinCategory(PC) || IsConvertableToClassPinCategory(PC) ||
+			     IsTextBasedPinCategory(PC) || IsDelegatePinCategory(PC); }
+	FORCEINLINE static bool IsConvertableToTextPinCategory(const FName& PC) { return IsTextBasedPinCategory(PC) || PC == PC_Enum; }
+	//--
 };
 
 USTRUCT()
