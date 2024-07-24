@@ -11,21 +11,22 @@ struct FLOW_API FFlowPin
 	GENERATED_BODY()
 
 	// A logical name, used during execution of pin
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FName PinName;
 
 	// An optional Display Name, you can use it to override PinName without the need to update graph connections
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FText PinFriendlyName;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FString PinToolTip;
 
-	/** Category of pin type */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "FlowPin")
+	//Category of pin type
+	UPROPERTY(EditDefaultsOnly, Category = "FlowPin")
 	FName PinCategory = PinCategoryDefault;
 
-	/** Sub-category object */
+	// Sub-category object
+	// (used to identify the struct or class type for some PinCategories, see IsSubtypeSupportedPinCategory)
 	UPROPERTY()
 	TWeakObjectPtr<UObject> PinSubCategoryObject;
 
