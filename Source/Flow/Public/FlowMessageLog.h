@@ -17,18 +17,18 @@ class UFlowNodeBase;
 class FLOW_API FFlowGraphToken : public IMessageToken
 {
 private:
-	const TWeakObjectPtr<UEdGraphNode> GraphNode;
+	const TWeakObjectPtr<const UEdGraphNode> GraphNode;
 	const FEdGraphPinReference GraphPin;
 
 	explicit FFlowGraphToken(const UFlowAsset* InFlowAsset);
 	explicit FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase);
-	explicit FFlowGraphToken(UEdGraphNode* InGraphNode, const UEdGraphPin* InPin);
+	explicit FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraphPin* InPin);
 
 public:
 	/** Factory method, tokens can only be constructed as shared refs */
 	static TSharedPtr<IMessageToken> Create(const UFlowAsset* InFlowAsset, FTokenizedMessage& Message);
 	static TSharedPtr<IMessageToken> Create(const UFlowNodeBase* InFlowNodeBase, FTokenizedMessage& Message);
-	static TSharedPtr<IMessageToken> Create(UEdGraphNode* InGraphNode, FTokenizedMessage& Message);
+	static TSharedPtr<IMessageToken> Create(const UEdGraphNode* InGraphNode, FTokenizedMessage& Message);
 	static TSharedPtr<IMessageToken> Create(const UEdGraphPin* InPin, FTokenizedMessage& Message);
 
 	const UEdGraphNode* GetGraphNode() const { return GraphNode.Get(); }

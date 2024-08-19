@@ -17,6 +17,12 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	GENERATED_UCLASS_BODY()
 	static UFlowGraphSettings* Get() { return StaticClass()->GetDefaultObject<UFlowGraphSettings>(); }
 
+	virtual void PostInitProperties() override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
 	/** Show Flow Asset in Flow category of "Create Asset" menu?
 	* Requires restart after making a change. */
 	UPROPERTY(EditAnywhere, config, Category = "Default UI", meta = (ConfigRestartRequired = true))
@@ -51,6 +57,11 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/** Hide default pin names on simple nodes, reduces UI clutter */
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bShowDefaultPinNames;
+
+	/** List of prefixes to hide on node titles and palette without need to add custom DisplayName.
+	 * If node class has meta = (DisplayName = ... ) or BlueprintDisplayName, those texts will be displayed */
+	UPROPERTY(EditAnywhere, config, Category = "Nodes")
+	TArray<FString> NodePrefixesToRemove;
 
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	TMap<EFlowNodeStyle, FLinearColor> NodeTitleColors;

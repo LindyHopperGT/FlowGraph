@@ -30,6 +30,7 @@ UFlowNodeBase::UFlowNodeBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, GraphNode(nullptr)
 #if WITH_EDITORONLY_DATA
+	, bDisplayNodeTitleWithoutPrefix(true)
 	, bCanDelete(true)
 	, bCanDuplicate(true)
 	, bNodeDeprecated(false)
@@ -390,7 +391,7 @@ EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowN
 		AddOnTemplate->IsA<UFlowNode>())
 	{
 		const FString Message = FString::Printf(TEXT("%s::AcceptFlowNodeAddOnParent must always Reject for UFlowNode subclasses"), *GetClass()->GetName());
-		GetFlowAsset()->GetTemplateAsset()->LogError(Message, const_cast<UFlowNodeBase*>(this));
+		GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
 
 		return EFlowAddOnAcceptResult::Reject;
 	}
@@ -548,6 +549,12 @@ FText UFlowNodeBase::GetNodeTitle() const
 		}
 	}
 
+	static const FName NAME_DisplayName(TEXT("DisplayName"));
+	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_DisplayName))
+	{
+		return GetGeneratedDisplayName();
+	}
+
 	return GetClass()->GetDisplayNameText();
 }
 
@@ -562,12 +569,42 @@ FText UFlowNodeBase::GetNodeToolTip() const
 		}
 	}
 
+	static const FName NAME_Tooltip(TEXT("Tooltip"));
+	if (bDisplayNodeTitleWithoutPrefix && !GetClass()->HasMetaData(NAME_Tooltip))
+	{
+		return GetGeneratedDisplayName();
+	}
+
+	// GetClass()->GetToolTipText() can return meta = (DisplayName = ... ), but ignore BlueprintDisplayName even if it is BP Node
+	if (GetClass()->ClassGeneratedBy)
+	{
+		const FString& BlueprintTitle = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->BlueprintDisplayName;
+		if (!BlueprintTitle.IsEmpty())
+		{
+			return FText::FromString(BlueprintTitle);
+		}
+	}
+	
+
 	return GetClass()->GetToolTipText();
 }
 
 FText UFlowNodeBase::GetNodeConfigText() const
 {
 	return DevNodeConfigText;
+}
+
+FText UFlowNodeBase::GetGeneratedDisplayName() const
+{
+	static const FName NAME_GeneratedDisplayName(TEXT("GeneratedDisplayName"));
+	
+	if (GetClass()->ClassGeneratedBy)
+	{
+		UClass* Class = Cast<UBlueprint>(GetClass()->ClassGeneratedBy)->GeneratedClass;
+		return Class->GetMetaDataText(NAME_GeneratedDisplayName);
+	}
+	
+	return GetClass()->GetMetaDataText(NAME_GeneratedDisplayName);
 }
 #endif // WITH_EDITOR
 
@@ -594,7 +631,7 @@ FString UFlowNodeBase::GetNodeDescription() const
 }
 #endif // WITH_EDITOR
 
-void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType)
+void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
 #if !UE_BUILD_SHIPPING
 	if (BuildMessage(Message))
@@ -632,12 +669,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 #endif
 }
 
-void UFlowNodeBase::LogErrorConst(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
-{
-	const_cast<UFlowNodeBase*>(this)->LogError(Message, OnScreenMessageType);
-}
-
-void UFlowNodeBase::LogWarning(FString Message)
+void UFlowNodeBase::LogWarning(FString Message) const
 {
 #if !UE_BUILD_SHIPPING
 	if (BuildMessage(Message))
@@ -653,12 +685,7 @@ void UFlowNodeBase::LogWarning(FString Message)
 #endif
 }
 
-void UFlowNodeBase::LogWarningConst(FString Message) const
-{
-	const_cast<UFlowNodeBase*>(this)->LogWarning(Message);
-}
-
-void UFlowNodeBase::LogNote(FString Message)
+void UFlowNodeBase::LogNote(FString Message) const
 {
 #if !UE_BUILD_SHIPPING
 	if (BuildMessage(Message))
@@ -672,11 +699,6 @@ void UFlowNodeBase::LogNote(FString Message)
 #endif
 	}
 #endif
-}
-
-void UFlowNodeBase::LogNoteConst(FString Message) const
-{
-	const_cast<UFlowNodeBase*>(this)->LogNote(Message);
 }
 
 #if !UE_BUILD_SHIPPING

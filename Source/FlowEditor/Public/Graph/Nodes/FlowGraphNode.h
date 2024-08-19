@@ -281,7 +281,7 @@ protected:
 
 	virtual void ResetNodeOwner();
 
-	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase);
+	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const;
 
 public:
 	

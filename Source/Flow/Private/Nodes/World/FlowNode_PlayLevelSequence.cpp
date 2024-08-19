@@ -81,7 +81,7 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 					{
 						for (const FString& EventName : FlowSection->GetAllEntryPoints())
 						{
-							if (!EventName.IsEmpty())
+							if (!EventName.IsEmpty() && !Pins.Contains(EventName))
 							{
 								Pins.Emplace(EventName);
 							}

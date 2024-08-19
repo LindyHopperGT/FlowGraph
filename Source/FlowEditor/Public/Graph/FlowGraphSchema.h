@@ -49,6 +49,9 @@ public:
 	virtual int32 GetNodeSelectionCount(const UEdGraph* Graph) const override;
 	virtual TSharedPtr<FEdGraphSchemaAction> GetCreateCommentAction() const override;
 	virtual void OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const override;
+	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
+	virtual int32 GetCurrentVisualizationCacheID() const override;
+	virtual void ForceVisualizationCacheClear() const override;
 	// --
 
 	// FlowGraphSchema
@@ -57,6 +60,9 @@ public:
 	bool IsAddOnAllowedForSelectedObjects(const TArray<UObject*>& SelectedObjects, const UFlowNodeAddOn* AddOnTemplate) const;
 
 		// --
+
+	static void UpdateGeneratedDisplayNames();
+	static void UpdateGeneratedDisplayName(UClass* NodeClass, bool bBatch = false);
 
 	static TArray<TSharedPtr<FString>> GetFlowNodeCategories();
 	static TSubclassOf<UEdGraphNode> GetAssignedGraphNodeClass(const TSubclassOf<UFlowNodeBase>& FlowNodeClass);
@@ -87,10 +93,15 @@ private:
 	static bool ShouldAddToBlueprintFlowNodesMap(const FAssetData& AssetData, const TSubclassOf<UBlueprint>& BlueprintClass, const TSubclassOf<UFlowNodeBase>& FlowNodeBaseClass);
 
 	static void OnAssetRemoved(const FAssetData& AssetData);
+	static void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
 
 public:
 	static FFlowGraphSchemaRefresh OnNodeListChanged;
 	static UBlueprint* GetPlaceableNodeOrAddOnBlueprint(const FAssetData& AssetData);
 
 	static const UFlowAsset* GetEditedAssetOrClassDefault(const UEdGraph* Graph);
+
+private:
+	// ID for checking dirty status of node titles against
+	static int32 CurrentCacheRefreshID;
 };

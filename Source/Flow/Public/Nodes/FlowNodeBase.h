@@ -181,6 +181,9 @@ public:
 	
 #if WITH_EDITORONLY_DATA
 protected:
+	UPROPERTY(EditDefaultsOnly, Category = "FlowNode")
+	uint8 bDisplayNodeTitleWithoutPrefix : 1;
+	
 	uint8 bCanDelete : 1 ;
 	uint8 bCanDuplicate : 1;
 	
@@ -244,6 +247,7 @@ public:
 	virtual FText GetNodeTitle() const;
 	virtual FText GetNodeToolTip() const;
 	virtual FText GetNodeConfigText() const;
+	FText GetGeneratedDisplayName() const;
 #endif
 
 protected:	
@@ -272,22 +276,13 @@ protected:
 	FString K2_GetNodeDescription() const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent);
-
-	// LogError from constant function (allowing 'this' to be modified only to log the error itself)
-	void LogErrorConst(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
+	void LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType = EFlowOnScreenMessageType::Permanent) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogWarning(FString Message);
-
-	// LogWarning from constant function (allowing 'this' to be modified only to log the warning itself)
-	void LogWarningConst(FString Message) const;
+	void LogWarning(FString Message) const;
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
-	void LogNote(FString Message);
-
-	// LogNote from constant function (allowing 'this' to be modified only to log the note itself)
-	void LogNoteConst(FString Message) const;
+	void LogNote(FString Message) const;
 
 #if !UE_BUILD_SHIPPING
 protected:

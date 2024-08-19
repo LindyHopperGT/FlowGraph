@@ -69,6 +69,7 @@ public:
 // Graph
 
 #if WITH_EDITOR
+public:	
 	friend class UFlowGraph;
 
 	// UObject
@@ -78,13 +79,16 @@ public:
 	virtual void PostLoad() override;
 	// --
 
+public:
+	FSimpleDelegate OnDetailsRefreshRequested;
+
+	static FString ValidationError_NodeClassNotAllowed;
+	static FString ValidationError_NullNodeInstance;
+
 	virtual EDataValidationResult ValidateAsset(FFlowMessageLog& MessageLog);
 
 	// Returns whether the node class is allowed in this flow asset
 	bool IsNodeOrAddOnClassAllowed(const UClass* FlowNodeClass, FText* OutOptionalFailureReason = nullptr) const;
-
-	static FString ValidationError_NodeClassNotAllowed;
-	static FString ValidationError_NullNodeInstance;
 
 protected:
 	bool CanFlowNodeClassBeUsedByFlowAsset(const UClass& FlowNodeClass) const;
@@ -264,14 +268,14 @@ public:
 	FRefreshDebuggerEvent& OnDebuggerRefresh() { return RefreshDebuggerEvent; }
 	FRefreshDebuggerEvent RefreshDebuggerEvent;
 
-	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
+	DECLARE_EVENT_TwoParams(UFlowAsset, FRuntimeMessageEvent, const UFlowAsset*, const TSharedRef<FTokenizedMessage>&);
 
 	FRuntimeMessageEvent& OnRuntimeMessageAdded() { return RuntimeMessageEvent; }
 	FRuntimeMessageEvent RuntimeMessageEvent;
 
 private:
 	void BroadcastDebuggerRefresh() const;
-	void BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message);
+	void BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message) const;
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -412,8 +416,8 @@ public:
 
 #if WITH_EDITOR
 public:
-	void LogError(const FString& MessageToLog, UFlowNodeBase* Node);
-	void LogWarning(const FString& MessageToLog, UFlowNodeBase* Node);
-	void LogNote(const FString& MessageToLog, UFlowNodeBase* Node);
+	void LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const;
+	void LogWarning(const FString& MessageToLog, const UFlowNodeBase* Node) const;
+	void LogNote(const FString& MessageToLog, const UFlowNodeBase* Node) const;
 #endif
 };

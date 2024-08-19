@@ -590,7 +590,7 @@ void UFlowAsset::BroadcastDebuggerRefresh() const
 	RefreshDebuggerEvent.Broadcast();
 }
 
-void UFlowAsset::BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message)
+void UFlowAsset::BroadcastRuntimeMessageAdded(const TSharedRef<FTokenizedMessage>& Message) const
 {
 	RuntimeMessageEvent.Broadcast(this, Message);
 }
@@ -907,7 +907,7 @@ bool UFlowAsset::IsBoundToWorld_Implementation()
 }
 
 #if WITH_EDITOR
-void UFlowAsset::LogError(const FString& MessageToLog, UFlowNodeBase* Node)
+void UFlowAsset::LogError(const FString& MessageToLog, const UFlowNodeBase* Node) const
 {
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
@@ -922,7 +922,7 @@ void UFlowAsset::LogError(const FString& MessageToLog, UFlowNodeBase* Node)
 	}
 }
 
-void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNodeBase* Node)
+void UFlowAsset::LogWarning(const FString& MessageToLog, const UFlowNodeBase* Node) const
 {
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)
@@ -937,7 +937,7 @@ void UFlowAsset::LogWarning(const FString& MessageToLog, UFlowNodeBase* Node)
 	}
 }
 
-void UFlowAsset::LogNote(const FString& MessageToLog, UFlowNodeBase* Node)
+void UFlowAsset::LogNote(const FString& MessageToLog, const UFlowNodeBase* Node) const
 {
 	// this is runtime log which is should be only called on runtime instances of asset
 	if (TemplateAsset == nullptr)

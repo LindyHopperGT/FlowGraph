@@ -923,9 +923,10 @@ void SFlowGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
 	{
 		LeftNodeBox->AddSlot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			.FillHeight(1.0f)
+			.AutoHeight()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Center)
+			.Padding(Settings->GetInputPinPadding())
 			[
 				PinToAdd
 			];
@@ -934,9 +935,10 @@ void SFlowGraphNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	else // Direction == EEdGraphPinDirection::EGPD_Output
 	{
 		RightNodeBox->AddSlot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			.FillHeight(1.0f)
+			.AutoHeight()
+			.HAlign(HAlign_Right)
+			.VAlign(VAlign_Center)
+			.Padding(Settings->GetOutputPinPadding())
 			[
 				PinToAdd
 			];

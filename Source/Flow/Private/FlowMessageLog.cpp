@@ -21,7 +21,7 @@ FFlowGraphToken::FFlowGraphToken(const UFlowNodeBase* InFlowNodeBase)
 	CachedText = InFlowNodeBase->GetNodeTitle();
 }
 
-FFlowGraphToken::FFlowGraphToken(UEdGraphNode* InGraphNode, const UEdGraphPin* InPin)
+FFlowGraphToken::FFlowGraphToken(const UEdGraphNode* InGraphNode, const UEdGraphPin* InPin)
 	: GraphNode(InGraphNode)
 	, GraphPin(InPin)
 {
@@ -61,7 +61,7 @@ TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UFlowNodeBase* InFlowNod
 	return nullptr;
 }
 
-TSharedPtr<IMessageToken> FFlowGraphToken::Create(UEdGraphNode* InGraphNode, FTokenizedMessage& Message)
+TSharedPtr<IMessageToken> FFlowGraphToken::Create(const UEdGraphNode* InGraphNode, FTokenizedMessage& Message)
 {
 	if (InGraphNode)
 	{

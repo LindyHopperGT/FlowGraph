@@ -224,10 +224,13 @@ void FFlowAssetToolbar::BuildAssetToolbar(UToolMenu* ToolbarMenu) const
 			DiffEntry.StyleNameOverride = "CalloutToolbar";
 			InSection.AddEntry(DiffEntry);
 		}));
-
-#if ENABLE_SEARCH_IN_ASSET_EDITOR
-		Section.AddEntry(FToolMenuEntry::InitToolBarButton(FFlowToolbarCommands::Get().SearchInAsset));
-#endif
+		
+		Section.AddEntry(FToolMenuEntry::InitToolBarButton(
+			FFlowToolbarCommands::Get().SearchInAsset,
+			TAttribute<FText>(),
+			TAttribute<FText>(),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults")
+		));
 	}
 }
 

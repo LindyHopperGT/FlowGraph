@@ -5,8 +5,8 @@
 #include "Nodes/Route/FlowNode_SubGraph.h"
 
 #include "DetailLayoutBuilder.h"
+#include "IDetailChildrenBuilder.h"
 #include "PropertyCustomizationHelpers.h"
-#include "PropertyEditing.h"
 #include "Widgets/Input/SEditableTextBox.h"
 
 #define LOCTEXT_NAMESPACE "FlowAssetDetails"

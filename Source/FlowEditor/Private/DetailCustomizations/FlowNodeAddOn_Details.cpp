@@ -1,7 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #include "DetailCustomizations/FlowNodeAddOn_Details.h"
-#include "PropertyEditing.h"
+#include "DetailLayoutBuilder.h"
 
 void FFlowNodeAddOn_Details::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
