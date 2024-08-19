@@ -678,6 +678,13 @@ const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGrap
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Pins are not compatible"));
 	}
 
+	// Break existing connections on outputs only - multiple input connections are acceptable
+	if (OutputPin->LinkedTo.Num() > 0)
+	{
+		const ECanCreateConnectionResponse ReplyBreakInputs = (OutputPin == PinA ? CONNECT_RESPONSE_BREAK_OTHERS_A : CONNECT_RESPONSE_BREAK_OTHERS_B);
+		return FPinConnectionResponse(ReplyBreakInputs, TEXT("Replace existing connections"));
+	}
+
 	FPinConnectionResponse ConnectionResponse = DetermineConnectionResponseOfCompatibleTypedPins(PinA, PinB, InputPin, OutputPin);
 	if (ConnectionResponse.Message.IsEmpty())
 	{

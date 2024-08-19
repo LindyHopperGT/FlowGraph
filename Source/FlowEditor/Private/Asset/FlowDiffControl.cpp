@@ -27,7 +27,7 @@ namespace
 			FlowGraphNode = Cast<UFlowGraphNode>(Difference.Result.Node2);
 		}
 
-		if (IsValid(FlowGraphNode))
+		if (IsValid(FlowGraphNode) && IsValid(FlowGraphNode->GetNodeTemplate()))
 		{
 			return FString::FromInt(FlowGraphNode->GetNodeTemplate()->GetUniqueID());//->GetName();
 		}
@@ -58,7 +58,7 @@ namespace
 			FlowGraphNode = Cast<UFlowGraphNode>(Difference.Result.Node2);
 		}
 
-		if (IsValid(FlowGraphNode))
+		if (IsValid(FlowGraphNode) && IsValid(FlowGraphNode->GetNodeTemplate()))
 		{
 			return FlowGraphNode->GetNodeTemplate()->GetName();
 		}
