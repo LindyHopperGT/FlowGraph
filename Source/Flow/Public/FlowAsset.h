@@ -50,6 +50,12 @@ struct FFlowHarvestDataPinsWorkingData
 		, AutoOutputDataPinsPrev(OutputPinsPrev)
 		{ }
 
+#if WITH_EDITOR
+	bool DidPinNameToBoundPropertyNameMapChange() const;
+	bool DidAutoInputDataPinsChange() const;
+	bool DidAutoOutputDataPinsChange() const;
+#endif
+
 	UFlowNode* FlowNode = nullptr;
 
 	const TMap<FName, FName>& PinNameToBoundPropertyNameMapPrev;

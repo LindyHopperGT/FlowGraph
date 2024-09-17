@@ -442,12 +442,12 @@ void UFlowAsset::HarvestFlowPinMetadata()
 			HarvestFlowPinMetadataForProperty(*PropertyIt, WorkingData);
 		}
 
-		// If the map counts are different, then the map is dirty		
-		WorkingData.bPinNameMapChanged |= (WorkingData.PinNameToBoundPropertyNameMapPrev.Num() != WorkingData.PinNameToBoundPropertyNameMapNext.Num());
+		// Check if the pin name to bound property map changed
+		WorkingData.bPinNameMapChanged |= WorkingData.DidPinNameToBoundPropertyNameMapChange();
 
 		// If the auto-generated data pins array changed, it counts as dirty as well
-		const bool bAutoInputDataPinsChanged = !FFlowPin::ArePinArraysMatchingNamesAndTypes(WorkingData.AutoInputDataPinsPrev, WorkingData.AutoInputDataPinsNext);
-		const bool bAutoOutputDataPinsChanged = !FFlowPin::ArePinArraysMatchingNamesAndTypes(WorkingData.AutoOutputDataPinsPrev, WorkingData.AutoOutputDataPinsNext);
+		const bool bAutoInputDataPinsChanged = WorkingData.DidAutoInputDataPinsChange();
+		const bool bAutoOutputDataPinsChanged = WorkingData.DidAutoOutputDataPinsChange();
 
 		if (WorkingData.bPinNameMapChanged || bAutoInputDataPinsChanged || bAutoOutputDataPinsChanged)
 		{
@@ -475,7 +475,7 @@ void UFlowAsset::HarvestFlowPinMetadata()
 				if (FlowNode->GraphNode)
 				{
 					FlowNode->OnReconstructionRequested.ExecuteIfBound();
-				}				
+				}
 			}
 
 			FlowNode->PostEditChange();
@@ -1377,4 +1377,44 @@ void UFlowAsset::LogNote(const FString& MessageToLog, const UFlowNodeBase* Node)
 		BroadcastRuntimeMessageAdded(TokenizedMessage);
 	}
 }
+#endif
+
+#if WITH_EDITOR
+bool FFlowHarvestDataPinsWorkingData::DidPinNameToBoundPropertyNameMapChange() const
+{
+	if (PinNameToBoundPropertyNameMapPrev.Num() != PinNameToBoundPropertyNameMapNext.Num())
+	{
+		return true;
+	}
+
+	for (const auto& KV : PinNameToBoundPropertyNameMapPrev)
+	{
+		const FName& PinNameFromPrev = KV.Key;
+		const FName& PropertyNameFromPrev = KV.Value;
+
+		const FName* FoundPropertyNameInNext = PinNameToBoundPropertyNameMapNext.Find(PinNameFromPrev);
+		if (!FoundPropertyNameInNext)
+		{
+			return true;
+		}
+
+		if (*FoundPropertyNameInNext != PropertyNameFromPrev)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool FFlowHarvestDataPinsWorkingData::DidAutoInputDataPinsChange() const
+{
+	return !FFlowPin::ArePinArraysMatchingNamesAndTypes(AutoInputDataPinsPrev, AutoInputDataPinsNext);
+}
+
+bool FFlowHarvestDataPinsWorkingData::DidAutoOutputDataPinsChange() const
+{
+	return !FFlowPin::ArePinArraysMatchingNamesAndTypes(AutoOutputDataPinsPrev, AutoOutputDataPinsNext);
+}
+
 #endif
