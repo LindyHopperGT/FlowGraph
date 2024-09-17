@@ -547,8 +547,10 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 
 		if (const FString* AutoPinType = ScriptStruct->FindMetaData(FFlowPin::MetadataKey_FlowPinType))
 		{
+			const bool bIsInputPin = DefaultForInputFlowPinName != nullptr;
+
 			// Auto-generate the pin for this property
-			if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, InOutData.FlowNode, Property, PinDisplayName, FlowPinArray))
+			if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, InOutData.FlowNode, Property, PinDisplayName, bIsInputPin, FlowPinArray))
 			{
 				LogError(FString::Printf(TEXT("Error.  Unknown value %s for metadata %s"), **AutoPinType, *FFlowPin::MetadataKey_FlowPinType.ToString()), InOutData.FlowNode);
 
@@ -577,8 +579,9 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 	if (AutoPinType)
 	{
 		// Auto-generate the desired pin for this property
+		const bool bIsInputPin = DefaultForInputFlowPinName != nullptr;
 
-		if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, InOutData.FlowNode, Property, PinDisplayName, FlowPinArray))
+		if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, InOutData.FlowNode, Property, PinDisplayName, bIsInputPin, FlowPinArray))
 		{
 			LogError(FString::Printf(TEXT("Unknown value %s for metadata %s"), **AutoPinType, *FFlowPin::MetadataKey_FlowPinType.ToString()), InOutData.FlowNode);
 
@@ -632,7 +635,95 @@ void UFlowAsset::AddDataPinPropertyBindingToMap(
 	}
 }
 
-bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(const FString& MetadataValue, UFlowNode* FlowNode, const FProperty* Property, const FName& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext) const
+template <typename TEnumProperty, typename TVectorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty>
+void AddPinForPinType(EFlowPinType PinType, UFlowNode* FlowNode, const FProperty* Property, const FName& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext)
+{
+	// Some of the FlowPinTypes require a SubCategoryObject to fully define the type, so
+	// we need to find that for the cases that it applies to.
+
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+
+	FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinDisplayName));
+	switch (PinType)
+	{
+	case EFlowPinType::Enum:
+		{
+			UEnum* EnumClass = nullptr;
+
+			if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+			{
+				// Check for a wrapper struct to get the enum data from
+				const UStruct* ScriptStruct = TEnumProperty::StaticStruct();
+				if (StructProperty->Struct == ScriptStruct)
+				{
+					TEnumProperty ValueStruct;
+					StructProperty->GetValue_InContainer(FlowNode, &ValueStruct);
+
+					EnumClass = ValueStruct.EnumClass;
+				}
+			}
+			else if (const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property))
+			{
+				// Get the enum data from the FEnumProperty
+				EnumClass = EnumProperty->GetEnum();
+			}
+
+			NewFlowPin.SetPinType(PinType, EnumClass);
+		}
+		break;
+
+	case EFlowPinType::Vector:
+		{
+			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TVectorProperty, FVector>(Property);
+			NewFlowPin.SetPinType(PinType, ValueStructType);
+		}
+		break;
+
+	case EFlowPinType::Transform:
+		{
+			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TTransformProperty, FTransform>(Property);
+			NewFlowPin.SetPinType(PinType, ValueStructType);
+		}
+		break;
+
+	case EFlowPinType::GameplayTag:
+		{
+			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TGameplayTagProperty, FGameplayTag>(Property);
+			NewFlowPin.SetPinType(PinType, ValueStructType);
+		}
+		break;
+
+	case EFlowPinType::GameplayTagContainer:
+		{
+			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TGameplayTagContainerProperty, FGameplayTagContainer>(Property);
+			NewFlowPin.SetPinType(PinType, ValueStructType);
+		}
+		break;
+
+#if 0
+	case EFlowPinType::Object:
+	case EFlowPinType::SoftObject:
+	case EFlowPinType::Class:
+	case EFlowPinType::SoftClass:
+		// TODO (gtaylor) Finish Object, Class support
+		break;
+#endif // 0
+
+	default:
+		{
+			NewFlowPin.SetPinType(PinType);
+		}
+		break;
+	}
+}
+
+bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
+	const FString& MetadataValue,
+	UFlowNode* FlowNode,
+	const FProperty* Property,
+	const FName& PinDisplayName,
+	const bool bIsInputPin,
+	TArray<FFlowPin>* InOutDataPinsNext) const
 {
 	check(InOutDataPinsNext);
 
@@ -648,82 +739,33 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(const FString& MetadataVa
 
 		if (MetadataValueAsName == EnumValueAsName)
 		{
-			// Some of the FlowPinTypes require a SubCategoryObject to fully define the type, so
-			// we need to find that for the cases that it applies to.
-
-			FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
- 
-			FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinDisplayName));
-			switch (PinType)
+			if (bIsInputPin)
 			{
-			case EFlowPinType::Enum:
-				{
-					UEnum* EnumClass = nullptr;
-
-					if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
-					{
-						// Check for a wrapper struct to get the enum data from
-						const UStruct* ScriptStruct = FFlowDataPinOutputProperty_Enum::StaticStruct();
-						if (StructProperty->Struct == ScriptStruct)
-						{
-							FFlowDataPinOutputProperty_Enum ValueStruct;
-							StructProperty->GetValue_InContainer(FlowNode, &ValueStruct);
-
-							EnumClass = ValueStruct.EnumClass;
-						}
-					}
-					else if (const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property))
-					{
-						// Get the enum data from the FEnumProperty
-						EnumClass = EnumProperty->GetEnum();
-					}
-					
-					NewFlowPin.SetPinType(PinType, EnumClass);
-				}
-				break;
-
-			case EFlowPinType::Vector:
-				{
-					UScriptStruct* ValueStructType = FindScriptStructForFlowDataPinProperty<FFlowDataPinOutputProperty_Vector, FVector>(Property);
-					NewFlowPin.SetPinType(PinType, ValueStructType);
-				}
-				break;
-
-			case EFlowPinType::Transform:
-				{
-					UScriptStruct* ValueStructType = FindScriptStructForFlowDataPinProperty<FFlowDataPinOutputProperty_Transform, FTransform>(Property);
-					NewFlowPin.SetPinType(PinType, ValueStructType);
-				}
-				break;
-
-			case EFlowPinType::GameplayTag:
-				{
-					UScriptStruct* ValueStructType = FindScriptStructForFlowDataPinProperty<FFlowDataPinOutputProperty_GameplayTag, FGameplayTag>(Property);
-					NewFlowPin.SetPinType(PinType, ValueStructType);
-				}
-				break;
-
-			case EFlowPinType::GameplayTagContainer:
-				{
-					UScriptStruct* ValueStructType = FindScriptStructForFlowDataPinProperty<FFlowDataPinOutputProperty_GameplayTagContainer, FGameplayTagContainer>(Property);
-					NewFlowPin.SetPinType(PinType, ValueStructType);
-				}
-				break;
-
-#if 0
-			case EFlowPinType::Object:
-			case EFlowPinType::SoftObject:
-			case EFlowPinType::Class:
-			case EFlowPinType::SoftClass:
-				// TODO (gtaylor) Finish Object, Class support
-				break;
-#endif // 0
-
-			default:
-				{
-					NewFlowPin.SetPinType(PinType);
-				}
-				break;
+				AddPinForPinType<
+					FFlowDataPinInputProperty_Enum,
+					FFlowDataPinInputProperty_Vector,
+					FFlowDataPinInputProperty_Transform,
+					FFlowDataPinInputProperty_GameplayTag,
+					FFlowDataPinInputProperty_GameplayTagContainer>(
+						PinType,
+						FlowNode,
+						Property,
+						PinDisplayName,
+						InOutDataPinsNext);
+			}
+			else
+			{
+				AddPinForPinType<
+					FFlowDataPinOutputProperty_Enum,
+					FFlowDataPinOutputProperty_Vector,
+					FFlowDataPinOutputProperty_Transform,
+					FFlowDataPinOutputProperty_GameplayTag,
+					FFlowDataPinOutputProperty_GameplayTagContainer>(
+						PinType,
+						FlowNode,
+						Property,
+						PinDisplayName,
+						InOutDataPinsNext);
 			}
 
 			return true;

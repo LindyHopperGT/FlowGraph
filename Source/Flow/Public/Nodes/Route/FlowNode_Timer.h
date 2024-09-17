@@ -23,6 +23,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Timer", meta = (ClampMin = 0.0f))
 	float StepTime;
 
+	static FName INPIN_CompletionTime;
+
 private:
 	FTimerHandle CompletionTimerHandle;
 	FTimerHandle StepTimerHandle;

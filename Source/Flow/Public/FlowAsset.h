@@ -185,15 +185,21 @@ public:
 	void HarvestNodeConnections();
 	void HarvestFlowPinMetadata();
 
+	template <typename TFlowDataPinPropertyType, typename TUnrealType>
+	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty* Property);
+
 protected:
 	void AddDataPinPropertyBindingToMap(
 		const FName& PinDisplayName,
 		const FName& PropertyName,
 		FFlowHarvestDataPinsWorkingData& InOutData);
-	virtual bool TryCreateFlowDataPinFromMetadataValue(const FString& MetadataValue, UFlowNode* FlowNode, const FProperty* Property, const FName& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext) const;
-
-	template <typename TFlowDataPinPropertyType, typename TUnrealType>
-	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty* Property);
+	virtual bool TryCreateFlowDataPinFromMetadataValue(
+		const FString& MetadataValue,
+		UFlowNode* FlowNode,
+		const FProperty* Property,
+		const FName& PinDisplayName,
+		const bool bIsInputPin,
+		TArray<FFlowPin>* InOutDataPinsNext) const;
 
 	void HarvestFlowPinMetadataForProperty(const FProperty* Property, FFlowHarvestDataPinsWorkingData& InOutData);
 #endif

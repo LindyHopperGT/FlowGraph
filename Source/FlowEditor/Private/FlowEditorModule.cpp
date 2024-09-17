@@ -203,6 +203,8 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 	    RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
 		RegisterCustomStructLayout(*FFlowOwnerFunctionRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowOwnerFunctionRefCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowActorOwnerComponentRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowActorOwnerComponentRefCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
+
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_BoolCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_Int64Customization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Int32::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_Int32Customization::MakeInstance));
@@ -212,8 +214,16 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_StringCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_TextCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_EnumCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_GameplayTag::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_GameplayTagCustomization::MakeInstance));
-		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
+
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_BoolCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_Int64Customization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Int32::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_Int32Customization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Double::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_DoubleCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Float::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_FloatCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Name::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_NameCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_StringCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_TextCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_EnumCustomization::MakeInstance));
 
 		// Consider implementing details customizations... for every EFlowPinType
 		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);

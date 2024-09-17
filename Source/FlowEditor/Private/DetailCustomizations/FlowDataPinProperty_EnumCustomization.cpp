@@ -7,9 +7,9 @@
 #include "IDetailChildrenBuilder.h"
 #include "UObject/UnrealType.h"
 
-// FFlowDataPinOutputProperty_EnumCustomization Implementation
+// FFlowDataPinProperty_EnumCustomizationBase Implementation
 
-void FFlowDataPinOutputProperty_EnumCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
+void FFlowDataPinProperty_EnumCustomizationBase::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	if (TSharedPtr<IPropertyHandle> EnumClassHandle = InStructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinOutputProperty_Enum, EnumClass)))
 	{
@@ -20,11 +20,11 @@ void FFlowDataPinOutputProperty_EnumCustomization::CustomizeChildren(TSharedRef<
 	{
 		StructBuilder.AddProperty(EnumNameHandle.ToSharedRef());
 
-		EnumNameHandle->SetOnPropertyValueChanged(FSimpleDelegate::CreateSP(this, &FFlowDataPinOutputProperty_EnumCustomization::OnEnumNameChanged));
+		EnumNameHandle->SetOnPropertyValueChanged(FSimpleDelegate::CreateSP(this, &FFlowDataPinProperty_EnumCustomizationBase::OnEnumNameChanged));
 	}
 }
 
-TSharedPtr<IPropertyHandle> FFlowDataPinOutputProperty_EnumCustomization::GetCuratedNamePropertyHandle() const
+TSharedPtr<IPropertyHandle> FFlowDataPinProperty_EnumCustomizationBase::GetCuratedNamePropertyHandle() const
 {
 	check(StructPropertyHandle->IsValidHandle());
 
@@ -34,7 +34,7 @@ TSharedPtr<IPropertyHandle> FFlowDataPinOutputProperty_EnumCustomization::GetCur
 	return FoundHandle;
 }
 
-TArray<FName> FFlowDataPinOutputProperty_EnumCustomization::GetCuratedNameOptions() const
+TArray<FName> FFlowDataPinProperty_EnumCustomizationBase::GetCuratedNameOptions() const
 {
 	TArray<FName> Results;
 
@@ -48,7 +48,7 @@ TArray<FName> FFlowDataPinOutputProperty_EnumCustomization::GetCuratedNameOption
 	return Results;
 }
 
-TArray<FName> FFlowDataPinOutputProperty_EnumCustomization::GetEnumValues(const UEnum& Enum)
+TArray<FName> FFlowDataPinProperty_EnumCustomizationBase::GetEnumValues(const UEnum& Enum)
 {
 	TArray<FName> EnumValues;
 
@@ -69,7 +69,7 @@ TArray<FName> FFlowDataPinOutputProperty_EnumCustomization::GetEnumValues(const 
 	return EnumValues;
 }
 
-void FFlowDataPinOutputProperty_EnumCustomization::SetCuratedName(const FName& NewValue)
+void FFlowDataPinProperty_EnumCustomizationBase::SetCuratedName(const FName& NewValue)
 {
 	TSharedPtr<IPropertyHandle> ValueHandle = StructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinOutputProperty_Enum, Value));
 
@@ -78,7 +78,7 @@ void FFlowDataPinOutputProperty_EnumCustomization::SetCuratedName(const FName& N
 	ValueHandle->SetPerObjectValue(0, NewValue.ToString());
 }
 
-bool FFlowDataPinOutputProperty_EnumCustomization::TryGetCuratedName(FName& OutName) const
+bool FFlowDataPinProperty_EnumCustomizationBase::TryGetCuratedName(FName& OutName) const
 {
 	if (const FFlowDataPinOutputProperty_Enum* ConfigurableEnumProperty = GetFlowDataPinEnumProperty())
 	{
@@ -92,7 +92,7 @@ bool FFlowDataPinOutputProperty_EnumCustomization::TryGetCuratedName(FName& OutN
 	}
 }
 
-void FFlowDataPinOutputProperty_EnumCustomization::OnEnumNameChanged()
+void FFlowDataPinProperty_EnumCustomizationBase::OnEnumNameChanged()
 {
 	if (FFlowDataPinOutputProperty_Enum* FlowDataPinEnumProperty = GetFlowDataPinEnumProperty())
 	{
@@ -100,7 +100,7 @@ void FFlowDataPinOutputProperty_EnumCustomization::OnEnumNameChanged()
 	}
 }
 
-const UEnum* FFlowDataPinOutputProperty_EnumCustomization::GetEnumClass() const
+const UEnum* FFlowDataPinProperty_EnumCustomizationBase::GetEnumClass() const
 {
 	if (const FFlowDataPinOutputProperty_Enum* FlowDataPinEnumProperty = GetFlowDataPinEnumProperty())
 	{

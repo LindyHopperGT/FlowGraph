@@ -10,6 +10,8 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_Timer"
 
+FName UFlowNode_Timer::INPIN_CompletionTime = FName("Completion Time");
+
 UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, CompletionTime(1.0f)
@@ -103,7 +105,7 @@ void UFlowNode_Timer::Restart()
 float UFlowNode_Timer::ResolveCompletionTime() const
 {
 	// Get the CompletionTime from either the default (property) or the data pin (if connected)
-	const FFlowDataPinResult_Float CompletionTimeResult = TryResolveDataPinAsFloat(GET_MEMBER_NAME_CHECKED(UFlowNode_Timer, CompletionTime));
+	const FFlowDataPinResult_Float CompletionTimeResult = TryResolveDataPinAsFloat(INPIN_CompletionTime);
 	check(CompletionTimeResult.Result == EFlowDataPinResolveResult::Success);
 
 	return static_cast<float>(CompletionTimeResult.Value);
@@ -182,7 +184,7 @@ void UFlowNode_Timer::OnLoad_Implementation()
 void UFlowNode_Timer::UpdateNodeConfigText_Implementation()
 {
 	constexpr bool bErrorIfInputPinNotFound = false;
-	const bool bIsInputConnected = IsInputConnected(GET_MEMBER_NAME_CHECKED(UFlowNode_Timer, CompletionTime), bErrorIfInputPinNotFound);
+	const bool bIsInputConnected = IsInputConnected(INPIN_CompletionTime);
 
 	if (bIsInputConnected)
 	{

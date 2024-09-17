@@ -327,76 +327,110 @@ USTRUCT(BlueprintType, DisplayName = "Bool - Input Flow Data Pin Property", meta
 struct FFlowDataPinInputProperty_Bool : public FFlowDataPinOutputProperty_Bool
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Bool(bool InValue = false) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Int64 - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Int"))
 struct FFlowDataPinInputProperty_Int64 : public FFlowDataPinOutputProperty_Int64
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Int64(int64 InValue = 0) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Int - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Int"))
 struct FFlowDataPinInputProperty_Int32 : public FFlowDataPinOutputProperty_Int32
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Int32(int32 InValue = 0) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Double (float64) - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Float"))
 struct FFlowDataPinInputProperty_Double : public FFlowDataPinOutputProperty_Double
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Double(double InValue = 0.0) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Float - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Float"))
 struct FFlowDataPinInputProperty_Float : public FFlowDataPinOutputProperty_Float
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Float(float InValue = 0.0f) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Name - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Name"))
 struct FFlowDataPinInputProperty_Name : public FFlowDataPinOutputProperty_Name
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Name() : Super() { }
+	FFlowDataPinInputProperty_Name(const FName& InValue) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "String - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "String"))
 struct FFlowDataPinInputProperty_String : public FFlowDataPinOutputProperty_String
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_String() : Super() { }
+	FFlowDataPinInputProperty_String(const FString& InValue) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Text - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Text"))
 struct FFlowDataPinInputProperty_Text : public FFlowDataPinOutputProperty_Text
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Text() : Super() { }
+	FFlowDataPinInputProperty_Text(const FText& InValue) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Enum - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Enum"))
 struct FFlowDataPinInputProperty_Enum : public FFlowDataPinOutputProperty_Enum
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Enum() : Super() { }
+	FFlowDataPinInputProperty_Enum(const FName& InValue, UEnum* InEnumClass) : Super(InValue, InEnumClass) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Vector - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Vector"))
 struct FFlowDataPinInputProperty_Vector : public FFlowDataPinOutputProperty_Vector
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Vector() : Super() { }
+	FFlowDataPinInputProperty_Vector(const FVector& InValue) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Transform - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Transform"))
 struct FFlowDataPinInputProperty_Transform : public FFlowDataPinOutputProperty_Transform
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Transform() : Super() { }
+	FFlowDataPinInputProperty_Transform(const FTransform& InValue) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "GameplayTag - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "GameplayTag"))
 struct FFlowDataPinInputProperty_GameplayTag : public FFlowDataPinOutputProperty_GameplayTag
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_GameplayTag() : Super() { }
+	FFlowDataPinInputProperty_GameplayTag(const FGameplayTag& InValue) : Super(InValue) { }
 };
 
 USTRUCT(BlueprintType, DisplayName = "GameplayTagContainer - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "GameplayTagContainer"))
 struct FFlowDataPinInputProperty_GameplayTagContainer : public FFlowDataPinOutputProperty_GameplayTagContainer
 {
 	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_GameplayTagContainer() : Super() { }
+	FFlowDataPinInputProperty_GameplayTagContainer(const FGameplayTagContainer& InValue) : Super(InValue) { }
 };
