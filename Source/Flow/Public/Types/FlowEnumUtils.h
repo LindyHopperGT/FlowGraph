@@ -122,5 +122,8 @@ namespace FlowEnum
 * // Defines iteration over EMyEnum to be: First, Second, Third
 * ENUM_RANGE_VALUES(EMyEnum)
 */
-#define FLOW_ENUM_RANGE_VALUES(EnumType) ENUM_RANGE_VALUES_WITH_MIN_AND_MAX(EnumType, EnumType::Min, EnumType::Max)
-
+#define FLOW_ENUM_RANGE_VALUES(EnumType) \
+	ENUM_RANGE_BY_FIRST_AND_LAST(EnumType, static_cast<int64>(EnumType::Min), static_cast<int64>(EnumType::Max) - 1) \
+	FLOW_ENUM_STATIC_CAST_MIN_AND_MAX(EnumType, EnumType::Min, EnumType::Max) \
+	FLOW_ENUM_STATIC_CAST_TO_INT(EnumType) \
+	FLOW_ENUM_RANGE_UTILITY_FUNCTIONS(EnumType)

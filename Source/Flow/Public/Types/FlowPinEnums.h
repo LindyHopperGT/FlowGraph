@@ -63,10 +63,7 @@ enum class EFlowPinType : uint8
 	Invalid UMETA(Hidden),
 	Min = 0 UMETA(Hidden),
 };
-ENUM_RANGE_BY_FIRST_AND_LAST(EFlowPinType, static_cast<int64>(EFlowPinType::Min), static_cast<int64>(EFlowPinType::Max) - 1)
-FLOW_ENUM_STATIC_CAST_MIN_AND_MAX(EFlowPinType, EFlowPinType::Min, EFlowPinType::Max)
-FLOW_ENUM_STATIC_CAST_TO_INT(EFlowPinType)
-FLOW_ENUM_RANGE_UTILITY_FUNCTIONS(EFlowPinType)
+FLOW_ENUM_RANGE_VALUES(EFlowPinType)
 
 // Result enum for TryResolveDataPinAs...() functions
 UENUM(BlueprintType)
