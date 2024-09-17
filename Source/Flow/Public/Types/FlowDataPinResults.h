@@ -25,7 +25,7 @@ public:
 };
 
 // Recommend implementing FFlowDataPinResult... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Bool)")
 struct FFlowDataPinResult_Bool : public FFlowDataPinResult

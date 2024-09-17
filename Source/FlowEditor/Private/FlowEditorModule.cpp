@@ -216,7 +216,7 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
 
 		// Consider implementing details customizations... for every EFlowPinType
-		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}

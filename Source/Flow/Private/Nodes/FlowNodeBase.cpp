@@ -772,7 +772,7 @@ EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinPrerequisites(const FN
 }
 
 // Must implement TryResolveDataPinAs...() for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 template <typename TFlowDataPinResultType, EFlowPinType PinType>
 bool TResolveDataPinWorkingData<TFlowDataPinResultType, PinType>::TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase)

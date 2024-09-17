@@ -678,7 +678,7 @@ bool UFlowNode::FindConnectedNodeForPinSlow(const FName& PinName, FGuid* OutGuid
 }
 
 // Must implement TrySupplyDataPinAs... for every EFlowPinType 
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 FFlowDataPinResult_Bool UFlowNode::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
 {

@@ -45,7 +45,7 @@ bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) co
 #endif // WITH_EDITOR
 
 // Must implement TrySupplyDataPinAs... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 FFlowDataPinResult_Bool UFlowNode_Start::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
 {

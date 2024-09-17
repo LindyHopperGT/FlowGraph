@@ -7,7 +7,7 @@
 #include "Types/FlowDataPinProperties.h"
 
 // Consider implementing details customization... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Bool> FFlowDataPinOutputProperty_BoolCustomization;
 typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Int64> FFlowDataPinOutputProperty_Int64Customization;

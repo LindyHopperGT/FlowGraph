@@ -16,7 +16,7 @@ class UFlowDataPinBlueprintLibrary : public UBlueprintFunctionLibrary
 public:
 
 	// Recommend implementing AutoConvert_FlowDataPinProperty... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// FFlowDataPinProperty auto-cast functions
 
@@ -104,7 +104,7 @@ public:
 	static FGameplayTagContainer AutoConvert_FlowDataPinPropertyGameplayTagContainerToGameplayTagContainer(const FFlowDataPinOutputProperty_GameplayTagContainer& GameplayTagContainerProperty) { return GameplayTagContainerProperty.Value; }
 
 	// Recommend implementing AutoConvert_FlowDataPinResult... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// FFlowDataPinResults auto-cast functions
 

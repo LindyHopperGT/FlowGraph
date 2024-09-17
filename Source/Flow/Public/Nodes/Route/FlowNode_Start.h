@@ -41,7 +41,7 @@ public:
 	// --
 
 	// Must implement TrySupplyDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// IFlowDataPinValueSupplierInterface
 	virtual FFlowDataPinResult_Bool TrySupplyDataPinAsBool_Implementation(const FName& PinName) const override;

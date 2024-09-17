@@ -41,6 +41,7 @@ protected:
 	TWeakObjectPtr<UObject> PinSubCategoryObject;
 
 #if WITH_EDITORONLY_DATA
+#if 0 // TODO (gtaylor) Finish Class/Object support
 	// Filter for limiting the compatible classes for this data pin.
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
 	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Class", EditConditionHides))
@@ -50,6 +51,7 @@ protected:
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
 	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Object", EditConditionHides))
 	TSubclassOf<UObject> SubCategoryObjectFilter;
+#endif
 
 	// Configuration option for setting the EnumClass to a Blueprint Enum 
 	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).

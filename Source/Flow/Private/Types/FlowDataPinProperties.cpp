@@ -16,7 +16,7 @@ FFlowPin FFlowNamedDataPinOutputProperty::CreateFlowPin() const
 
 	const EFlowPinType FlowPinType = Property->GetFlowPinType();
 
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	switch (FlowPinType)
 	{

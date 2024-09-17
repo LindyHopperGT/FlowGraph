@@ -23,7 +23,7 @@ struct FFlowDataPinProperty
 };
 
 // Recommend implementing FFlowDataPinProperty... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 // Wrapper struct for a bool that will generate and link to a Data Pin with its same name
 USTRUCT(BlueprintType, DisplayName = "Bool - Output Flow Data Pin Property", meta = (FlowPinType = "Bool"))

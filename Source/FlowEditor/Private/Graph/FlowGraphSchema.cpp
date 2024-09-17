@@ -315,7 +315,7 @@ bool UFlowGraphSchema::ArePinCategoriesEffectivelyMatching(const FName& InputPin
 	}
 
 	// Must handle pin connectivity for all added EFlowPinTypes
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// We could extend the compatibility here to accept more implicit conversions (eg, null objects convertible to bools)
 	// but we'd need to also add support the conversion in the Supply/Resolve side as well.

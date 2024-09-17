@@ -29,7 +29,7 @@ public:
 	virtual bool CanSupplyDataPinValues_Implementation() const { return false; }
 
 	// Must implement TrySupplyDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// Try to supply the value for a data Bool pin
 	UFUNCTION(BlueprintNativeEvent, Category = "FlowNode", DisplayName = "Try Supply DataPin As Bool")

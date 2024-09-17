@@ -192,7 +192,7 @@ void FFlowPin::SetPinType(EFlowPinType InFlowPinType, UObject* SubCategoryObject
 
 void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// Set the PinSubCategoryObject based on the PinType (if appropriate)
 	switch (PinType)
@@ -242,7 +242,7 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 
 const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	switch (FlowPinType)
 	{
@@ -276,6 +276,7 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 	case EFlowPinType::GameplayTagContainer:
 		return FFlowPin::PC_Struct;
 
+#if 0 // TODO (gtaylor) Finish Class/Object support
 	case EFlowPinType::Object:
 		return FFlowPin::PC_Object;
 
@@ -287,6 +288,7 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 
 	case EFlowPinType::SoftClass:
 		return FFlowPin::PC_SoftClass;
+#endif
 
 	default:
 		{
@@ -300,10 +302,11 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
 {
 	// PinTypes with PinSubCategoryObjects will need to update thif function
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
 
+#if 0 // TODO (gtaylor) Finish Class/Object support
 	if (PinType == EFlowPinType::Class)
 	{
 		PinSubCategoryObject = SubCategoryClassFilter;
@@ -312,7 +315,9 @@ void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
 	{
 		PinSubCategoryObject = SubCategoryObjectFilter;
 	}
-	else if (PinType == EFlowPinType::Enum)
+	else 
+#endif
+	if (PinType == EFlowPinType::Enum)
 	{
 		if (!SubCategoryEnumName.IsEmpty())
 		{

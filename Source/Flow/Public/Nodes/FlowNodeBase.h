@@ -204,7 +204,7 @@ public:
 // Data Pins
 
 	// Must implement TryResolveDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Bool")
 	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;

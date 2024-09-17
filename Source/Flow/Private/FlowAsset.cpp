@@ -651,7 +651,7 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(const FString& MetadataVa
 			// Some of the FlowPinTypes require a SubCategoryObject to fully define the type, so
 			// we need to find that for the cases that it applies to.
 
-			FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+			FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
  
 			FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinDisplayName));
 			switch (PinType)
