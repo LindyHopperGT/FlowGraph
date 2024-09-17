@@ -424,40 +424,34 @@ bool UFlowNode::TryGetFlowDataPinSupplierDatasForPinName(
 	FFlowPinValueSupplierData ConnectedPinValueSupplier;
 	FGuid ConnectedNodeGuid;
 
-	if (!FindConnectedNodeForPinFast(PinName, &ConnectedNodeGuid, &ConnectedPinValueSupplier.SupplierPinName))
+	if (FindConnectedNodeForPinFast(PinName, &ConnectedNodeGuid, &ConnectedPinValueSupplier.SupplierPinName))
 	{
-		// Node is not connected
-
-		return false;
-	}
-
-	if (const UFlowAsset* FlowAsset = GetFlowAsset())
-	{
-		const UFlowNode* SupplierFlowNode = FlowAsset->GetNode(ConnectedNodeGuid);
-
-		// If the connected node can supply data pin values, insert it into the top of the priority queue
-		const IFlowDataPinValueSupplierInterface* SupplierFlowNodeAsInterface = Cast<IFlowDataPinValueSupplierInterface>(SupplierFlowNode);
-		if (SupplierFlowNodeAsInterface && IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(SupplierFlowNode))
+		if (const UFlowAsset* FlowAsset = GetFlowAsset())
 		{
-			ConnectedPinValueSupplier.PinValueSupplier = SupplierFlowNodeAsInterface;
+			const UFlowNode* SupplierFlowNode = FlowAsset->GetNode(ConnectedNodeGuid);
 
-			InOutPinValueSupplierDatas.Insert(ConnectedPinValueSupplier, 0);
-		}
-
-		// Exception case for nodes with external suppliers, recurse here to crawl further 
-		// to the external supplier's connected pin as our most preferred source (see block comment above).
-		if (const IFlowNodeWithExternalDataPinSupplierInterface* HasExternalPinSupplierInterface = Cast<IFlowNodeWithExternalDataPinSupplierInterface>(SupplierFlowNode))
-		{
-			if (const UFlowNode* ExternalDataPinSupplierFlowNode = Cast<UFlowNode>(HasExternalPinSupplierInterface->GetExternalDataPinSupplier()))
+			// If the connected node can supply data pin values, insert it into the top of the priority queue
+			const IFlowDataPinValueSupplierInterface* SupplierFlowNodeAsInterface = Cast<IFlowDataPinValueSupplierInterface>(SupplierFlowNode);
+			if (SupplierFlowNodeAsInterface && IFlowDataPinValueSupplierInterface::Execute_CanSupplyDataPinValues(SupplierFlowNode))
 			{
-				return ExternalDataPinSupplierFlowNode->TryGetFlowDataPinSupplierDatasForPinName(ConnectedPinValueSupplier.SupplierPinName, InOutPinValueSupplierDatas);
+				ConnectedPinValueSupplier.PinValueSupplier = SupplierFlowNodeAsInterface;
+
+				InOutPinValueSupplierDatas.Insert(ConnectedPinValueSupplier, 0);
+			}
+
+			// Exception case for nodes with external suppliers, recurse here to crawl further 
+			// to the external supplier's connected pin as our most preferred source (see block comment above).
+			if (const IFlowNodeWithExternalDataPinSupplierInterface* HasExternalPinSupplierInterface = Cast<IFlowNodeWithExternalDataPinSupplierInterface>(SupplierFlowNode))
+			{
+				if (const UFlowNode* ExternalDataPinSupplierFlowNode = Cast<UFlowNode>(HasExternalPinSupplierInterface->GetExternalDataPinSupplier()))
+				{
+					return ExternalDataPinSupplierFlowNode->TryGetFlowDataPinSupplierDatasForPinName(ConnectedPinValueSupplier.SupplierPinName, InOutPinValueSupplierDatas);
+				}
 			}
 		}
-
-		return true;
 	}
 
-	return false;
+	return !InOutPinValueSupplierDatas.IsEmpty();
 }
 
 bool UFlowNode::TryFindPropertyByPinName(
