@@ -525,7 +525,7 @@ const FPinConnectionResponse UFlowGraphSchema::DetermineConnectionResponseOfComp
 	// Break existing connections on inputs for Data Pins
 	if (FFlowPin::IsDataPinCategory(InputPin->PinType.PinCategory) && InputPin->LinkedTo.Num() > 0)
 	{
-		const ECanCreateConnectionResponse ReplyBreakInputs = (OutputPin == PinA ? CONNECT_RESPONSE_BREAK_OTHERS_A : CONNECT_RESPONSE_BREAK_OTHERS_B);
+		const ECanCreateConnectionResponse ReplyBreakInputs = (InputPin == PinA ? CONNECT_RESPONSE_BREAK_OTHERS_A : CONNECT_RESPONSE_BREAK_OTHERS_B);
 		return FPinConnectionResponse(ReplyBreakInputs, TEXT("Replace existing data connection"));
 	}
 
