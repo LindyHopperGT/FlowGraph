@@ -37,6 +37,7 @@ UFlowGraphNode::UFlowGraphNode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, NodeInstance(nullptr)
 	, bBlueprintCompilationPending(false)
+	, bIsReconstructingNode(false)
 	, bNeedsFullReconstruction(false)
 {
 	OrphanedPinSaveMode = ESaveOrphanPinMode::SaveAll;
@@ -184,6 +185,11 @@ void UFlowGraphNode::SubscribeToExternalChanges()
 
 void UFlowGraphNode::OnExternalChange()
 {
+	if (bIsReconstructingNode)
+	{
+		return;
+	}
+
 	// Do not create transaction here, since this function triggers from modifying UFlowNode's property, which itself already made inside of transaction.
 	Modify();
 
@@ -276,6 +282,13 @@ void UFlowGraphNode::InsertNewNode(UEdGraphPin* FromPin, UEdGraphPin* NewLinkPin
 
 void UFlowGraphNode::ReconstructNode()
 {
+	if (bIsReconstructingNode)
+	{
+		return;
+	}
+
+	bIsReconstructingNode = true;
+
 	// Store old pins
 	TArray<UEdGraphPin*> OldPins(Pins);
 
@@ -301,6 +314,7 @@ void UFlowGraphNode::ReconstructNode()
 	}
 
 	bNeedsFullReconstruction = false;
+	bIsReconstructingNode = false;
 }
 
 void UFlowGraphNode::AllocateDefaultPins()
@@ -774,7 +788,12 @@ void UFlowGraphNode::CreateInputPin(const FFlowPin& FlowPin, const int32 Index /
 		return;
 	}
 
-	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	const FName PinCategory = GetPinCategoryFromFlowPin(FlowPin);
+	const FName PinSubCategory = NAME_None;
+	UObject* PinSubCategoryObject = FlowPin.GetPinSubCategoryObject().Get();
+	constexpr bool bIsReference = false;
+
+	const FEdGraphPinType PinType = FEdGraphPinType(PinCategory, PinSubCategory, PinSubCategoryObject, EPinContainerType::None, bIsReference, FEdGraphTerminalType());
 	UEdGraphPin* NewPin = CreatePin(EGPD_Input, PinType, FlowPin.PinName, Index);
 	check(NewPin);
 
@@ -796,7 +815,12 @@ void UFlowGraphNode::CreateOutputPin(const FFlowPin& FlowPin, const int32 Index 
 		return;
 	}
 
-	const FEdGraphPinType PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Exec, FName(NAME_None), nullptr, EPinContainerType::None, false, FEdGraphTerminalType());
+	const FName PinCategory = GetPinCategoryFromFlowPin(FlowPin);
+	const FName PinSubCategory = NAME_None;
+	UObject* PinSubCategoryObject = FlowPin.GetPinSubCategoryObject().Get();
+	constexpr bool bIsReference = false;
+
+	const FEdGraphPinType PinType = FEdGraphPinType(PinCategory, PinSubCategory, PinSubCategoryObject, EPinContainerType::None, bIsReference, FEdGraphTerminalType());
 	UEdGraphPin* NewPin = CreatePin(EGPD_Output, PinType, FlowPin.PinName, Index);
 	check(NewPin);
 
@@ -1031,6 +1055,11 @@ void UFlowGraphNode::GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextO
 	}
 }
 
+const FName& UFlowGraphNode::GetPinCategoryFromFlowPin(const FFlowPin& FlowPin) const
+{
+	return FFlowPin::GetPinCategoryFromPinType(FlowPin.GetPinType());
+}
+
 void UFlowGraphNode::OnInputTriggered(const int32 Index)
 {
 	if (InputPins.IsValidIndex(Index) && PinBreakpoints.Contains(InputPins[Index]))
@@ -1176,7 +1205,7 @@ void UFlowGraphNode::PostEditUndo()
 	}
 }
 
-void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase)  const
+void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const
 {
 	if (UFlowGraph* FlowGraph = GetFlowGraph())
 	{

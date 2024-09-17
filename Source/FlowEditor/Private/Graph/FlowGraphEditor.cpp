@@ -2,9 +2,11 @@
 
 #include "Graph/FlowGraphEditor.h"
 
+#include "FlowEditorCommands.h"
+#include "FlowEditorModule.h"
+
 #include "Asset/FlowAssetEditor.h"
 #include "Asset/FlowDebuggerSubsystem.h"
-#include "FlowEditorCommands.h"
 #include "Graph/FlowGraphEditorSettings.h"
 #include "Graph/FlowGraphSchema_Actions.h"
 #include "Graph/Nodes/FlowGraphNode.h"
@@ -644,11 +646,14 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 	FlowGraph->LockUpdates();
 
 	UFlowGraphNode* SelectedParent = nullptr;
+	bool bHasMultipleNodesSelected = false;
 
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
 	{
-		if (UFlowGraphNode* Node = Cast<UFlowGraphNode>(*SelectedIter))
+		UFlowGraphNode* Node = Cast<UFlowGraphNode>(*SelectedIter);
+
+		if (Node)
 		{
 			if (SelectedParent == nullptr)
 			{
@@ -656,6 +661,8 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 			}
 			else
 			{
+				bHasMultipleNodesSelected = true;
+
 				break;
 			}
 		}
@@ -698,6 +705,8 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 		AvgNodePosition.Y *= InvNumNodes;
 	}
 
+	bool bPastedParentNode = false;
+
 	TMap<int32, UFlowGraphNode*> EdNodeCopyIndexMap;
 	for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
 	{
@@ -708,6 +717,8 @@ void SFlowGraphEditor::PasteNodesHere(const FVector2D& Location)
 
 		if (PasteNode && (PasteFlowGraphNode == nullptr || !PasteFlowGraphNode->IsSubNode()))
 		{
+			bPastedParentNode = true;
+
 			// Select the newly pasted stuff
 			constexpr bool bSelectNodes = true;
 			SetNodeSelection(PasteNode, bSelectNodes);

@@ -1,0 +1,25 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
+#pragma once
+
+#include "FlowDataPinPropertyCustomizationBase.h"
+
+#include "Types/FlowDataPinProperties.h"
+
+// Consider implementing details customization... for every EFlowPinType
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Bool> FFlowDataPinOutputProperty_BoolCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Int64> FFlowDataPinOutputProperty_Int64Customization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Int32> FFlowDataPinOutputProperty_Int32Customization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Double> FFlowDataPinOutputProperty_DoubleCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Float> FFlowDataPinOutputProperty_FloatCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Name> FFlowDataPinOutputProperty_NameCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_String> FFlowDataPinOutputProperty_StringCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Text> FFlowDataPinOutputProperty_TextCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Vector> FFlowDataPinOutputProperty_VectorCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_Transform> FFlowDataPinOutputProperty_TransformCustomization;
+typedef TFlowDataPinPropertyCustomization<FFlowDataPinOutputProperty_GameplayTag> FFlowDataPinOutputProperty_GameplayTagCustomization;
+
+// NOTE (gtaylor) Enum is defined separately, because it's quite a bit more complex
+// NOTE (gtaylor) BaseStruct types like FVector don't customize well using this technique, so I am leaving their default details handler in-place

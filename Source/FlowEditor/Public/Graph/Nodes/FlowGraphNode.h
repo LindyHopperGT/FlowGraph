@@ -34,6 +34,7 @@ private:
 	UFlowNodeBase* NodeInstance;
 
 	bool bBlueprintCompilationPending;
+	bool bIsReconstructingNode;
 	bool bNeedsFullReconstruction;
 	static bool bFlowAssetsLoaded;
 
@@ -183,6 +184,14 @@ public:
 	// UEdGraphNode
 	virtual void GetPinHoverText(const UEdGraphPin& Pin, FString& HoverTextOut) const override;
 	// --
+
+	// @return true, if pins cannot be connected due to node's inner logic, put message for user in OutReason
+	virtual bool IsConnectionDisallowed(const UEdGraphPin* MyPin, const UEdGraphPin* OtherPin, FString& OutReason) const { return false; }
+
+protected:
+	// Gets the PinCategory from the FlowPin
+	// (accounting for FFlowPin structs that predate the PinCategory field)
+	const FName& GetPinCategoryFromFlowPin(const FFlowPin& FlowPin) const;
 
 //////////////////////////////////////////////////////////////////////////
 // Breakpoints

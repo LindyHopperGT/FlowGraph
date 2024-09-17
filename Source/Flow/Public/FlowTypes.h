@@ -25,7 +25,10 @@ enum class EFlowNodeState : uint8
 	NeverActivated,
 	Active,
 	Completed,
-	Aborted
+	Aborted,
+
+	Max UMETA(Hidden),
+	Invalid UMETA(Hidden),
 };
 
 // Finish Policy value is read by Flow Node

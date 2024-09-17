@@ -107,7 +107,10 @@ void UFlowGraph::RefreshGraph()
 
 void UFlowGraph::NotifyGraphChanged()
 {
-	GetFlowAsset()->HarvestNodeConnections();
+	UFlowAsset* FlowAsset = GetFlowAsset();
+
+	FlowAsset->HarvestNodeConnections();
+	FlowAsset->HarvestFlowPinMetadata();
 
 	Super::NotifyGraphChanged();
 }

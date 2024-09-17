@@ -27,7 +27,7 @@ namespace
 			FlowGraphNode = Cast<UFlowGraphNode>(Difference.Result.Node2);
 		}
 
-		if (IsValid(FlowGraphNode))
+		if (IsValid(FlowGraphNode) && IsValid(FlowGraphNode->GetNodeTemplate()))
 		{
 			return FString::FromInt(FlowGraphNode->GetNodeTemplate()->GetUniqueID());//->GetName();
 		}
@@ -58,7 +58,7 @@ namespace
 			FlowGraphNode = Cast<UFlowGraphNode>(Difference.Result.Node2);
 		}
 
-		if (IsValid(FlowGraphNode))
+		if (IsValid(FlowGraphNode) && IsValid(FlowGraphNode->GetNodeTemplate()))
 		{
 			return FlowGraphNode->GetNodeTemplate()->GetName();
 		}
@@ -268,9 +268,11 @@ void FFlowGraphToDiff::GenerateTreeEntries(TArray<TSharedPtr<FBlueprintDifferenc
 			Children.Push(FlowNodeDiff->DiffTreeEntry);
 		}
 
-		//generate property diffs.
+		//find and generate  property diffs.
 		TArray<FSingleObjectDiffEntry> PropertyDiffsArray;
 		FlowNodeDiff->DiffProperties(PropertyDiffsArray);
+
+		//generate property diff tree entries.
 		for (const auto& PropertyDiffEntry : PropertyDiffsArray)
 		{
 			check(FlowNodeDiff.IsValid());

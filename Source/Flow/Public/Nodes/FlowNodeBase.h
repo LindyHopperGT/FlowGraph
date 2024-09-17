@@ -8,6 +8,7 @@
 #include "Interfaces/FlowContextPinSupplierInterface.h"
 #include "FlowMessageLog.h"
 #include "FlowTypes.h"
+#include "Types/FlowDataPinResults.h"
 
 #include "FlowNodeBase.generated.h"
 
@@ -17,6 +18,8 @@ class UFlowNodeAddOn;
 class UFlowSubsystem;
 class UEdGraphNode;
 class IFlowOwnerInterface;
+class IFlowDataPinValueSupplierInterface;
+struct FFlowPin;
 
 #if WITH_EDITOR
 DECLARE_DELEGATE(FFlowNodeEvent);
@@ -24,6 +27,28 @@ DECLARE_DELEGATE(FFlowNodeEvent);
 
 typedef TFunction<void(const UFlowNodeAddOn&)> FConstFlowNodeAddOnFunction;
 typedef TFunction<void(UFlowNodeAddOn&)> FFlowNodeAddOnFunction;
+
+// Supplier + PinName (in that supplier) for a Flow Data Pin value
+struct FFlowPinValueSupplierData
+{
+	FName SupplierPinName;
+	const IFlowDataPinValueSupplierInterface* PinValueSupplier = nullptr;
+};
+
+// Helper template to reduce (some) of the boilerplate in TryResolveDataPinAs...() functions
+template <typename TFlowDataPinResultType, EFlowPinType PinType>
+struct TResolveDataPinWorkingData
+{
+	bool TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase);
+
+	TFlowDataPinResultType DataPinResult;
+	const UFlowNode* FlowNode = nullptr;
+	const FFlowPin* FlowPin = nullptr;
+	
+	TArray<FFlowPinValueSupplierData> PinValueSupplierDatas;
+
+	static constexpr bool bCheckDefaultProperties = true;
+};
 
 /**
  * The base class for UFlowNode and UFlowNodeAddOn, with their shared functionality
@@ -89,6 +114,7 @@ public:
 
 public:
 	static const FFlowPin* FindFlowPinByName(const FName& PinName, const TArray<FFlowPin>& FlowPins);
+	static FFlowPin* FindFlowPinByName(const FName& PinName, TArray<FFlowPin>& FlowPins);
 	virtual bool IsSupportedInputPinName(const FName& PinName) const PURE_VIRTUAL(IsSupportedInputPinName, return true;);
 
 #if WITH_EDITOR
@@ -171,6 +197,52 @@ public:
 	}
 
 	void ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const;
+
+public:
+
+//////////////////////////////////////////////////////////////////////////
+// Data Pins
+
+	// Must implement TryResolveDataAs... for every EFlowPinType
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Bool")
+	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Int")
+	FFlowDataPinResult_Int TryResolveDataPinAsInt(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Float")
+	FFlowDataPinResult_Float TryResolveDataPinAsFloat(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Name")
+	FFlowDataPinResult_Name TryResolveDataPinAsName(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As String")
+	FFlowDataPinResult_String TryResolveDataPinAsString(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Text")
+	FFlowDataPinResult_Text TryResolveDataPinAsText(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Enum")
+	FFlowDataPinResult_Enum TryResolveDataPinAsEnum(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Vector")
+	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Transform")
+	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As GameplayTag")
+	FFlowDataPinResult_GameplayTag TryResolveDataPinAsGameplayTag(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As GameplayTagContainer")
+	FFlowDataPinResult_GameplayTagContainer TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const;
+
+	// Public only for for TResolveDataPinWorkingData's use
+	EFlowDataPinResolveResult TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const;
+
+public:
 
 //////////////////////////////////////////////////////////////////////////
 // Editor
@@ -283,6 +355,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogNote(FString Message) const;
+
+	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
+	void LogVerbose(FString Message) const;
 
 #if !UE_BUILD_SHIPPING
 protected:

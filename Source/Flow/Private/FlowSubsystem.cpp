@@ -82,7 +82,11 @@ void UFlowSubsystem::StartRootFlow(UObject* Owner, UFlowAsset* FlowAsset, const 
 	{
 		if (UFlowAsset* NewFlow = CreateRootFlow(Owner, FlowAsset, bAllowMultipleInstances))
 		{
-			NewFlow->StartFlow();
+			// TODO (gtaylor) In the future, we may want to provide a way to set a data pin value supplier
+			// for the root flow graph.
+			constexpr IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr;
+
+			NewFlow->StartFlow(DataPinValueSupplier);
 		}
 	}
 #if WITH_EDITOR
@@ -190,7 +194,7 @@ UFlowAsset* UFlowSubsystem::CreateSubFlow(UFlowNode_SubGraph* SubGraphNode, cons
 		// don't activate Start Node if we're loading Sub Graph from SaveGame
 		if (SavedInstanceName.IsEmpty())
 		{
-			AssetInstance->StartFlow();
+			AssetInstance->StartFlow(SubGraphNode);
 		}
 	}
 
@@ -226,6 +230,8 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	{
 		// Fix connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
 		LoadedFlowAsset->HarvestNodeConnections();
+
+		LoadedFlowAsset->HarvestFlowPinMetadata();
 	}
 #endif
 
