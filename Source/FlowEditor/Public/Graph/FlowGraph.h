@@ -9,6 +9,7 @@
 
 class SFlowGraphEditor;
 class UFlowGraphNode;
+class UFlowGraphSchema;
 
 class FLOWEDITOR_API FFlowGraphInterface : public IFlowGraphInterface
 {

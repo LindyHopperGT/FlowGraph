@@ -39,19 +39,19 @@ void UFlowComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	FDoRepLifetimeParams Params;
 	Params.bIsPushBased = true;
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, AddedIdentityTags, Params);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, RemovedIdentityTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, AddedIdentityTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, RemovedIdentityTags, Params);
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, RecentlySentNotifyTags, Params);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, NotifyTagsFromGraph, Params);
-	DOREPLIFETIME_WITH_PARAMS_FAST(UFlowComponent, NotifyTagsFromAnotherComponent, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, RecentlySentNotifyTags, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, NotifyTagsFromGraph, Params);
+	DOREPLIFETIME_WITH_PARAMS_FAST(ThisClass, NotifyTagsFromAnotherComponent, Params);
 #else
-	DOREPLIFETIME(UFlowComponent, AddedIdentityTags);
-	DOREPLIFETIME(UFlowComponent, RemovedIdentityTags);
+	DOREPLIFETIME(ThisClass, AddedIdentityTags);
+	DOREPLIFETIME(ThisClass, RemovedIdentityTags);
 
-	DOREPLIFETIME(UFlowComponent, RecentlySentNotifyTags);
-	DOREPLIFETIME(UFlowComponent, NotifyTagsFromGraph);
-	DOREPLIFETIME(UFlowComponent, NotifyTagsFromAnotherComponent);
+	DOREPLIFETIME(ThisClass, RecentlySentNotifyTags);
+	DOREPLIFETIME(ThisClass, NotifyTagsFromGraph);
+	DOREPLIFETIME(ThisClass, NotifyTagsFromAnotherComponent);
 #endif
 }
 
@@ -294,7 +294,7 @@ void UFlowComponent::NotifyGraph(const FGameplayTag NotifyTag, const EFlowNetMod
 {
 	if (IsFlowNetMode(NetMode) && NotifyTag.IsValid() && HasBegunPlay())
 	{
-		// save recently notify, this allow for the retroactive check in nodes
+		// save recently notify, this allows for the retroactive check in nodes
 		// if retroactive check wouldn't be performed, this is only used by the network replication
 		RecentlySentNotifyTags = FGameplayTagContainer(NotifyTag);
 #if WITH_PUSH_MODEL
@@ -323,7 +323,7 @@ void UFlowComponent::BulkNotifyGraph(const FGameplayTagContainer NotifyTags, con
 
 		if (ValidatedTags.Num() > 0)
 		{
-			// save recently notify, this allow for the retroactive check in nodes
+			// save recently notify, this allows for the retroactive check in nodes
 			// if retroactive check wouldn't be performed, this is only used by the network replication
 			RecentlySentNotifyTags = ValidatedTags;
 #if WITH_PUSH_MODEL

@@ -85,7 +85,7 @@ void UFlowAsset::PostLoad()
 	// If we removed or moved a flow node blueprint (and there is no redirector) we might loose the reference to it resulting
 	// in null pointers in the Nodes FGUID->UFlowNode* Map. So here we iterate over all the Nodes and remove all pairs that
 	// are nulled out.
-	
+
 	TSet<FGuid> NodesToRemoveGUID;
 
 	for (auto& [Guid, Node] : GetNodes())
@@ -112,14 +112,14 @@ EDataValidationResult UFlowAsset::ValidateAsset(FFlowMessageLog& MessageLog)
 			FText FailureReason;
 			if (!IsNodeOrAddOnClassAllowed(Node.Value->GetClass(), &FailureReason))
 			{
-				const FString ErrorMsg = 
-					FailureReason.IsEmpty() ?
-						FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()}) :
-						FailureReason.ToString();
+				const FString ErrorMsg =
+					FailureReason.IsEmpty()
+						? FString::Format(*ValidationError_NodeClassNotAllowed, {*Node.Value->GetClass()->GetName()})
+						: FailureReason.ToString();
 
 				MessageLog.Error(*ErrorMsg, Node.Value);
 			}
-			
+
 			Node.Value->ValidationLog.Messages.Empty();
 			if (Node.Value->ValidateNode() == EDataValidationResult::Invalid)
 			{
@@ -510,7 +510,7 @@ TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIterated
 		}
 	}
 	FoundNodes.Shrink();
-	
+
 	return FoundNodes;
 }
 
@@ -775,11 +775,23 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 			if (NodeOwningThisAssetInstance.IsValid())
 			{
 				NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+				return;
 			}
 			else
 			{
-				FinishFlow(EFlowFinishPolicy::Keep);
+				// if this instance is a Root Flow, we need to deregister it from the subsystem first
+				if (Owner.IsValid())
+				{
+					const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
+					if (RootFlowInstances.Contains(this))
+					{
+						GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+						return;
+					}
+				}
 			}
+
+			FinishFlow(EFlowFinishPolicy::Keep);
 		}
 	}
 }
