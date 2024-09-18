@@ -192,18 +192,18 @@ public:
 	void HarvestFlowPinMetadata();
 
 	template <typename TFlowDataPinPropertyType, typename TUnrealType>
-	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty* Property);
+	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty& Property);
 
 protected:
 	void AddDataPinPropertyBindingToMap(
-		const FName& PinDisplayName,
-		const FName& PropertyName,
+		const FName& PinAuthoredName,
+		const FName& PropertyAuthoredName,
 		FFlowHarvestDataPinsWorkingData& InOutData);
 	virtual bool TryCreateFlowDataPinFromMetadataValue(
 		const FString& MetadataValue,
-		UFlowNode* FlowNode,
-		const FProperty* Property,
-		const FName& PinDisplayName,
+		UFlowNode& FlowNode,
+		const FProperty& Property,
+		const FText& PinDisplayName,
 		const bool bIsInputPin,
 		TArray<FFlowPin>* InOutDataPinsNext) const;
 
@@ -474,10 +474,10 @@ public:
 
 #if WITH_EDITOR
 template <typename TFlowDataPinPropertyType, typename TUnrealType>
-UScriptStruct* UFlowAsset::FindScriptStructForFlowDataPinProperty(const FProperty* Property)
+UScriptStruct* UFlowAsset::FindScriptStructForFlowDataPinProperty(const FProperty& Property)
 {
 	// Find the ScriptStruct of the wrapped struct in a wrapper (eg, FFlowDataPinOutputProperty_Vector) or the struct itself (eg, FVector)
-	const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
+	const FStructProperty* StructProperty = CastField<FStructProperty>(&Property);
 	if (!StructProperty)
 	{
 		return nullptr;

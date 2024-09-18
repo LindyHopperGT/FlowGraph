@@ -485,7 +485,8 @@ void UFlowAsset::HarvestFlowPinMetadata()
 
 void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FFlowHarvestDataPinsWorkingData& InOutData)
 {
-	FName PinDisplayName = FName(Property->GetDisplayNameText().ToString());
+	FText PinDisplayName = Property->GetDisplayNameText();
+	const FName& PinAuthoredName = Property->GetFName();
 
 	// Default assumption is the pin is will be a output pin, if no metadata is specified (ie, bIsSourceForOutputPin == false),
 	// because this is the most common case (the auto-generated input-pin-from-property case is only for defaulting)
@@ -512,7 +513,7 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 		if (SpecifyOutputPinNameString.Len() > 0)
 		{
 			// Replace the default PinDisplayName with the name specified in the Metadata value
-			PinDisplayName = FName(SpecifyOutputPinNameString);
+			PinDisplayName = FText::FromString(SpecifyOutputPinNameString);
 		}
 	}
 	else if (DefaultForInputFlowPinName)
@@ -522,7 +523,7 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 		if (SpecifyInputPinNameString.Len() > 0)
 		{
 			// Replace the default PinDisplayName with the name specified in the Metadata value
-			PinDisplayName = FName(SpecifyInputPinNameString);
+			PinDisplayName = FText::FromString(SpecifyInputPinNameString);
 		}
 
 		// If the property is a Default Input for a data pin, then we need to generate the pin in the
@@ -550,7 +551,7 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 			const bool bIsInputPin = DefaultForInputFlowPinName != nullptr;
 
 			// Auto-generate the pin for this property
-			if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, InOutData.FlowNode, Property, PinDisplayName, bIsInputPin, FlowPinArray))
+			if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, *InOutData.FlowNode, *Property, PinDisplayName, bIsInputPin, FlowPinArray))
 			{
 				LogError(FString::Printf(TEXT("Error.  Unknown value %s for metadata %s"), **AutoPinType, *FFlowPin::MetadataKey_FlowPinType.ToString()), InOutData.FlowNode);
 
@@ -559,7 +560,7 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 
 			// Add a binding for the new pin to its property
 			AddDataPinPropertyBindingToMap(
-				PinDisplayName,
+				PinAuthoredName,
 				Property->GetFName(),
 				InOutData);
 
@@ -581,7 +582,7 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 		// Auto-generate the desired pin for this property
 		const bool bIsInputPin = DefaultForInputFlowPinName != nullptr;
 
-		if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, InOutData.FlowNode, Property, PinDisplayName, bIsInputPin, FlowPinArray))
+		if (!TryCreateFlowDataPinFromMetadataValue(*AutoPinType, *InOutData.FlowNode, *Property, PinDisplayName, bIsInputPin, FlowPinArray))
 		{
 			LogError(FString::Printf(TEXT("Unknown value %s for metadata %s"), **AutoPinType, *FFlowPin::MetadataKey_FlowPinType.ToString()), InOutData.FlowNode);
 
@@ -592,10 +593,10 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 	{
 		// Bind to the output data pin to source from the property (but do not auto-generate the pin)
 
-		FFlowPin* FoundFlowPin = InOutData.FlowNode->FindOutputPinByName(PinDisplayName);
+		FFlowPin* FoundFlowPin = InOutData.FlowNode->FindOutputPinByName(PinAuthoredName);
 		if (!FoundFlowPin)
 		{
-			LogError(FString::Printf(TEXT("Could not find bound data pin named %s for property %s"), *PinDisplayName.ToString(), *Property->GetName()), InOutData.FlowNode);
+			LogError(FString::Printf(TEXT("Could not find bound data pin named %s for property %s"), *PinAuthoredName.ToString(), *Property->GetName()), InOutData.FlowNode);
 
 			return;
 		}
@@ -604,10 +605,10 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 	{
 		// Bind to the input data pin to default its value from the property (but do not auto-generate the pin)
 
-		FFlowPin* FoundFlowPin = InOutData.FlowNode->FindInputPinByName(PinDisplayName);
+		FFlowPin* FoundFlowPin = InOutData.FlowNode->FindInputPinByName(PinAuthoredName);
 		if (!FoundFlowPin)
 		{
-			LogError(FString::Printf(TEXT("Could not find bound data pin named %s for property %s"), *PinDisplayName.ToString(), *Property->GetName()), InOutData.FlowNode);
+			LogError(FString::Printf(TEXT("Could not find bound data pin named %s for property %s"), *PinAuthoredName.ToString(), *Property->GetName()), InOutData.FlowNode);
 
 			return;
 		}
@@ -615,54 +616,50 @@ void UFlowAsset::HarvestFlowPinMetadataForProperty(const FProperty* Property, FF
 
 	// Add a binding for the data pin to its property
 	AddDataPinPropertyBindingToMap(
-		PinDisplayName,
+		PinAuthoredName,
 		Property->GetFName(),
 		InOutData);
 }
 
 void UFlowAsset::AddDataPinPropertyBindingToMap(
-	const FName& PinDisplayName,
-	const FName& PropertyName,
+	const FName& PinAuthoredName,
+	const FName& PropertyAuthoredName,
 	FFlowHarvestDataPinsWorkingData& InOutData)
 {
 	// Add a new entry in the map for this DataPin name to the property it sources from
-	InOutData.PinNameToBoundPropertyNameMapNext.Add(PinDisplayName, PropertyName);
-
-	if (const FName* PrevPropertyName = InOutData.PinNameToBoundPropertyNameMapPrev.Find(PinDisplayName))
-	{
-		// If any entry in the map changed value, then the map is dirty
-		InOutData.bPinNameMapChanged |= (*PrevPropertyName != PropertyName);
-	}
+	InOutData.PinNameToBoundPropertyNameMapNext.Add(PinAuthoredName, PropertyAuthoredName);
 }
 
 template <typename TEnumProperty, typename TVectorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty>
-void AddPinForPinType(EFlowPinType PinType, UFlowNode* FlowNode, const FProperty* Property, const FName& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext)
+void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty& Property, const FText& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext)
 {
+	const FName& PinAuthoredName = Property.GetFName();
+
 	// Some of the FlowPinTypes require a SubCategoryObject to fully define the type, so
 	// we need to find that for the cases that it applies to.
 
 	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
-	FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinDisplayName));
+	FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinAuthoredName, PinDisplayName));
 	switch (PinType)
 	{
 	case EFlowPinType::Enum:
 		{
 			UEnum* EnumClass = nullptr;
 
-			if (const FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+			if (const FStructProperty* StructProperty = CastField<FStructProperty>(&Property))
 			{
 				// Check for a wrapper struct to get the enum data from
 				const UStruct* ScriptStruct = TEnumProperty::StaticStruct();
 				if (StructProperty->Struct == ScriptStruct)
 				{
 					TEnumProperty ValueStruct;
-					StructProperty->GetValue_InContainer(FlowNode, &ValueStruct);
+					StructProperty->GetValue_InContainer(&FlowNode, &ValueStruct);
 
 					EnumClass = ValueStruct.EnumClass;
 				}
 			}
-			else if (const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property))
+			else if (const FEnumProperty* EnumProperty = CastField<FEnumProperty>(&Property))
 			{
 				// Get the enum data from the FEnumProperty
 				EnumClass = EnumProperty->GetEnum();
@@ -719,9 +716,9 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode* FlowNode, const FProperty
 
 bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 	const FString& MetadataValue,
-	UFlowNode* FlowNode,
-	const FProperty* Property,
-	const FName& PinDisplayName,
+	UFlowNode& FlowNode,
+	const FProperty& Property,
+	const FText& PinDisplayName,
 	const bool bIsInputPin,
 	TArray<FFlowPin>* InOutDataPinsNext) const
 {
@@ -733,7 +730,7 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 
 	for (EFlowPinType PinType : TEnumRange<EFlowPinType>())
 	{
-		const int32 PinTypeAsInt = static_cast<int32>(PinType);
+		const int32 PinTypeAsInt = FlowEnum::ToInt(PinType);
 		check(CachedEnumValueNames.IsValidIndex(PinTypeAsInt));
 		const FName& EnumValueAsName = CachedEnumValueNames[PinTypeAsInt];
 

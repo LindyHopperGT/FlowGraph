@@ -206,37 +206,37 @@ public:
 	// Must implement TryResolveDataAs... for every EFlowPinType
 	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Bool")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool")
 	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Int")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Int")
 	FFlowDataPinResult_Int TryResolveDataPinAsInt(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Float")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Float")
 	FFlowDataPinResult_Float TryResolveDataPinAsFloat(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Name")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Name")
 	FFlowDataPinResult_Name TryResolveDataPinAsName(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As String")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As String")
 	FFlowDataPinResult_String TryResolveDataPinAsString(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Text")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Text")
 	FFlowDataPinResult_Text TryResolveDataPinAsText(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Enum")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Enum")
 	FFlowDataPinResult_Enum TryResolveDataPinAsEnum(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Vector")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector")
 	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As Transform")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform")
 	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As GameplayTag")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTag")
 	FFlowDataPinResult_GameplayTag TryResolveDataPinAsGameplayTag(const FName& PinName) const;
 
-	UFUNCTION(BlueprintCallable, Category = "FlowNode", DisplayName = "Try Resolve DataPin As GameplayTagContainer")
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As GameplayTagContainer")
 	FFlowDataPinResult_GameplayTagContainer TryResolveDataPinAsGameplayTagContainer(const FName& PinName) const;
 
 	// Public only for for TResolveDataPinWorkingData's use

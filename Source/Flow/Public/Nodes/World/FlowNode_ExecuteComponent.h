@@ -6,6 +6,7 @@
 
 #include "Nodes/FlowNode.h"
 #include "Types/FlowInjectComponentsHelper.h"
+#include "Types/FlowEnumUtils.h"
 
 #include "FlowNode_ExecuteComponent.generated.h"
 
@@ -23,14 +24,17 @@ enum class EExecuteComponentSource : uint8
 	InjectFromClass,
 
 	Max UMETA(Hidden),
+	Invalid UMETA(Hidden),
+	Min = 0,
 
 	UsesInjectManagerFirst = InjectFromTemplate UMETA(Hidden),
 	UsesInjectManagerLast = InjectFromClass UMETA(Hidden),
 };
+FLOW_ENUM_RANGE_VALUES(EExecuteComponentSource)
 
 namespace EExecuteComponentSource_Classifiers
 {
-	FORCEINLINE bool DoesComponentSourceUseInjectManager(EExecuteComponentSource Source) { return Source >= EExecuteComponentSource::UsesInjectManagerFirst && Source <= EExecuteComponentSource::UsesInjectManagerLast; }
+	FORCEINLINE bool DoesComponentSourceUseInjectManager(EExecuteComponentSource Source) { return FLOW_IS_ENUM_IN_SUBRANGE(Source, EExecuteComponentSource::UsesInjectManager); }
 }
 
 /**

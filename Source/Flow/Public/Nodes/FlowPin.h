@@ -143,6 +143,19 @@ public:
 	{
 	}
 
+	FFlowPin(const FName& InPinName, const FText& InPinFriendlyName)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
+	{
+	}
+
+	FFlowPin(const FName& InPinName, const FText& InPinFriendlyName, EFlowPinType InFlowPinType, UObject* SubCategoryObject = nullptr)
+		: PinName(InPinName)
+		, PinFriendlyName(InPinFriendlyName)
+	{
+		SetPinType(InFlowPinType, SubCategoryObject);
+	}
+
 	FFlowPin(const FName& InPinName, EFlowPinType InFlowPinType, UObject* SubCategoryObject = nullptr)
 		: PinName(InPinName)
 	{

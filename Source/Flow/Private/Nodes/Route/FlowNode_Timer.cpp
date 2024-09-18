@@ -10,7 +10,7 @@
 
 #define LOCTEXT_NAMESPACE "FlowNode_Timer"
 
-FName UFlowNode_Timer::INPIN_CompletionTime = FName("Completion Time");
+FName UFlowNode_Timer::INPIN_CompletionTime;
 
 UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -33,6 +33,8 @@ UFlowNode_Timer::UFlowNode_Timer(const FObjectInitializer& ObjectInitializer)
 	OutputPins.Add(FFlowPin(TEXT("Completed")));
 	OutputPins.Add(FFlowPin(TEXT("Step")));
 	OutputPins.Add(FFlowPin(TEXT("Skipped")));
+
+	INPIN_CompletionTime = GET_MEMBER_NAME_CHECKED(UFlowNode_Timer, CompletionTime);
 }
 
 void UFlowNode_Timer::InitializeInstance()

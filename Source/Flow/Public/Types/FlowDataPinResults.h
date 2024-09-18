@@ -194,6 +194,7 @@ public:
 		const FName EnumValue = FName(DisplayValueText.ToString());
 
 		Value = EnumValue;
+		Result = EFlowDataPinResolveResult::Success;
 	}
 
 	template <typename TUnrealNativeEnumType, TUnrealNativeEnumType InvalidValue>

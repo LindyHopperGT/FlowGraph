@@ -387,7 +387,7 @@ EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowN
 		return EFlowAddOnAcceptResult::Reject;
 	}
 
-	static_assert(static_cast<__underlying_type(EFlowAddOnAcceptResult)>(EFlowAddOnAcceptResult::Max) == 3, "This code may need updating if the enum values change");
+	FLOW_ASSERT_ENUM_MAX(EFlowAddOnAcceptResult, 3);
 
 	EFlowAddOnAcceptResult CombinedResult = EFlowAddOnAcceptResult::Undetermined;
 

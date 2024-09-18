@@ -3,6 +3,8 @@
 #pragma once
 
 #include "GameplayTagContainer.h"
+#include "Types/FlowEnumUtils.h"
+
 #include "FlowTypes.generated.h"
 
 #if WITH_EDITORONLY_DATA
@@ -29,7 +31,9 @@ enum class EFlowNodeState : uint8
 
 	Max UMETA(Hidden),
 	Invalid UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
 };
+FLOW_ENUM_RANGE_VALUES(EFlowNodeState)
 
 // Finish Policy value is read by Flow Node
 // Nodes have opportunity to terminate themselves differently if Flow Graph has been aborted
@@ -114,11 +118,12 @@ enum class EFlowAddOnAcceptResult : uint8
 	Invalid UMETA(Hidden),
 	Min = Undetermined UMETA(Hidden),
 };
+FLOW_ENUM_RANGE_VALUES(EFlowAddOnAcceptResult)
 
 FORCEINLINE_DEBUGGABLE EFlowAddOnAcceptResult CombineFlowAddOnAcceptResult(EFlowAddOnAcceptResult Result0, EFlowAddOnAcceptResult Result1)
 {
-	const __underlying_type(EFlowAddOnAcceptResult) Result0AsInt = static_cast<__underlying_type(EFlowAddOnAcceptResult)>(Result0);
-	const __underlying_type(EFlowAddOnAcceptResult) Result1AsInt = static_cast<__underlying_type(EFlowAddOnAcceptResult)>(Result1);
+	const int64 Result0AsInt = FlowEnum::ToInt(Result0);
+	const int64 Result1AsInt = FlowEnum::ToInt(Result1);
 
 	// Prioritize the higher numerical value enum value
 	return static_cast<EFlowAddOnAcceptResult>(FMath::Max(Result0AsInt, Result1AsInt));
