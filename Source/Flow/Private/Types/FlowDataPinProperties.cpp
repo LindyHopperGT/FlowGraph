@@ -2,6 +2,8 @@
 
 #include "Types/FlowDataPinProperties.h"
 
+#define LOCTEXT_NAMESPACE "FlowDataPinProperties"
+
 FFlowPin FFlowNamedDataPinOutputProperty::CreateFlowPin() const
 {
 	FFlowPin FlowPin;
@@ -66,4 +68,14 @@ void FFlowDataPinOutputProperty_Enum::OnEnumNameChanged()
 		}
 	}
 }
+
+FText FFlowNamedDataPinOutputProperty::BuildHeaderText() const
+{
+	const FFlowDataPinProperty& DataPinPropertyRef = DataPinProperty.Get<FFlowDataPinProperty>();
+	const EFlowPinType PinType = DataPinPropertyRef.GetFlowPinType();
+
+	return FText::Format(LOCTEXT("FlowNamedDataPinOutputPropertyHeader", "{0} ({1})"), { FText::FromName(Name), UEnum::GetDisplayValueAsText(PinType) });
+}
 #endif // WITH_EDITOR
+
+#undef LOCTEXT_NAMESPACE

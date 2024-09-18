@@ -29,6 +29,7 @@
 #include "DetailCustomizations/FlowDataPinPropertyCustomizations.h"
 #include "DetailCustomizations/FlowDataPinProperty_EnumCustomization.h"
 #include "DetailCustomizations/FlowPinCustomization.h"
+#include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
 
 #include "FlowAsset.h"
 #include "AddOns/FlowNodeAddOn.h"
@@ -204,6 +205,8 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowOwnerFunctionRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowOwnerFunctionRefCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowActorOwnerComponentRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowActorOwnerComponentRefCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowNamedDataPinOutputProperty::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNamedDataPinOutputPropertyCustomization::MakeInstance));
+		
 
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_BoolCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_Int64Customization::MakeInstance));

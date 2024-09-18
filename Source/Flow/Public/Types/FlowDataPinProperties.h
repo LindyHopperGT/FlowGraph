@@ -317,6 +317,10 @@ public:
 
 	FFlowPin CreateFlowPin() const;
 	bool IsValid() const { return Name != NAME_None && DataPinProperty.GetPtr() != nullptr; }
+
+#if WITH_EDITOR
+	FLOW_API FText BuildHeaderText() const;
+#endif // WITH_EDITOR
 };
 
 // Wrapper-structs for a blueprint defaulted input pin types
