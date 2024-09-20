@@ -45,6 +45,9 @@ enum class EFlowPinType : uint8
 	// FGameplayTagContainer (FStructProperty)
 	GameplayTagContainer,
 
+	// FInstancedStruct (FStructProperty)
+	InstancedStruct,
+
 #if 0 // TODO (gtaylor) finish support for Class/Object types
 	// FObjectProperty, FObjectPtrProperty, FWeakObjectProperty, FLazyObjectProperty
 	Object,

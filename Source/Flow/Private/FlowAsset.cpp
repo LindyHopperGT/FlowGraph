@@ -630,7 +630,7 @@ void UFlowAsset::AddDataPinPropertyBindingToMap(
 	InOutData.PinNameToBoundPropertyNameMapNext.Add(PinAuthoredName, PropertyAuthoredName);
 }
 
-template <typename TEnumProperty, typename TVectorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty>
+template <typename TEnumProperty, typename TVectorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty, typename TInstancedStructProperty>
 void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty& Property, const FText& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext)
 {
 	const FName& PinAuthoredName = Property.GetFName();
@@ -638,7 +638,7 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 	// Some of the FlowPinTypes require a SubCategoryObject to fully define the type, so
 	// we need to find that for the cases that it applies to.
 
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinAuthoredName, PinDisplayName));
 	switch (PinType)
@@ -697,6 +697,13 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 		}
 		break;
 
+	case EFlowPinType::InstancedStruct:
+		{
+			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TInstancedStructProperty, FInstancedStruct>(Property);
+			NewFlowPin.SetPinType(PinType, ValueStructType);
+		}
+		break;
+
 #if 0
 	case EFlowPinType::Object:
 	case EFlowPinType::SoftObject:
@@ -743,7 +750,8 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 					FFlowDataPinInputProperty_Vector,
 					FFlowDataPinInputProperty_Transform,
 					FFlowDataPinInputProperty_GameplayTag,
-					FFlowDataPinInputProperty_GameplayTagContainer>(
+					FFlowDataPinInputProperty_GameplayTagContainer,
+					FFlowDataPinInputProperty_InstancedStruct>(
 						PinType,
 						FlowNode,
 						Property,
@@ -757,7 +765,8 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 					FFlowDataPinOutputProperty_Vector,
 					FFlowDataPinOutputProperty_Transform,
 					FFlowDataPinOutputProperty_GameplayTag,
-					FFlowDataPinOutputProperty_GameplayTagContainer>(
+					FFlowDataPinOutputProperty_GameplayTagContainer,
+					FFlowDataPinOutputProperty_InstancedStruct>(
 						PinType,
 						FlowNode,
 						Property,

@@ -45,7 +45,7 @@ bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) co
 #endif // WITH_EDITOR
 
 // Must implement TrySupplyDataPinAs... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 FFlowDataPinResult_Bool UFlowNode_Start::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
 {
@@ -210,4 +210,19 @@ FFlowDataPinResult_GameplayTagContainer UFlowNode_Start::TrySupplyDataPinAsGamep
 	}
 
 	return Super::TrySupplyDataPinAsGameplayTagContainer_Implementation(PinName);
+}
+
+FFlowDataPinResult_InstancedStruct UFlowNode_Start::TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const
+{
+	if (FlowDataPinValueSupplierInterface)
+	{
+		FFlowDataPinResult_InstancedStruct SuppliedResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInstancedStruct(FlowDataPinValueSupplierInterface.GetObject(), PinName);
+
+		if (SuppliedResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return SuppliedResult;
+		}
+	}
+
+	return Super::TrySupplyDataPinAsInstancedStruct_Implementation(PinName);
 }

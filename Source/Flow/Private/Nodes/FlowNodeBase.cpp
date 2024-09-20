@@ -772,7 +772,7 @@ EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinPrerequisites(const FN
 }
 
 // Must implement TryResolveDataPinAs...() for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 template <typename TFlowDataPinResultType, EFlowPinType PinType>
 bool TResolveDataPinWorkingData<TFlowDataPinResultType, PinType>::TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase)
@@ -1016,6 +1016,27 @@ FFlowDataPinResult_GameplayTagContainer UFlowNodeBase::TryResolveDataPinAsGamepl
 	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
 	{
 		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsGameplayTagContainer(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+
+		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return WorkData.DataPinResult;
+		}
+	}
+
+	return WorkData.DataPinResult;
+}
+
+FFlowDataPinResult_InstancedStruct UFlowNodeBase::TryResolveDataPinAsInstancedStruct(const FName& PinName) const
+{
+	TResolveDataPinWorkingData<FFlowDataPinResult_InstancedStruct, EFlowPinType::InstancedStruct> WorkData;
+	if (!WorkData.TrySetupWorkingData(PinName, *this))
+	{
+		return WorkData.DataPinResult;
+	}
+
+	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
+	{
+		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInstancedStruct(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
 
 		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
 		{

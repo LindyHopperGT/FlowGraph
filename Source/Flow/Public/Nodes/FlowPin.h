@@ -231,6 +231,7 @@ public:
 	FORCEINLINE static bool IsTextPinCategory(const FName& PC) { return PC == PC_Name || PC == PC_String || PC == PC_Text; }
 	FORCEINLINE static bool IsObjectPinCategory(const FName& PC) { return PC == PC_Object || PC == PC_SoftObject; }
 	FORCEINLINE static bool IsClassPinCategory(const FName& PC) { return PC == PC_Class || PC == PC_SoftClass; }	
+	FORCEINLINE static bool IsStructPinCategory(const FName& PC) { return PC == PC_Struct; }
 	// --
 
 	// IsConvertable trait functions:
@@ -241,6 +242,7 @@ public:
 	FORCEINLINE static bool IsConvertableToTextPinCategory(const FName& PC) { return IsTextPinCategory(PC); }
 	FORCEINLINE static bool IsConvertableToObjectPinCategory(const FName& PC) { return IsObjectPinCategory(PC); }
 	FORCEINLINE static bool IsConvertableToClassPinCategory(const FName& PC) { return IsClassPinCategory(PC); }
+	FORCEINLINE static bool IsConvertableToStructPinCategory(const FName& PC) { return IsStructPinCategory(PC); }
 	// --
 
 	// Metadata keys for properties that bind and auto-generate Data Pins:

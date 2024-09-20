@@ -29,7 +29,7 @@ public:
 	virtual bool CanSupplyDataPinValues_Implementation() const { return false; }
 
 	// Must implement TrySupplyDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	// Try to supply the value for a data Bool pin
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As Bool")
@@ -85,4 +85,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As GameplayTagContainer")
 	FFlowDataPinResult_GameplayTagContainer TrySupplyDataPinAsGameplayTagContainer(const FName& PinName) const;
 	virtual FFlowDataPinResult_GameplayTagContainer TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const { return FFlowDataPinResult_GameplayTagContainer(); }
+
+	// Try to supply the value for a data InstancedStruct pin
+	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As InstancedStruct")
+	FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct(const FName& PinName) const;
+	virtual FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const { return FFlowDataPinResult_InstancedStruct(); }
 };

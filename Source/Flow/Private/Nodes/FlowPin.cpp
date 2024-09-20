@@ -192,7 +192,7 @@ void FFlowPin::SetPinType(EFlowPinType InFlowPinType, UObject* SubCategoryObject
 
 void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	// Set the PinSubCategoryObject based on the PinType (if appropriate)
 	switch (PinType)
@@ -221,6 +221,12 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 		}
 		break;
 
+	case EFlowPinType::InstancedStruct:
+		{
+			PinSubCategoryObject = TBaseStructure<FInstancedStruct>::Get();
+		}
+		break;
+
 	case EFlowPinType::Enum:
 #if 0 // TODO (gtaylor) Object, Class support
 	case EFlowPinType::Object:
@@ -242,7 +248,7 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 
 const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	switch (FlowPinType)
 	{
@@ -274,6 +280,7 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 	case EFlowPinType::Transform:
 	case EFlowPinType::GameplayTag:
 	case EFlowPinType::GameplayTagContainer:
+	case EFlowPinType::InstancedStruct:
 		return FFlowPin::PC_Struct;
 
 #if 0 // TODO (gtaylor) Finish Class/Object support
@@ -302,38 +309,48 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
 {
 	// PinTypes with PinSubCategoryObjects will need to update thif function
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
 
+	switch (PinType)
+	{
+
 #if 0 // TODO (gtaylor) Finish Class/Object support
-	if (PinType == EFlowPinType::Class)
-	{
-		PinSubCategoryObject = SubCategoryClassFilter;
-	}
-	else if (PinType == EFlowPinType::Object)
-	{
-		PinSubCategoryObject = SubCategoryObjectFilter;
-	}
-	else 
-#endif
-	if (PinType == EFlowPinType::Enum)
-	{
-		if (!SubCategoryEnumName.IsEmpty())
+	case EFlowPinType::Class:
 		{
-			SubCategoryEnumClass = UClass::TryFindTypeSlow<UEnum>(SubCategoryEnumName, EFindFirstObjectOptions::ExactClass);
-
-			if (SubCategoryEnumClass != nullptr && !FFlowPin::ValidateEnum(*SubCategoryEnumClass))
-			{
-				SubCategoryEnumClass = nullptr;
-			}
+			PinSubCategoryObject = SubCategoryClassFilter;
 		}
+		break;
 
-		PinSubCategoryObject = SubCategoryEnumClass;
-	}
-	else
-	{
-		TrySetStructSubCategoryObjectFromPinType();
+	case EFlowPinType::Object:
+		{
+			PinSubCategoryObject = SubCategoryObjectFilter;
+		}
+		break;
+#endif
+
+	case EFlowPinType::Enum:
+		{
+			if (!SubCategoryEnumName.IsEmpty())
+			{
+				SubCategoryEnumClass = UClass::TryFindTypeSlow<UEnum>(SubCategoryEnumName, EFindFirstObjectOptions::ExactClass);
+
+				if (SubCategoryEnumClass != nullptr && !FFlowPin::ValidateEnum(*SubCategoryEnumClass))
+				{
+					SubCategoryEnumClass = nullptr;
+				}
+			}
+
+			PinSubCategoryObject = SubCategoryEnumClass;
+		}
+		break;
+
+	default:
+		{
+			TrySetStructSubCategoryObjectFromPinType();
+		}
+		break;
 	}
 }
 

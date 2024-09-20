@@ -5,8 +5,11 @@
 #include "Types/FlowPinEnums.h"
 
 #include "GameplayTagContainer.h"
+#include "InstancedStruct.h"
 
 #include "FlowDataPinResults.generated.h"
+
+struct FInstancedStruct;
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result")
 struct FFlowDataPinResult
@@ -25,7 +28,7 @@ public:
 };
 
 // Recommend implementing FFlowDataPinResult... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Bool)")
 struct FFlowDataPinResult_Bool : public FFlowDataPinResult
@@ -289,4 +292,23 @@ public:
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
+};
+
+USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (InstancedStruct)")
+struct FFlowDataPinResult_InstancedStruct : public FFlowDataPinResult
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	FInstancedStruct Value;
+
+public:
+
+	FFlowDataPinResult_InstancedStruct() { }
+	FFlowDataPinResult_InstancedStruct(const FInstancedStruct& InValue)
+		: Super(EFlowDataPinResolveResult::Success)
+		, Value(InValue)
+	{ }
 };

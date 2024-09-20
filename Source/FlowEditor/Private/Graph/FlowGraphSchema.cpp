@@ -315,7 +315,7 @@ bool UFlowGraphSchema::ArePinCategoriesEffectivelyMatching(const FName& InputPin
 	}
 
 	// Must handle pin connectivity for all added EFlowPinTypes
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	// We could extend the compatibility here to accept more implicit conversions (eg, null objects convertible to bools)
 	// but we'd need to also add support the conversion in the Supply/Resolve side as well.
@@ -355,6 +355,11 @@ bool UFlowGraphSchema::ArePinCategoriesEffectivelyMatching(const FName& InputPin
 		return true;
 	}
 
+	if (FFlowPin::IsStructPinCategory(InputPinCategory) && FFlowPin::IsConvertableToStructPinCategory(OutputPinCategory))
+	{
+		return true;
+	}
+
 	return false;
 }
 
@@ -385,7 +390,6 @@ bool UFlowGraphSchema::ArePinTypesCompatible(const FEdGraphPinType& Output, cons
 			&& (Output.PinSubCategoryMemberReference == Input.PinSubCategoryMemberReference))
 		{
 			// If the sub-category also matches exactly, then the pins are compatible
-
 			return true;
 		}
 		

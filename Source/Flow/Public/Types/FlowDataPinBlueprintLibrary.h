@@ -16,7 +16,7 @@ class UFlowDataPinBlueprintLibrary : public UBlueprintFunctionLibrary
 public:
 
 	// Recommend implementing AutoConvert_FlowDataPinProperty... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	// FFlowDataPinProperty auto-cast functions
 
@@ -103,8 +103,12 @@ public:
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to GameplayTagContainer", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FGameplayTagContainer AutoConvert_FlowDataPinPropertyGameplayTagContainerToGameplayTagContainer(const FFlowDataPinOutputProperty_GameplayTagContainer& GameplayTagContainerProperty) { return GameplayTagContainerProperty.Value; }
 
+	// Convert InstancedStruct property values to their inner InstancedStruct
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to InstancedStruct", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static FInstancedStruct AutoConvert_FlowDataPinPropertyInstancedStructToInstancedStruct(const FFlowDataPinOutputProperty_InstancedStruct& InstancedStructProperty) { return InstancedStructProperty.Value; }
+
 	// Recommend implementing AutoConvert_FlowDataPinResult... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 	// FFlowDataPinResults auto-cast functions
 
@@ -182,4 +186,7 @@ public:
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to GameplayTagContainer", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FGameplayTagContainer AutoConvert_FlowDataPinResultGameplayTagContainerToGameplayTagContainer(const FFlowDataPinResult_GameplayTagContainer& GameplayTagContainerProperty) { return GameplayTagContainerProperty.Value; }
 
+	// Convert InstancedStruct property values to their inner InstancedStruct
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to InstancedStruct", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static FInstancedStruct AutoConvert_FlowDataPinResultInstancedStructToInstancedStruct(const FFlowDataPinResult_InstancedStruct& InstancedStructProperty) { return InstancedStructProperty.Value; }
 };

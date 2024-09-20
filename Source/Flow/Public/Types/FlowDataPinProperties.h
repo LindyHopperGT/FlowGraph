@@ -23,7 +23,7 @@ struct FFlowDataPinProperty
 };
 
 // Recommend implementing FFlowDataPinProperty... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 // Wrapper struct for a bool that will generate and link to a Data Pin with its same name
 USTRUCT(BlueprintType, DisplayName = "Bool - Output Flow Data Pin Property", meta = (FlowPinType = "Bool"))
@@ -293,6 +293,25 @@ public:
 	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::GameplayTagContainer; }
 };
 
+// Wrapper struct for a FInstancedStruct that will generate and link to a Data Pin with its same name
+USTRUCT(BlueprintType, DisplayName = "InstancedStruct - Output Flow DataPin Property", meta = (FlowPinType = "InstancedStruct"))
+struct FFlowDataPinOutputProperty_InstancedStruct : public FFlowDataPinProperty
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
+	FInstancedStruct Value;
+
+public:
+
+	FFlowDataPinOutputProperty_InstancedStruct() {}
+	FFlowDataPinOutputProperty_InstancedStruct(const FInstancedStruct& InValue) : Value(InValue) { }
+
+	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::InstancedStruct; }
+};
+
 // Wrapper for FFlowDataPinProperty that is used for flow nodes that add 
 // dynamic properties, with associated data pins, on the flow node instance
 // (as opposed to C++ or blueprint compile-time).
@@ -437,4 +456,13 @@ struct FFlowDataPinInputProperty_GameplayTagContainer : public FFlowDataPinOutpu
 
 	FFlowDataPinInputProperty_GameplayTagContainer() : Super() { }
 	FFlowDataPinInputProperty_GameplayTagContainer(const FGameplayTagContainer& InValue) : Super(InValue) { }
+};
+
+USTRUCT(BlueprintType, DisplayName = "InstancedStruct - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "InstancedStruct"))
+struct FFlowDataPinInputProperty_InstancedStruct : public FFlowDataPinOutputProperty_InstancedStruct
+{
+	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_InstancedStruct() : Super() { }
+	FFlowDataPinInputProperty_InstancedStruct(const FInstancedStruct& InValue) : Super(InValue) { }
 };

@@ -672,7 +672,7 @@ bool UFlowNode::FindConnectedNodeForPinSlow(const FName& PinName, FGuid* OutGuid
 }
 
 // Must implement TrySupplyDataPinAs... for every EFlowPinType 
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 12);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
 
 FFlowDataPinResult_Bool UFlowNode::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
 {
@@ -727,6 +727,11 @@ FFlowDataPinResult_GameplayTag UFlowNode::TrySupplyDataPinAsGameplayTag_Implemen
 FFlowDataPinResult_GameplayTagContainer UFlowNode::TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const
 {
 	return TrySupplyDataPinAsStructType<FFlowDataPinResult_GameplayTagContainer, FFlowDataPinOutputProperty_GameplayTagContainer, FGameplayTagContainer>(PinName);
+}
+
+FFlowDataPinResult_InstancedStruct UFlowNode::TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const
+{
+	return TrySupplyDataPinAsStructType<FFlowDataPinResult_InstancedStruct, FFlowDataPinOutputProperty_InstancedStruct, FInstancedStruct>(PinName);
 }
 
 void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)
