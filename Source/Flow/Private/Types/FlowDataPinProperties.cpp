@@ -4,7 +4,8 @@
 
 #define LOCTEXT_NAMESPACE "FlowDataPinProperties"
 
-FFlowPin FFlowNamedDataPinOutputProperty::CreateFlowPin() const
+#if WITH_EDITOR
+FFlowPin FFlowDataPinProperty::CreateFlowPin(const FName& PinName, const TInstancedStruct<FFlowDataPinProperty>& DataPinProperty)
 {
 	FFlowPin FlowPin;
 
@@ -14,7 +15,7 @@ FFlowPin FFlowNamedDataPinOutputProperty::CreateFlowPin() const
 		return FlowPin;
 	}
 
-	FlowPin.PinName = Name;
+	FlowPin.PinName = PinName;
 
 	const EFlowPinType FlowPinType = Property->GetFlowPinType();
 
@@ -55,7 +56,6 @@ FFlowPin FFlowNamedDataPinOutputProperty::CreateFlowPin() const
 	return FlowPin;
 }
 
-#if WITH_EDITOR
 void FFlowDataPinOutputProperty_Enum::OnEnumNameChanged()
 {
 	if (!EnumName.IsEmpty())
@@ -71,8 +71,12 @@ void FFlowDataPinOutputProperty_Enum::OnEnumNameChanged()
 
 FText FFlowNamedDataPinOutputProperty::BuildHeaderText() const
 {
-	const FFlowDataPinProperty& DataPinPropertyRef = DataPinProperty.Get<FFlowDataPinProperty>();
-	const EFlowPinType PinType = DataPinPropertyRef.GetFlowPinType();
+	EFlowPinType PinType = EFlowPinType::Invalid;
+
+	if (const FFlowDataPinProperty* DataPinPropertyPtr = DataPinProperty.GetPtr<FFlowDataPinProperty>())
+	{
+		PinType = DataPinPropertyPtr->GetFlowPinType();
+	}
 
 	return FText::Format(LOCTEXT("FlowNamedDataPinOutputPropertyHeader", "{0} ({1})"), { FText::FromName(Name), UEnum::GetDisplayValueAsText(PinType) });
 }

@@ -20,6 +20,10 @@ struct FFlowDataPinProperty
 	virtual ~FFlowDataPinProperty() { }
 
 	virtual EFlowPinType GetFlowPinType() const { return EFlowPinType::Invalid; }
+
+#if WITH_EDITOR
+	FLOW_API static FFlowPin CreateFlowPin(const FName& PinName, const TInstancedStruct<FFlowDataPinProperty>& DataPinProperty);
+#endif
 };
 
 // Recommend implementing FFlowDataPinProperty... for every EFlowPinType
@@ -334,10 +338,11 @@ public:
 
 	FFlowNamedDataPinOutputProperty() { }
 
-	FFlowPin CreateFlowPin() const;
 	bool IsValid() const { return Name != NAME_None && DataPinProperty.GetPtr() != nullptr; }
 
 #if WITH_EDITOR
+	FFlowPin CreateFlowPin() const { return FFlowDataPinProperty::CreateFlowPin(Name, DataPinProperty); }
+
 	FLOW_API FText BuildHeaderText() const;
 #endif // WITH_EDITOR
 };

@@ -30,15 +30,13 @@ bool UFlowNode_DefineProperties::TryFindPropertyByRemappedPinName(
 	{
 		if (NamedProperty.Name == RemappedPinName && NamedProperty.IsValid())
 		{
-			NamedProperty.DataPinProperty.GetPtr<FFlowDataPinProperty>();
-
 			OutFoundInstancedStruct = NamedProperty.DataPinProperty;
 
 			return true;
 		}
 	}
 
-	return false;
+	return Super::TryFindPropertyByPinName(RemappedPinName, OutFoundProperty, OutFoundInstancedStruct, InOutResult);
 }
 
 #if WITH_EDITOR
