@@ -815,7 +815,7 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 	switch (SignalMode)
 	{
 		case EFlowSignalMode::Enabled:
-			ExecuteInput(PinName);
+			ExecuteInputForSelfAndAddOns(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
 			if (UFlowSettings::Get()->bLogOnSignalDisabled)
@@ -864,7 +864,7 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 		{
 			UFlowAsset::GetFlowGraphInterface()->OnOutputTriggered(GraphNode, OutputPins.IndexOfByKey(PinName));
 		}
-#endif // WITH_EDITOR
+#endif
 	}
 	else
 	{
@@ -874,9 +874,9 @@ void UFlowNode::TriggerOutput(const FName PinName, const bool bFinish /*= false*
 
 #if WITH_EDITOR
 	LogVerbose(FString::Printf(TEXT("\n Description: %s"), *GetNodeDescription()));
-	LogVerbose(FString::Printf(TEXT("\n Status: %s"), *GetStatusString()));
+	LogVerbose(FString::Printf(TEXT("\n Status: %s"), *GetStatusStringForNodeAndAddOns()));
 #endif
-	
+
 	// call the next node
 	if (OutputPins.Contains(PinName) && Connections.Contains(PinName))
 	{
@@ -1001,6 +1001,7 @@ TArray<FPinRecord> UFlowNode::GetPinRecords(const FName& PinName, const EEdGraph
 			return TArray<FPinRecord>();
 	}
 }
+
 #endif
 
 FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)
@@ -1039,9 +1040,30 @@ UFlowNode* UFlowNode::GetInspectedInstance() const
 	return nullptr;
 }
 
-FString UFlowNode::GetStatusString() const
+FString UFlowNode::GetStatusStringForNodeAndAddOns() const
 {
-	return K2_GetStatusString();
+	FString CombinedStatusString = GetStatusString();
+
+	// Give all of the AddOns a chance to add their status strings as well
+	(void) ForEachAddOnConst(
+		[&CombinedStatusString](const UFlowNodeAddOn& AddOn)
+		{
+			const FString AddOnStatusString = AddOn.GetStatusString();
+
+			if (!AddOnStatusString.IsEmpty())
+			{
+				if (!CombinedStatusString.IsEmpty())
+				{
+					CombinedStatusString += TEXT("\n");
+				}
+
+				CombinedStatusString += AddOnStatusString;
+			}
+
+			return EFlowForEachAddOnFunctionReturnValue::Continue;
+		});
+
+	return CombinedStatusString;
 }
 
 bool UFlowNode::GetStatusBackgroundColor(FLinearColor& OutColor) const

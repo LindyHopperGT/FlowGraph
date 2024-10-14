@@ -292,6 +292,8 @@ protected:
 
 	void LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const;
 
+	bool HavePinsChanged();
+
 public:
 	
 	/** instance class */

@@ -26,6 +26,8 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNodeBase)
 
+using namespace EFlowForEachAddOnFunctionReturnValue_Classifiers;
+
 UFlowNodeBase::UFlowNodeBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, GraphNode(nullptr)
@@ -129,7 +131,7 @@ void UFlowNodeBase::OnActivate()
 	}
 }
 
-void UFlowNodeBase::ExecuteInput(const FName& PinName)
+void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
 {
 	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
 	// To ensure that Nodes and AddOns only get the input pins signalled that they expect,
@@ -137,13 +139,18 @@ void UFlowNodeBase::ExecuteInput(const FName& PinName)
 
 	if (IsSupportedInputPinName(PinName))
 	{
-		IFlowCoreExecutableInterface::ExecuteInput(PinName);
+		ExecuteInput(PinName);
 	}
 
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
-		AddOn->ExecuteInput(PinName);
+		AddOn->ExecuteInputForSelfAndAddOns(PinName);
 	}
+}
+
+void UFlowNodeBase::ExecuteInput(const FName& PinName)
+{
+	IFlowCoreExecutableInterface::ExecuteInput(PinName);
 }
 
 void UFlowNodeBase::ForceFinishNode()
@@ -243,6 +250,11 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	}
 
 	return ContextOutputs;
+}
+
+FString UFlowNodeBase::GetStatusString() const
+{
+	return K2_GetStatusString();
 }
 #endif // WITH_EDITOR
 
@@ -417,66 +429,138 @@ EFlowAddOnAcceptResult UFlowNodeBase::CheckAcceptFlowNodeAddOnChild(const UFlowN
 }
 #endif // WITH_EDITOR
 
-void UFlowNodeBase::ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function) const
+EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function) const
 {
+	FLOW_ASSERT_ENUM_MAX(EFlowForEachAddOnFunctionReturnValue, 3);
+
+	EFlowForEachAddOnFunctionReturnValue ReturnValue = EFlowForEachAddOnFunctionReturnValue::Continue;
+
 	for (const UFlowNodeAddOn* AddOn : AddOns)
 	{
-		if (IsValid(AddOn))
+		if (!IsValid(AddOn))
 		{
-			Function(*AddOn);
+			continue;
+		}
 
-			AddOn->ForEachAddOnConst(Function);
+		ReturnValue = Function(*AddOn);
+
+		if (!ShouldContinueForEach(ReturnValue))
+		{
+			break;
+		}
+
+		ReturnValue = AddOn->ForEachAddOnConst(Function);
+
+		if (!ShouldContinueForEach(ReturnValue))
+		{
+			break;
 		}
 	}
+
+	return ReturnValue;
 }
 
-void UFlowNodeBase::ForEachAddOn(const FFlowNodeAddOnFunction& Function) const
+EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOn(const FFlowNodeAddOnFunction& Function) const
 {
+	FLOW_ASSERT_ENUM_MAX(EFlowForEachAddOnFunctionReturnValue, 3);
+
+	EFlowForEachAddOnFunctionReturnValue ReturnValue = EFlowForEachAddOnFunctionReturnValue::Continue;
+
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
-		if (IsValid(AddOn))
+		if (!IsValid(AddOn))
 		{
-			Function(*AddOn);
+			continue;
+		}
 
-			AddOn->ForEachAddOn(Function);
+		ReturnValue = Function(*AddOn);
+
+		if (!ShouldContinueForEach(ReturnValue))
+		{
+			break;
+		}
+
+		ReturnValue = AddOn->ForEachAddOn(Function);
+
+		if (!ShouldContinueForEach(ReturnValue))
+		{
+			break;
 		}
 	}
+
+	return ReturnValue;
 }
 
-void UFlowNodeBase::ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function) const
+EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function) const
 {
+	FLOW_ASSERT_ENUM_MAX(EFlowForEachAddOnFunctionReturnValue, 3);
+
+	EFlowForEachAddOnFunctionReturnValue ReturnValue = EFlowForEachAddOnFunctionReturnValue::Continue;
+
 	for (const UFlowNodeAddOn* AddOn : AddOns)
 	{
-		if (IsValid(AddOn))
+		if (!IsValid(AddOn))
 		{
-			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
-			// or an interface (the UClass version) that its UClass implements 
-			if (AddOn->IsA(&InterfaceOrClass) || AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
-			{
-				Function(*AddOn);
-			}
+			continue;
+		}
 
-			AddOn->ForEachAddOnForClassConst(InterfaceOrClass, Function);
+		// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+		// or an interface (the UClass version) that its UClass implements 
+		if (AddOn->IsA(&InterfaceOrClass) || AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
+		{
+			ReturnValue = Function(*AddOn);
+
+			if (!ShouldContinueForEach(ReturnValue))
+			{
+				break;
+			}
+		}
+
+		ReturnValue = AddOn->ForEachAddOnForClassConst(InterfaceOrClass, Function);
+
+		if (!ShouldContinueForEach(ReturnValue))
+		{
+			break;
 		}
 	}
+
+	return ReturnValue;
 }
 
-void UFlowNodeBase::ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const
+EFlowForEachAddOnFunctionReturnValue UFlowNodeBase::ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const
 {
+	FLOW_ASSERT_ENUM_MAX(EFlowForEachAddOnFunctionReturnValue, 3);
+
+	EFlowForEachAddOnFunctionReturnValue ReturnValue = EFlowForEachAddOnFunctionReturnValue::Continue;
+
 	for (UFlowNodeAddOn* AddOn : AddOns)
 	{
-		if (IsValid(AddOn))
+		if (!IsValid(AddOn))
 		{
-			// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
-			// or an interface (the UClass version) that its UClass implements 
-			if (AddOn->IsA(&InterfaceOrClass) || AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
-			{
-				Function(*AddOn);
-			}
+			continue;
+		}
 
-			AddOn->ForEachAddOnForClass(InterfaceOrClass, Function);
+		// InterfaceOrClass can either be the AddOn's UClass (or its superclass)
+		// or an interface (the UClass version) that its UClass implements 
+		if (AddOn->IsA(&InterfaceOrClass) || AddOn->GetClass()->ImplementsInterface(&InterfaceOrClass))
+		{
+			ReturnValue = Function(*AddOn);
+
+			if (!ShouldContinueForEach(ReturnValue))
+			{
+				break;
+			}
+		}
+
+		ReturnValue = AddOn->ForEachAddOnForClass(InterfaceOrClass, Function);
+
+		if (!ShouldContinueForEach(ReturnValue))
+		{
+			break;
 		}
 	}
+
+	return ReturnValue;
 }
 
 #if WITH_EDITOR

@@ -118,13 +118,39 @@ enum class EFlowAddOnAcceptResult : uint8
 	Invalid UMETA(Hidden),
 	Min = Undetermined UMETA(Hidden),
 };
-FLOW_ENUM_RANGE_VALUES(EFlowAddOnAcceptResult)
+FLOW_ENUM_RANGE_VALUES(EFlowAddOnAcceptResult);
 
 FORCEINLINE_DEBUGGABLE EFlowAddOnAcceptResult CombineFlowAddOnAcceptResult(EFlowAddOnAcceptResult Result0, EFlowAddOnAcceptResult Result1)
 {
-	const int64 Result0AsInt = FlowEnum::ToInt(Result0);
-	const int64 Result1AsInt = FlowEnum::ToInt(Result1);
+	const FlowEnum::safe_underlying_type<EFlowAddOnAcceptResult>::type Result0AsInt = FlowEnum::ToInt(Result0);
+	const FlowEnum::safe_underlying_type<EFlowAddOnAcceptResult>::type Result1AsInt = FlowEnum::ToInt(Result1);
 
 	// Prioritize the higher numerical value enum value
 	return static_cast<EFlowAddOnAcceptResult>(FMath::Max(Result0AsInt, Result1AsInt));
+}
+
+UENUM()
+enum class EFlowForEachAddOnFunctionReturnValue : int8
+{
+	// Continue iterating the ForEach loop
+	Continue,
+
+	// Break out of the ForEach loop, with a "Success" result (whatever that means to the TFunction)
+	BreakWithSuccess,
+
+	// Break out of the ForEach loop, with a "Failure" return (whatever that means to the TFunction)
+	BreakWithFailure,
+
+	Max UMETA(Hidden),
+	Invalid = -1 UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
+
+	ContinueForEachFirst = Continue UMETA(Hidden),
+	ContinueForEachLast = Continue UMETA(Hidden),
+};
+FLOW_ENUM_RANGE_VALUES(EFlowForEachAddOnFunctionReturnValue);
+
+namespace EFlowForEachAddOnFunctionReturnValue_Classifiers
+{
+	FORCEINLINE bool ShouldContinueForEach(EFlowForEachAddOnFunctionReturnValue Result) { return FLOW_IS_ENUM_IN_SUBRANGE(Result, EFlowForEachAddOnFunctionReturnValue::ContinueForEach); }
 }

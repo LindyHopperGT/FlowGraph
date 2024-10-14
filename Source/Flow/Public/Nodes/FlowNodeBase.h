@@ -25,8 +25,8 @@ struct FFlowPin;
 DECLARE_DELEGATE(FFlowNodeEvent);
 #endif
 
-typedef TFunction<void(const UFlowNodeAddOn&)> FConstFlowNodeAddOnFunction;
-typedef TFunction<void(UFlowNodeAddOn&)> FFlowNodeAddOnFunction;
+typedef TFunction<EFlowForEachAddOnFunctionReturnValue(const UFlowNodeAddOn&)> FConstFlowNodeAddOnFunction;
+typedef TFunction<EFlowForEachAddOnFunctionReturnValue(UFlowNodeAddOn&)> FFlowNodeAddOnFunction;
 
 // Supplier + PinName (in that supplier) for a Flow Data Pin value
 struct FFlowPinValueSupplierData
@@ -73,6 +73,9 @@ public:
 	// UObject
 	virtual UWorld* GetWorld() const override;
 	// --
+
+	// Dispatcher for ExecuteInput to ensure the AddOns get their ExecuteInput calls even if the node/addon
+	void ExecuteInputForSelfAndAddOns(const FName& PinName);
 
 	// IFlowCoreExecutableInterface
 	virtual void InitializeInstance() override;
@@ -179,24 +182,24 @@ public:
 #endif // WITH_EDITOR
 
 	// Call a function for all of this object's AddOns (recursively iterating AddOns inside AddOn)
-	void ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function) const;
-	void ForEachAddOn(const FFlowNodeAddOnFunction& Function) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnConst(const FConstFlowNodeAddOnFunction& Function) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOn(const FFlowNodeAddOnFunction& Function) const;
 
 	template <typename TInterfaceOrClass>
-	void ForEachAddOnForClassConst(const FConstFlowNodeAddOnFunction Function) const
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClassConst(const FConstFlowNodeAddOnFunction Function) const
 	{
-		ForEachAddOnForClassConst(*TInterfaceOrClass::StaticClass(), Function);
+		return ForEachAddOnForClassConst(*TInterfaceOrClass::StaticClass(), Function);
 	}
 
-	void ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClassConst(const UClass& InterfaceOrClass, const FConstFlowNodeAddOnFunction& Function) const;
 
 	template <typename TInterfaceOrClass>
-	void ForEachAddOnForClass(const FFlowNodeAddOnFunction Function) const
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const FFlowNodeAddOnFunction Function) const
 	{
-		ForEachAddOnForClass(*TInterfaceOrClass::StaticClass(), Function);
+		return ForEachAddOnForClass(*TInterfaceOrClass::StaticClass(), Function);
 	}
 
-	void ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const;
+	EFlowForEachAddOnFunctionReturnValue ForEachAddOnForClass(const UClass& InterfaceOrClass, const FFlowNodeAddOnFunction& Function) const;
 
 public:
 
@@ -291,7 +294,16 @@ public:
 	
 	// used when import graph from another asset
 	virtual void PostImport() {}
+
+	// Called by owning FlowNode to add to its Status String.
+	// (may be multi-line)
+	virtual FString GetStatusString() const;
 #endif
+
+protected:
+	// Information displayed while node is working - displayed over node as NodeInfoPopup
+	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Status String"))
+	FString K2_GetStatusString() const;
 
 #if WITH_EDITORONLY_DATA
 protected:

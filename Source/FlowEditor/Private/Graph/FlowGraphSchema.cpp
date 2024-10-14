@@ -788,7 +788,9 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotification);
 
-	UFlowGraphNode* OwningFlowGraphNode = Cast<UFlowGraphNode>(TargetPin.GetOwningNodeUnchecked());
+	// Cache the owning node because calling Super::BreakPinLinks might release the pointer
+	// to the pin owning node as a side effect of notify graph changed events. 
+	UFlowGraphNode* OwningFlowGraphNode = Cast<UFlowGraphNode>(TargetPin.GetOwningNode());
 	if (!IsValid(OwningFlowGraphNode))
 	{
 		return;

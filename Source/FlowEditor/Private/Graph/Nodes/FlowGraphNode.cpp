@@ -690,7 +690,7 @@ FString UFlowGraphNode::GetStatusString() const
 	{
 		if (const UFlowNode* InspectedInstance = FlowNode->GetInspectedInstance())
 		{
-			return InspectedInstance->GetStatusString();
+			return InspectedInstance->GetStatusStringForNodeAndAddOns();
 		}
 	}
 
@@ -986,26 +986,29 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 	// Skip the rest if the node went from no ContextPins to no ContextPins
 	const bool bMaintainedNoContextPins = !bPrevHasContextPins && !bHasContextPins;
 
-	if (!bMaintainedNoContextPins)
+	if (bMaintainedNoContextPins || !HavePinsChanged())
 	{
-		const FScopedTransaction Transaction(LOCTEXT("RefreshContextPins", "Refresh Context Pins"));
-		Modify();
+		// We dont have contextual pins to account for; or the contextual pins have not changed. We can skip now. 
+		return;
+	}
+		
+	const FScopedTransaction Transaction(LOCTEXT("RefreshContextPins", "Refresh Context Pins"));
+	Modify();
 
-		const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
+	const UFlowNode* NodeDefaults = FlowNode->GetClass()->GetDefaultObject<UFlowNode>();
 
-		// recreate inputs
-		FlowNode->InputPins = NodeDefaults->InputPins;
-		FlowNode->AddInputPins(ContextInputs);
+	// recreate inputs
+	FlowNode->InputPins = NodeDefaults->InputPins;
+	FlowNode->AddInputPins(ContextInputs);
 
-		// recreate outputs
-		FlowNode->OutputPins = NodeDefaults->OutputPins;
-		FlowNode->AddOutputPins(ContextOutputs);
+	// recreate outputs
+	FlowNode->OutputPins = NodeDefaults->OutputPins;
+	FlowNode->AddOutputPins(ContextOutputs);
 
-		if (bReconstructNode && !bMaintainedNoContextPins)
-		{
-			ReconstructNode();
-			GetGraph()->NotifyGraphChanged();
-		}
+	if (bReconstructNode)
+	{
+		ReconstructNode();
+		GetGraph()->NotifyGraphChanged();
 	}
 }
 
@@ -1214,6 +1217,53 @@ void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* 
 			FlowAsset->LogError(MessageToLog, FlowNodeBase);
 		}
 	}
+}
+
+bool UFlowGraphNode::HavePinsChanged()
+{
+	const UFlowNode* FlowNodeInstance = Cast<UFlowNode>(NodeInstance);	
+	if (!IsValid(FlowNodeInstance))
+	{
+		// default to having changed because we don't have a way to confirm that the pins have remained intact. 
+		return true;
+	}
+
+	// Get the pins that are part of the node itself. We use the CDO because it inherently knows about the built-in
+	// pins for this node. 
+	const UFlowNode* FlowNodeCDO = FlowNodeInstance->GetClass()->GetDefaultObject<UFlowNode>();
+	check(IsValid(FlowNodeCDO));
+
+	TArray<FFlowPin> AllFlowPins = FlowNodeCDO->GetInputPins();
+	AllFlowPins.Append(FlowNodeCDO->GetOutputPins());
+
+	// Get the contextual pins for the underlying flow node instance.  
+	AllFlowPins.Append(FlowNodeInstance->GetContextInputs());
+	AllFlowPins.Append(FlowNodeInstance->GetContextOutputs());
+
+	if (Pins.Num() != AllFlowPins.Num())
+	{
+		// There is a different number of EdGraphPins and Flow Node pins; something changed.
+		return true;
+	}
+	
+	TArray<FName> PinNames;
+	for (const UEdGraphPin* Pin : Pins)
+	{
+		PinNames.Add(Pin->PinName);
+	}
+
+	for (const FFlowPin& Pin : AllFlowPins)
+	{
+		if (!PinNames.Contains(Pin.PinName))
+		{
+			// Could not match the pin from the flow node with any of the EdPins array.
+			// we have a mismatch between the ed graph pins and the flow node, something changed. 
+			return true;
+		}
+	}
+
+	// Nothing changed
+	return false;	
 }
 
 void UFlowGraphNode::ResetNodeOwner()

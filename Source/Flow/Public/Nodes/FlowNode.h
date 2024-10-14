@@ -356,7 +356,7 @@ public:
 	TArray<FPinRecord> GetPinRecords(const FName& PinName, const EEdGraphPinDirection PinDirection) const;
 
 	// Information displayed while node is working - displayed over node as NodeInfoPopup
-	virtual FString GetStatusString() const;
+	FString GetStatusStringForNodeAndAddOns() const;
 	virtual bool GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
 	virtual FString GetAssetPath();
@@ -365,10 +365,6 @@ public:
 #endif
 
 protected:
-	// Information displayed while node is working - displayed over node as NodeInfoPopup
-	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Status String"))
-	FString K2_GetStatusString() const;
-
 	UFUNCTION(BlueprintImplementableEvent, Category = "FlowNode", meta = (DisplayName = "Get Status Background Color"))
 	bool K2_GetStatusBackgroundColor(FLinearColor& OutColor) const;
 
