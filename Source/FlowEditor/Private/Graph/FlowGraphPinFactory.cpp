@@ -101,6 +101,4 @@ void UFlowK2SchemaSubclassForAccess::AssertPinCategoryNames()
 	checkf(FFlowPin::PC_Text == UEdGraphSchema_K2::PC_Text, TEXT("Flow PC_* aliases should match Epic's K2 PC_* names exactly"));
 	checkf(FFlowPin::PC_Struct == UEdGraphSchema_K2::PC_Struct, TEXT("Flow PC_* aliases should match Epic's K2 PC_* names exactly"));
 	checkf(FFlowPin::PC_Enum == UEdGraphSchema_K2::PC_Enum, TEXT("Flow PC_* aliases should match Epic's K2 PC_* names exactly"));
-	checkf(FFlowPin::PC_SoftObject == UEdGraphSchema_K2::PC_SoftObject, TEXT("Flow PC_* aliases should match Epic's K2 PC_* names exactly"));
-	checkf(FFlowPin::PC_SoftClass == UEdGraphSchema_K2::PC_SoftClass, TEXT("Flow PC_* aliases should match Epic's K2 PC_* names exactly"));
 }

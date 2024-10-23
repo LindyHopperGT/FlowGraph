@@ -214,11 +214,11 @@ void UFlowNode_Timer::UpdateNodeConfigText_Implementation()
 		{
 			const FString StepTimeString = FString::Printf(TEXT("%.*f"), 2, StepTime);
 
-			SetNodeConfigText(FText::Format(LOCTEXT("TimerConfigWithStep", "{0}, step by {1}"), { FText::FromString(CompletionTimeString), FText::FromString(StepTimeString) }));
+			SetNodeConfigText(FText::Format(LOCTEXT("TimerConfigWithStep", "Time: {0}, step by {1}"), { FText::FromString(CompletionTimeString), FText::FromString(StepTimeString) }));
 		}
 		else
 		{
-			SetNodeConfigText(FText::FromString(CompletionTimeString));
+			SetNodeConfigText(FText::Format(LOCTEXT("TimerConfig", "Time: {0}"), { FText::FromString(CompletionTimeString) }));
 		}
 	}
 	else

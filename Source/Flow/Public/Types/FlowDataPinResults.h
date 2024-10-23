@@ -10,6 +10,8 @@
 #include "FlowDataPinResults.generated.h"
 
 struct FInstancedStruct;
+struct FFlowDataPinOutputProperty_Object;
+struct FFlowDataPinOutputProperty_Class;
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result")
 struct FFlowDataPinResult
@@ -19,16 +21,16 @@ struct FFlowDataPinResult
 public:
 
 	// Result for the DataPin resolve attempt
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	EFlowDataPinResolveResult Result = EFlowDataPinResolveResult::FailedUnimplemented;
 
 public:
-	FFlowDataPinResult() { }
-	FFlowDataPinResult(EFlowDataPinResolveResult InResult) : Result(InResult) { }
+	FLOW_API FFlowDataPinResult() { }
+	FLOW_API FFlowDataPinResult(EFlowDataPinResolveResult InResult) : Result(InResult) { }
 };
 
 // Recommend implementing FFlowDataPinResult... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Bool)")
 struct FFlowDataPinResult_Bool : public FFlowDataPinResult
@@ -37,13 +39,13 @@ struct FFlowDataPinResult_Bool : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	bool Value = false;
 
 public:
 
-	FFlowDataPinResult_Bool() { }
-	FFlowDataPinResult_Bool(bool InValue)
+	FLOW_API FFlowDataPinResult_Bool() { }
+	FLOW_API FFlowDataPinResult_Bool(bool InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -56,13 +58,13 @@ struct FFlowDataPinResult_Int : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	int64 Value = 0;
 
 public:
 
-	FFlowDataPinResult_Int() { }
-	FFlowDataPinResult_Int(int64 InValue)
+	FLOW_API FFlowDataPinResult_Int() { }
+	FLOW_API FFlowDataPinResult_Int(int64 InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -75,13 +77,13 @@ struct FFlowDataPinResult_Float : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	double Value = 0;
 
 public:
 
-	FFlowDataPinResult_Float() { }
-	FFlowDataPinResult_Float(double InValue)
+	FLOW_API FFlowDataPinResult_Float() { }
+	FLOW_API FFlowDataPinResult_Float(double InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
@@ -94,20 +96,20 @@ struct FFlowDataPinResult_Name : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FName Value = NAME_None;
 
 public:
 
-	FFlowDataPinResult_Name() { }
-	FFlowDataPinResult_Name(const FName& InValue)
+	FLOW_API FFlowDataPinResult_Name() { }
+	FLOW_API FFlowDataPinResult_Name(const FName& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
 
-	void SetValue(const FName& FromName) { Value = FromName; }
-	void SetValue(const FString& FromString) { Value = FName(FromString); }
-	void SetValue(const FText& FromText) { Value = FName(FromText.ToString()); }
+	FLOW_API void SetValue(const FName& FromName) { Value = FromName; }
+	FLOW_API void SetValue(const FString& FromString) { Value = FName(FromString); }
+	FLOW_API void SetValue(const FText& FromText) { Value = FName(FromText.ToString()); }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (String)")
@@ -117,20 +119,20 @@ struct FFlowDataPinResult_String : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FString Value;
 
 public:
 
-	FFlowDataPinResult_String() { }
-	FFlowDataPinResult_String(const FString& InValue)
+	FLOW_API FFlowDataPinResult_String() { }
+	FLOW_API FFlowDataPinResult_String(const FString& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
 
-	void SetValue(const FName& FromName) { Value = FromName.ToString(); }
-	void SetValue(const FString& FromString) { Value = FromString; }
-	void SetValue(const FText& FromText) { Value = FromText.ToString(); }
+	FLOW_API void SetValue(const FName& FromName) { Value = FromName.ToString(); }
+	FLOW_API void SetValue(const FString& FromString) { Value = FromString; }
+	FLOW_API void SetValue(const FText& FromText) { Value = FromText.ToString(); }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Text)")
@@ -140,20 +142,20 @@ struct FFlowDataPinResult_Text : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FText Value;
 
 public:
 
-	FFlowDataPinResult_Text() { }
-	FFlowDataPinResult_Text(const FText& InValue)
+	FLOW_API FFlowDataPinResult_Text() { }
+	FLOW_API FFlowDataPinResult_Text(const FText& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
 
-	void SetValue(const FName& FromName) { Value = FText::FromName(FromName); }
-	void SetValue(const FString& FromString) { Value = FText::FromString(FromString); }
-	void SetValue(const FText& FromText) { Value = FromText; }
+	FLOW_API void SetValue(const FName& FromName) { Value = FText::FromName(FromName); }
+	FLOW_API void SetValue(const FString& FromString) { Value = FText::FromString(FromString); }
+	FLOW_API void SetValue(const FText& FromText) { Value = FromText; }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Enum)")
@@ -164,17 +166,17 @@ struct FFlowDataPinResult_Enum : public FFlowDataPinResult
 public:
 
 	// The selected enum Value
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FName Value = NAME_None;
 
 	// Class for this enum
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	UEnum* EnumClass = nullptr;
 
 public:
 
-	FFlowDataPinResult_Enum() { }
-	FFlowDataPinResult_Enum(const FName& InValue, UEnum* InEnumClass)
+	FLOW_API FFlowDataPinResult_Enum() { }
+	FLOW_API FFlowDataPinResult_Enum(const FName& InValue, UEnum* InEnumClass)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		, EnumClass(InEnumClass)
@@ -225,16 +227,35 @@ struct FFlowDataPinResult_Vector : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FVector Value;
 
 public:
 
-	FFlowDataPinResult_Vector() { }
-	FFlowDataPinResult_Vector(const FVector& InValue)
+	FLOW_API FFlowDataPinResult_Vector() { }
+	FLOW_API FFlowDataPinResult_Vector(const FVector& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
+};
+
+USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Rotator)")
+struct FFlowDataPinResult_Rotator : public FFlowDataPinResult
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
+	FRotator Value;
+
+public:
+
+	FLOW_API FFlowDataPinResult_Rotator() { }
+	FLOW_API FFlowDataPinResult_Rotator(const FRotator& InValue)
+		: Super(EFlowDataPinResolveResult::Success)
+		, Value(InValue)
+	{ }
 };
 
 USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Transform)")
@@ -244,13 +265,13 @@ struct FFlowDataPinResult_Transform : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FTransform Value;
 
 public:
 
-	FFlowDataPinResult_Transform() { }
-	FFlowDataPinResult_Transform(const FTransform& InValue)
+	FLOW_API FFlowDataPinResult_Transform() { }
+	FLOW_API FFlowDataPinResult_Transform(const FTransform& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
@@ -263,13 +284,13 @@ struct FFlowDataPinResult_GameplayTag : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FGameplayTag Value;
 
 public:
 
-	FFlowDataPinResult_GameplayTag() { }
-	FFlowDataPinResult_GameplayTag(const FGameplayTag& InValue)
+	FLOW_API FFlowDataPinResult_GameplayTag() { }
+	FLOW_API FFlowDataPinResult_GameplayTag(const FGameplayTag& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -282,13 +303,13 @@ struct FFlowDataPinResult_GameplayTagContainer : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FGameplayTagContainer Value;
 
 public:
 
-	FFlowDataPinResult_GameplayTagContainer() { }
-	FFlowDataPinResult_GameplayTagContainer(const FGameplayTagContainer& InValue)
+	FLOW_API FFlowDataPinResult_GameplayTagContainer() { }
+	FLOW_API FFlowDataPinResult_GameplayTagContainer(const FGameplayTagContainer& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 		{ }
@@ -301,14 +322,66 @@ struct FFlowDataPinResult_InstancedStruct : public FFlowDataPinResult
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = DataPins)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
 	FInstancedStruct Value;
 
 public:
 
-	FFlowDataPinResult_InstancedStruct() { }
-	FFlowDataPinResult_InstancedStruct(const FInstancedStruct& InValue)
+	FLOW_API FFlowDataPinResult_InstancedStruct() { }
+	FLOW_API FFlowDataPinResult_InstancedStruct(const FInstancedStruct& InValue)
 		: Super(EFlowDataPinResolveResult::Success)
 		, Value(InValue)
 	{ }
+};
+
+USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Object)")
+struct FFlowDataPinResult_Object : public FFlowDataPinResult
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
+	TObjectPtr<UObject> Value;
+
+public:
+
+	FLOW_API FFlowDataPinResult_Object() { }
+	FLOW_API FFlowDataPinResult_Object(UObject* InValue);
+
+	FLOW_API void SetValueFromPropertyWrapper(const FFlowDataPinOutputProperty_Object& InPropertyWrapper);
+	FLOW_API FORCEINLINE void SetValueFromSoftPath(const FSoftObjectPath& SoftPath) { Value = SoftPath.ResolveObject(); }
+	FLOW_API FORCEINLINE void SetValueFromObjectPtr(UObject* ObjectPtr) { Value = ObjectPtr; }
+};
+
+USTRUCT(BlueprintType, DisplayName = "Flow DataPin Result (Class)")
+struct FFlowDataPinResult_Class : public FFlowDataPinResult
+{
+	GENERATED_BODY()
+
+protected:
+
+	// SoftClassPath version of the result
+	// (both the SoftClassPath and the UClass (if available) will be set for the result)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
+	FSoftClassPath ValuePath;
+
+	// UClass version of the result
+	// (both the SoftClassPath and the UClass (if available) will be set for the result)
+	UPROPERTY(Transient, BlueprintReadWrite, Category = DataPins)
+	TObjectPtr<UClass> ValueClass = nullptr;
+
+public:
+
+	FLOW_API FFlowDataPinResult_Class() { }
+	FLOW_API FFlowDataPinResult_Class(const FSoftClassPath& InValuePath);
+	FLOW_API FFlowDataPinResult_Class(UClass* InValueClass);
+
+	FLOW_API void SetValueFromPropertyWrapper(const FFlowDataPinOutputProperty_Class& PropertyWrapper);
+	FLOW_API void SetValueSoftClassAndClassPtr(const FSoftClassPath& SoftPath, UClass* ObjectPtr);
+	FLOW_API void SetValueFromSoftPath(const FSoftObjectPath& SoftObjectPath);
+	FLOW_API FORCEINLINE void SetValueFromObjectPtr(UClass* ClassPtr) { SetValueSoftClassAndClassPtr(FSoftClassPath(ClassPtr), ClassPtr); }
+
+	FLOW_API UClass* GetOrResolveClass() const { return IsValid(ValueClass) ? ValueClass.Get() : ValuePath.ResolveClass(); }
+	FLOW_API FSoftClassPath GetAsSoftClass() const;
 };

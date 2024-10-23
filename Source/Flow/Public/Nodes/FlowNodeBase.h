@@ -207,7 +207,7 @@ public:
 // Data Pins
 
 	// Must implement TryResolveDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Bool")
 	FFlowDataPinResult_Bool TryResolveDataPinAsBool(const FName& PinName) const;
@@ -233,6 +233,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Vector")
 	FFlowDataPinResult_Vector TryResolveDataPinAsVector(const FName& PinName) const;
 
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Rotator")
+	FFlowDataPinResult_Rotator TryResolveDataPinAsRotator(const FName& PinName) const;
+
 	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Transform")
 	FFlowDataPinResult_Transform TryResolveDataPinAsTransform(const FName& PinName) const;
 
@@ -244,6 +247,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As InstancedStruct")
 	FFlowDataPinResult_InstancedStruct TryResolveDataPinAsInstancedStruct(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Object")
+	FFlowDataPinResult_Object TryResolveDataPinAsObject(const FName& PinName) const;
+
+	UFUNCTION(BlueprintCallable, Category = DataPins, DisplayName = "Try Resolve DataPin As Class")
+	FFlowDataPinResult_Class TryResolveDataPinAsClass(const FName& PinName) const;
 
 	// Public only for for TResolveDataPinWorkingData's use
 	EFlowDataPinResolveResult TryResolveDataPinPrerequisites(const FName& PinName, const UFlowNode*& FlowNode, const FFlowPin*& FlowPin, EFlowPinType PinType) const;

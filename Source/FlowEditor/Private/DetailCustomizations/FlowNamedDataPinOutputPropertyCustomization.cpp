@@ -2,8 +2,6 @@
 
 #include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
 
-// FFlowNamedDataPinOutputPropertyCustomization Implementation
-
 FText FFlowNamedDataPinOutputPropertyCustomization::BuildHeaderText() const
 {
 	if (const FFlowNamedDataPinOutputProperty* FlowNamedDataPinOutputProperty = IFlowExtendedPropertyTypeCustomization::TryGetTypedStructValue<FFlowNamedDataPinOutputProperty>(StructPropertyHandle))

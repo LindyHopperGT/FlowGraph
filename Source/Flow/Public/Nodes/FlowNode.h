@@ -237,10 +237,13 @@ public:
 	virtual FFlowDataPinResult_Text TrySupplyDataPinAsText_Implementation(const FName& PinName) const override;
 	virtual FFlowDataPinResult_Enum TrySupplyDataPinAsEnum_Implementation(const FName& PinName) const override;
 	virtual FFlowDataPinResult_Vector TrySupplyDataPinAsVector_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Rotator TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const override;
 	virtual FFlowDataPinResult_Transform TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const override;
 	virtual FFlowDataPinResult_GameplayTag TrySupplyDataPinAsGameplayTag_Implementation(const FName& PinName) const override;
 	virtual FFlowDataPinResult_GameplayTagContainer TrySupplyDataPinAsGameplayTagContainer_Implementation(const FName& PinName) const override;
 	virtual FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Object TrySupplyDataPinAsObject_Implementation(const FName& PinName) const override;
+	virtual FFlowDataPinResult_Class TrySupplyDataPinAsClass_Implementation(const FName& PinName) const override;
 
 	bool TryGetFlowDataPinSupplierDatasForPinName(
 		const FName& PinName,
@@ -275,7 +278,20 @@ protected:
 
 	template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TTargetStruct>
 	TFlowDataPinResultType TrySupplyDataPinAsStructType(const FName& PinName) const;
-	
+
+	template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TUObjectType,
+		typename TFieldPropertyObjectType0, typename TFieldPropertySoftObjectType1>
+	TFlowDataPinResultType TrySupplyDataPinAsUObjectTypeCommon(const FName& PinName, const FProperty*& OutFoundProperty) const;
+
+	template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TUObjectType,
+		typename TFieldPropertyObjectType0, typename TFieldPropertySoftObjectType1,
+		typename TFieldPropertyWeakType2, typename TFieldPropertyLazyType3>
+	TFlowDataPinResultType TrySupplyDataPinAsUObjectType(const FName& PinName) const;
+
+	template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TUObjectType,
+		typename TFieldPropertyObjectType0, typename TFieldPropertySoftObjectType1>
+	TFlowDataPinResultType TrySupplyDataPinAsUClassType(const FName& PinName) const;
+
 //////////////////////////////////////////////////////////////////////////
 // Debugger
 
@@ -774,4 +790,112 @@ TFlowDataPinResultType UFlowNode::TrySupplyDataPinAsStructType(const FName& PinN
 		return SuppliedResult;
 	}
 }
- 
+
+template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TUObjectType,
+	typename TFieldPropertyObjectType0, typename TFieldPropertySoftObjectType1>
+TFlowDataPinResultType UFlowNode::TrySupplyDataPinAsUObjectTypeCommon(const FName& PinName, const FProperty*& OutFoundProperty) const
+{
+	TFlowDataPinResultType SuppliedResult;
+
+	TInstancedStruct<FFlowDataPinProperty> InstancedStruct;
+	if (!TryFindPropertyByPinName(PinName, OutFoundProperty, InstancedStruct, SuppliedResult.Result))
+	{
+		return SuppliedResult;
+	}
+
+	if (const TFlowDataPinProperty* FlowDataPinProp = InstancedStruct.GetPtr<TFlowDataPinProperty>())
+	{
+		// In some cases, TryFindPropertyByPinName can find an instanced struct for the wrapper,
+		// so get the value from it and return straight away
+
+		SuppliedResult.SetValueFromPropertyWrapper(*FlowDataPinProp);
+		SuppliedResult.Result = EFlowDataPinResolveResult::Success;
+
+		return SuppliedResult;
+	}
+
+	// Check for struct-based wrapper for the property and get the value out of it
+	if (const FStructProperty* StructProperty = CastField<FStructProperty>(OutFoundProperty))
+	{
+		const UScriptStruct* FlowDataPinPropertyStruct = TFlowDataPinProperty::StaticStruct();
+
+		if (StructProperty->Struct == FlowDataPinPropertyStruct)
+		{
+			TFlowDataPinProperty ValueStruct;
+			StructProperty->GetValue_InContainer(this, &ValueStruct);
+
+			SuppliedResult.SetValueFromPropertyWrapper(ValueStruct);
+			SuppliedResult.Result = EFlowDataPinResolveResult::Success;
+		}
+
+		return SuppliedResult;
+	}
+
+	// Get the value from one of the UE simple property types
+	if (const TFieldPropertyObjectType0* UnrealProperty0 = CastField<TFieldPropertyObjectType0>(OutFoundProperty))
+	{
+		// TObjectPtr / UObject*
+		TUObjectType* Object = Cast<TUObjectType>(UnrealProperty0->GetPropertyValue_InContainer(this));
+		SuppliedResult.SetValueFromObjectPtr(Object);
+		SuppliedResult.Result = EFlowDataPinResolveResult::Success;
+
+		return SuppliedResult;
+	}
+
+	if (const TFieldPropertySoftObjectType1* UnrealProperty1 = CastField<TFieldPropertySoftObjectType1>(OutFoundProperty))
+	{
+		// FSoftObjectPath / TSoftObjectPtr (or their Class variants)
+		const FSoftObjectPath SoftObjectPath = UnrealProperty1->GetPropertyValue_InContainer(this).ToSoftObjectPath();
+		SuppliedResult.SetValueFromSoftPath(SoftObjectPath);
+		SuppliedResult.Result = EFlowDataPinResolveResult::Success;
+
+		return SuppliedResult;
+	}
+
+	SuppliedResult.Result = EFlowDataPinResolveResult::FailedMismatchedType;
+
+	return SuppliedResult;
+}
+
+template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TUObjectType,
+		  typename TFieldPropertyObjectType0, typename TFieldPropertySoftObjectType1, typename TFieldPropertyWeakType2, typename TFieldPropertyLazyType3>
+TFlowDataPinResultType UFlowNode::TrySupplyDataPinAsUObjectType(const FName& PinName) const
+{
+	// First execute TrySupplyDataPinAsUObjectTypeCommon to handle all of the shared cases between UObject and UClass properties:
+	const FProperty* FoundProperty = nullptr;
+	TFlowDataPinResultType SuppliedResult = 
+		TrySupplyDataPinAsUObjectTypeCommon<TFlowDataPinResultType, TFlowDataPinProperty, TUObjectType, TFieldPropertyObjectType0, TFieldPropertySoftObjectType1>(PinName, FoundProperty);
+
+	if (SuppliedResult.Result == EFlowDataPinResolveResult::FailedMismatchedType)
+	{
+		if (const TFieldPropertyWeakType2* UnrealProperty2 = CastField<TFieldPropertyWeakType2>(FoundProperty))
+		{
+			// TWeakObjectPtr
+			TUObjectType* Object = Cast<TUObjectType>(UnrealProperty2->GetPropertyValue_InContainer(this).Get());
+			SuppliedResult.SetValueFromObjectPtr(Object);
+			SuppliedResult.Result = EFlowDataPinResolveResult::Success;
+
+			return SuppliedResult;
+		}
+
+		if (const TFieldPropertyLazyType3* UnrealProperty3 = CastField<TFieldPropertyLazyType3>(FoundProperty))
+		{
+			// FLazyObjectPtr
+			TUObjectType* Object = Cast<TUObjectType>(UnrealProperty3->GetPropertyValue_InContainer(this).Get());
+			SuppliedResult.SetValueFromObjectPtr(Object);
+			SuppliedResult.Result = EFlowDataPinResolveResult::Success;
+
+			return SuppliedResult;
+		}
+	}
+
+	return SuppliedResult;
+}
+
+template <typename TFlowDataPinResultType, typename TFlowDataPinProperty, typename TUObjectType,
+	typename TFieldPropertyObjectType0, typename TFieldPropertySoftObjectType1>
+TFlowDataPinResultType UFlowNode::TrySupplyDataPinAsUClassType(const FName& PinName) const
+{
+	const FProperty* FoundProperty = nullptr;
+	return TrySupplyDataPinAsUObjectTypeCommon<TFlowDataPinResultType, TFlowDataPinProperty, TUObjectType, TFieldPropertyObjectType0, TFieldPropertySoftObjectType1>(PinName, FoundProperty);
+}

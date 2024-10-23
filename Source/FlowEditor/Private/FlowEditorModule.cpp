@@ -27,7 +27,9 @@
 #include "DetailCustomizations/FlowOwnerFunctionRefCustomization.h"
 #include "DetailCustomizations/FlowActorOwnerComponentRefCustomization.h"
 #include "DetailCustomizations/FlowDataPinPropertyCustomizations.h"
+#include "DetailCustomizations/FlowDataPinProperty_ClassCustomization.h"
 #include "DetailCustomizations/FlowDataPinProperty_EnumCustomization.h"
+#include "DetailCustomizations/FlowDataPinProperty_ObjectCustomization.h"
 #include "DetailCustomizations/FlowPinCustomization.h"
 #include "DetailCustomizations/FlowNamedDataPinOutputPropertyCustomization.h"
 
@@ -206,7 +208,6 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowActorOwnerComponentRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowActorOwnerComponentRefCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowPin::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowPinCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowNamedDataPinOutputProperty::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowNamedDataPinOutputPropertyCustomization::MakeInstance));
-		
 
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_BoolCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_Int64Customization::MakeInstance));
@@ -217,6 +218,8 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_StringCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_TextCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_EnumCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_ClassCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinOutputProperty_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinOutputProperty_ObjectCustomization::MakeInstance));
 
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Bool::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_BoolCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Int64::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_Int64Customization::MakeInstance));
@@ -227,9 +230,11 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_String::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_StringCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Text::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_TextCustomization::MakeInstance));
 		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Enum::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_EnumCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Class::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_ClassCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowDataPinInputProperty_Object::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowDataPinInputProperty_ObjectCustomization::MakeInstance));
 
 		// Consider implementing details customizations... for every EFlowPinType
-		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+		FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}

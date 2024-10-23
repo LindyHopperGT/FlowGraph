@@ -315,7 +315,7 @@ bool UFlowGraphSchema::ArePinCategoriesEffectivelyMatching(const FName& InputPin
 	}
 
 	// Must handle pin connectivity for all added EFlowPinTypes
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	// We could extend the compatibility here to accept more implicit conversions (eg, null objects convertible to bools)
 	// but we'd need to also add support the conversion in the Supply/Resolve side as well.
@@ -391,21 +391,6 @@ bool UFlowGraphSchema::ArePinTypesCompatible(const FEdGraphPinType& Output, cons
 		{
 			// If the sub-category also matches exactly, then the pins are compatible
 			return true;
-		}
-		
-		if (((Output.PinCategory == FFlowPin::PC_SoftObject) && (Input.PinCategory == FFlowPin::PC_SoftObject)) ||
-			((Output.PinCategory == FFlowPin::PC_SoftClass) && (Input.PinCategory == FFlowPin::PC_SoftClass)))
-		{
-			// Check for Soft-Object/Class compatiblity
-
-			const UClass* OutputObject = (Output.PinSubCategory == UEdGraphSchema_K2::PSC_Self) ? CallingContext : Cast<const UClass>(Output.PinSubCategoryObject.Get());
-			const UClass* InputObject = (Input.PinSubCategory == UEdGraphSchema_K2::PSC_Self) ? CallingContext : Cast<const UClass>(Input.PinSubCategoryObject.Get());
-			if (OutputObject && InputObject)
-			{
-				return ExtendedIsChildOf(OutputObject, InputObject);
-			}
-
-			return false;
 		}
 		
 		if ((Output.PinCategory == FFlowPin::PC_Object) || (Output.PinCategory == FFlowPin::PC_Struct) || (Output.PinCategory == FFlowPin::PC_Class))
@@ -657,14 +642,6 @@ FLinearColor UFlowGraphSchema::GetPinTypeColor(const FEdGraphPinType& PinType) c
 	else if (PinCategory == FFlowPin::PC_Name)
 	{
 		return Settings->NamePinTypeColor;
-	}
-	else if (PinCategory == FFlowPin::PC_SoftObject)
-	{
-		return Settings->SoftObjectPinTypeColor;
-	}
-	else if (PinCategory == FFlowPin::PC_SoftClass)
-	{
-		return Settings->SoftClassPinTypeColor;
 	}
 	else if (PinCategory == FFlowPin::PC_Class)
 	{

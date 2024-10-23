@@ -41,17 +41,15 @@ protected:
 	TWeakObjectPtr<UObject> PinSubCategoryObject;
 
 #if WITH_EDITORONLY_DATA
-#if 0 // TODO (gtaylor) Finish Class/Object support
 	// Filter for limiting the compatible classes for this data pin.
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
 	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Class", EditConditionHides))
-	TSubclassOf<UClass> SubCategoryClassFilter;
+	TSubclassOf<UClass> SubCategoryClassFilter = UClass::StaticClass();
 
 	// Filter for limiting the compatible object types for this data pin.
 	// This property is editor-only, but it is automatically copied into PinSubCategoryObject if the PinType matches (for runtime use).
 	UPROPERTY(EditAnywhere, Category = "FlowPin", meta = (EditCondition = "PinType == EFlowPinType::Object", EditConditionHides))
 	TSubclassOf<UObject> SubCategoryObjectFilter;
-#endif
 
 	// Configuration option for setting the EnumClass to a Blueprint Enum 
 	// (C++ enums must bind by name using SubCategoryEnumName, due to a limitation with UE's UEnum discovery).
@@ -84,8 +82,6 @@ public:
 	static inline FName PC_Text = TEXT("text");
 	static inline FName PC_Struct = TEXT("struct");
 	static inline FName PC_Enum = TEXT("enum");
-	static inline FName PC_SoftObject = TEXT("softobject");
-	static inline FName PC_SoftClass = TEXT("softclass");
 
 	static inline FName AnyPinName = TEXT("AnyPinName");
 
@@ -229,8 +225,8 @@ public:
 	FORCEINLINE static bool IsFloatPinCategory(const FName& PC) { return PC == PC_Double || PC == PC_Float; }
 	FORCEINLINE static bool IsEnumPinCategory(const FName& PC) { return PC == PC_Enum; }
 	FORCEINLINE static bool IsTextPinCategory(const FName& PC) { return PC == PC_Name || PC == PC_String || PC == PC_Text; }
-	FORCEINLINE static bool IsObjectPinCategory(const FName& PC) { return PC == PC_Object || PC == PC_SoftObject; }
-	FORCEINLINE static bool IsClassPinCategory(const FName& PC) { return PC == PC_Class || PC == PC_SoftClass; }	
+	FORCEINLINE static bool IsObjectPinCategory(const FName& PC) { return PC == PC_Object; }
+	FORCEINLINE static bool IsClassPinCategory(const FName& PC) { return PC == PC_Class; }	
 	FORCEINLINE static bool IsStructPinCategory(const FName& PC) { return PC == PC_Struct; }
 	// --
 

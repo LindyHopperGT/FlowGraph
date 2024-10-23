@@ -29,7 +29,7 @@ public:
 	virtual bool CanSupplyDataPinValues_Implementation() const { return false; }
 
 	// Must implement TrySupplyDataAs... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	// Try to supply the value for a data Bool pin
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As Bool")
@@ -71,6 +71,11 @@ public:
 	FFlowDataPinResult_Vector TrySupplyDataPinAsVector(const FName& PinName) const;
 	virtual FFlowDataPinResult_Vector TrySupplyDataPinAsVector_Implementation(const FName& PinName) const { return FFlowDataPinResult_Vector(); }
 
+	// Try to supply the value for a data Rotator pin
+	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As Rotator")
+	FFlowDataPinResult_Rotator TrySupplyDataPinAsRotator(const FName& PinName) const;
+	virtual FFlowDataPinResult_Rotator TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const { return FFlowDataPinResult_Rotator(); }
+
 	// Try to supply the value for a data Transform pin
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As Transform")
 	FFlowDataPinResult_Transform TrySupplyDataPinAsTransform(const FName& PinName) const;
@@ -90,4 +95,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As InstancedStruct")
 	FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct(const FName& PinName) const;
 	virtual FFlowDataPinResult_InstancedStruct TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const { return FFlowDataPinResult_InstancedStruct(); }
+
+	// Try to supply the value for a data Object pin
+	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As Object")
+	FFlowDataPinResult_Object TrySupplyDataPinAsObject(const FName& PinName) const;
+	virtual FFlowDataPinResult_Object TrySupplyDataPinAsObject_Implementation(const FName& PinName) const { return FFlowDataPinResult_Object(); }
+
+	// Try to supply the value for a data Class pin
+	UFUNCTION(BlueprintNativeEvent, Category = DataPins, DisplayName = "Try Supply DataPin As Class")
+	FFlowDataPinResult_Class TrySupplyDataPinAsClass(const FName& PinName) const;
+	virtual FFlowDataPinResult_Class TrySupplyDataPinAsClass_Implementation(const FName& PinName) const { return FFlowDataPinResult_Class(); }
 };

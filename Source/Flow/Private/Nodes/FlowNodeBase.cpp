@@ -856,7 +856,7 @@ EFlowDataPinResolveResult UFlowNodeBase::TryResolveDataPinPrerequisites(const FN
 }
 
 // Must implement TryResolveDataPinAs...() for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 template <typename TFlowDataPinResultType, EFlowPinType PinType>
 bool TResolveDataPinWorkingData<TFlowDataPinResultType, PinType>::TrySetupWorkingData(const FName& PinName, const UFlowNodeBase& FlowNodeBase)
@@ -1047,6 +1047,27 @@ FFlowDataPinResult_Vector UFlowNodeBase::TryResolveDataPinAsVector(const FName& 
 	return WorkData.DataPinResult;
 }
 
+FFlowDataPinResult_Rotator UFlowNodeBase::TryResolveDataPinAsRotator(const FName& PinName) const
+{
+	TResolveDataPinWorkingData<FFlowDataPinResult_Rotator, EFlowPinType::Rotator> WorkData;
+	if (!WorkData.TrySetupWorkingData(PinName, *this))
+	{
+		return WorkData.DataPinResult;
+	}
+
+	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
+	{
+		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsRotator(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+
+		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return WorkData.DataPinResult;
+		}
+	}
+
+	return WorkData.DataPinResult;
+}
+
 FFlowDataPinResult_Transform UFlowNodeBase::TryResolveDataPinAsTransform(const FName& PinName) const
 {
 	TResolveDataPinWorkingData<FFlowDataPinResult_Transform, EFlowPinType::Transform> WorkData;
@@ -1121,6 +1142,48 @@ FFlowDataPinResult_InstancedStruct UFlowNodeBase::TryResolveDataPinAsInstancedSt
 	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
 	{
 		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsInstancedStruct(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+
+		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return WorkData.DataPinResult;
+		}
+	}
+
+	return WorkData.DataPinResult;
+}
+
+FFlowDataPinResult_Object UFlowNodeBase::TryResolveDataPinAsObject(const FName& PinName) const
+{
+	TResolveDataPinWorkingData<FFlowDataPinResult_Object, EFlowPinType::Object> WorkData;
+	if (!WorkData.TrySetupWorkingData(PinName, *this))
+	{
+		return WorkData.DataPinResult;
+	}
+
+	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
+	{
+		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsObject(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
+
+		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return WorkData.DataPinResult;
+		}
+	}
+
+	return WorkData.DataPinResult;
+}
+
+FFlowDataPinResult_Class UFlowNodeBase::TryResolveDataPinAsClass(const FName& PinName) const
+{
+	TResolveDataPinWorkingData<FFlowDataPinResult_Class, EFlowPinType::Class> WorkData;
+	if (!WorkData.TrySetupWorkingData(PinName, *this))
+	{
+		return WorkData.DataPinResult;
+	}
+
+	for (const FFlowPinValueSupplierData& SupplierData : WorkData.PinValueSupplierDatas)
+	{
+		WorkData.DataPinResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsClass(CastChecked<UObject>(SupplierData.PinValueSupplier), SupplierData.SupplierPinName);
 
 		if (WorkData.DataPinResult.Result == EFlowDataPinResolveResult::Success)
 		{

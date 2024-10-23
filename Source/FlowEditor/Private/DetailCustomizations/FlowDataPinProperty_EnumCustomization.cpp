@@ -7,8 +7,6 @@
 #include "IDetailChildrenBuilder.h"
 #include "UObject/UnrealType.h"
 
-// FFlowDataPinProperty_EnumCustomizationBase Implementation
-
 void FFlowDataPinProperty_EnumCustomizationBase::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& StructBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {
 	if (TSharedPtr<IPropertyHandle> EnumClassHandle = InStructPropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowDataPinOutputProperty_Enum, EnumClass)))

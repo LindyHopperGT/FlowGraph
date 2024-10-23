@@ -4,7 +4,7 @@
 
 #include "UnrealExtensions/IFlowExtendedPropertyTypeCustomization.h"
 
-// Base class customization for FFlow*DataPinProperty structs
+// Base class customization for most FFlow*DataPinProperty structs
 class FFlowDataPinPropertyCustomizationBase : public IFlowExtendedPropertyTypeCustomization
 {
 	typedef IFlowExtendedPropertyTypeCustomization Super;

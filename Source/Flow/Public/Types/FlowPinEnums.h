@@ -36,6 +36,9 @@ enum class EFlowPinType : uint8
 	// FVector (FStructProperty)
 	Vector,
 
+	// FRotator (FStructProperty)
+	Rotator,
+
 	// FTransform (FStructProperty)
 	Transform,
 
@@ -48,19 +51,11 @@ enum class EFlowPinType : uint8
 	// FInstancedStruct (FStructProperty)
 	InstancedStruct,
 
-#if 0 // TODO (gtaylor) finish support for Class/Object types
-	// FObjectProperty, FObjectPtrProperty, FWeakObjectProperty, FLazyObjectProperty
+	// FObjectProperty, FObjectPtrProperty, FWeakObjectProperty, FLazyObjectProperty, FSoftObjectProperty
 	Object,
 
-	// FSoftObjectProperty
-	SoftObject,
-
-	// FClassProperty, FClassPtrProperty
+	// FClassProperty, FClassPtrProperty, FSoftClassProperty
 	Class,
-
-	// FSoftClassProperty
-	SoftClass,
-#endif
 
 	Max UMETA(Hidden),
 	Invalid UMETA(Hidden),
@@ -91,4 +86,7 @@ enum class EFlowDataPinResolveResult : uint8
 	FailedWithError,
 
 	Max UMETA(Hidden),
+	Invalid UMETA(Hidden),
+	Min = 0 UMETA(Hidden),
 };
+FLOW_ENUM_RANGE_VALUES(EFlowDataPinResolveResult)

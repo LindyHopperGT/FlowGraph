@@ -2,11 +2,8 @@
 
 #include "DetailCustomizations/FlowPinCustomization.h"
 #include "Nodes/FlowPin.h"
-
 #include "IDetailChildrenBuilder.h"
 #include "UObject/UnrealType.h"
-
-// FFlowPinCustomization Implementation
 
 void FFlowPinCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> InStructPropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& StructCustomizationUtils)
 {

@@ -630,7 +630,8 @@ void UFlowAsset::AddDataPinPropertyBindingToMap(
 	InOutData.PinNameToBoundPropertyNameMapNext.Add(PinAuthoredName, PropertyAuthoredName);
 }
 
-template <typename TEnumProperty, typename TVectorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty, typename TInstancedStructProperty>
+template <typename TEnumProperty, typename TVectorProperty, typename TRotatorProperty, typename TTransformProperty, typename TGameplayTagProperty, typename TGameplayTagContainerProperty, 
+		  typename TInstancedStructProperty, typename TObjectProperty, typename TClassProperty>
 void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty& Property, const FText& PinDisplayName, TArray<FFlowPin>* InOutDataPinsNext)
 {
 	const FName& PinAuthoredName = Property.GetFName();
@@ -638,7 +639,7 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 	// Some of the FlowPinTypes require a SubCategoryObject to fully define the type, so
 	// we need to find that for the cases that it applies to.
 
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	FFlowPin& NewFlowPin = InOutDataPinsNext->Add_GetRef(FFlowPin(PinAuthoredName, PinDisplayName));
 	switch (PinType)
@@ -671,47 +672,129 @@ void AddPinForPinType(EFlowPinType PinType, UFlowNode& FlowNode, const FProperty
 
 	case EFlowPinType::Vector:
 		{
-			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TVectorProperty, FVector>(Property);
+			UScriptStruct* ValueStructType = FFlowDataPinProperty::FindScriptStructForFlowDataPinProperty<TVectorProperty, FVector>(Property);
+			NewFlowPin.SetPinType(PinType, ValueStructType);
+		}
+		break;
+
+	case EFlowPinType::Rotator:
+		{
+			UScriptStruct* ValueStructType = FFlowDataPinProperty::FindScriptStructForFlowDataPinProperty<TRotatorProperty, FRotator>(Property);
 			NewFlowPin.SetPinType(PinType, ValueStructType);
 		}
 		break;
 
 	case EFlowPinType::Transform:
 		{
-			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TTransformProperty, FTransform>(Property);
+			UScriptStruct* ValueStructType = FFlowDataPinProperty::FindScriptStructForFlowDataPinProperty<TTransformProperty, FTransform>(Property);
 			NewFlowPin.SetPinType(PinType, ValueStructType);
 		}
 		break;
 
 	case EFlowPinType::GameplayTag:
 		{
-			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TGameplayTagProperty, FGameplayTag>(Property);
+			UScriptStruct* ValueStructType = FFlowDataPinProperty::FindScriptStructForFlowDataPinProperty<TGameplayTagProperty, FGameplayTag>(Property);
 			NewFlowPin.SetPinType(PinType, ValueStructType);
 		}
 		break;
 
 	case EFlowPinType::GameplayTagContainer:
 		{
-			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TGameplayTagContainerProperty, FGameplayTagContainer>(Property);
+			UScriptStruct* ValueStructType = FFlowDataPinProperty::FindScriptStructForFlowDataPinProperty<TGameplayTagContainerProperty, FGameplayTagContainer>(Property);
 			NewFlowPin.SetPinType(PinType, ValueStructType);
 		}
 		break;
 
 	case EFlowPinType::InstancedStruct:
 		{
-			UScriptStruct* ValueStructType = UFlowAsset::FindScriptStructForFlowDataPinProperty<TInstancedStructProperty, FInstancedStruct>(Property);
+			UScriptStruct* ValueStructType = FFlowDataPinProperty::FindScriptStructForFlowDataPinProperty<TInstancedStructProperty, FInstancedStruct>(Property);
 			NewFlowPin.SetPinType(PinType, ValueStructType);
 		}
 		break;
 
-#if 0
 	case EFlowPinType::Object:
-	case EFlowPinType::SoftObject:
-	case EFlowPinType::Class:
-	case EFlowPinType::SoftClass:
-		// TODO (gtaylor) Finish Object, Class support
+		{
+			UClass* Class = nullptr;
+			if (const FStructProperty* StructProperty = CastField<FStructProperty>(&Property))
+			{
+				const UStruct* ScriptStruct = TObjectProperty::StaticStruct();
+				static const UStruct* SoftObjectPathStruct = TBaseStructure<FSoftObjectPath>::Get();
+
+				if (StructProperty->Struct == ScriptStruct)
+				{
+					TObjectProperty ValueStruct;
+					StructProperty->GetValue_InContainer(&FlowNode, &ValueStruct);
+
+					// Get the Object property's base UClass from the FFlowDataPinProperty
+					Class = ValueStruct.DeriveObjectClass(*StructProperty);
+				}
+				else if (StructProperty->Struct == SoftObjectPathStruct)
+				{
+					// Get the Object property's base UClass from the struct property's MetaData
+					Class = FFlowDataPinOutputProperty_Object::TryGetObjectClassFromProperty(*StructProperty);
+				}
+			}
+			else if (const FObjectProperty* ObjectProperty = CastField<FObjectProperty>(&Property))
+			{
+				// Get the Object property's base UClass from the property's MetaData
+				Class = ObjectProperty->PropertyClass;
+			}
+			else if (const FSoftObjectProperty* SoftObjectProperty = CastField<FSoftObjectProperty>(&Property))
+			{
+				// Get the Object property's base UClass from the property's MetaData
+				Class = SoftObjectProperty->PropertyClass;
+			}
+			else if (const FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(&Property))
+			{
+				// Get the Object property's base UClass from the property's MetaData
+				Class = WeakObjectProperty->PropertyClass;
+			}			
+			else if (const FLazyObjectProperty* LazyObjectProperty = CastField<FLazyObjectProperty>(&Property))
+			{
+				// Get the Object property's base UClass from the property's MetaData
+				Class = LazyObjectProperty->PropertyClass;
+			}
+
+			NewFlowPin.SetPinType(PinType, Class);
+		}
 		break;
-#endif // 0
+
+	case EFlowPinType::Class:
+		{
+			UClass* Class = nullptr;
+			if (const FStructProperty* StructProperty = CastField<FStructProperty>(&Property))
+			{
+				const UStruct* ScriptStruct = TClassProperty::StaticStruct();
+				static const UStruct* SoftClassPathStruct = TBaseStructure<FSoftClassPath>::Get();
+
+				if (StructProperty->Struct == ScriptStruct)
+				{					
+					TClassProperty ValueStruct;
+					StructProperty->GetValue_InContainer(&FlowNode, &ValueStruct);
+
+					// Get the Class property's base UClass from the FFlowDataPinProperty
+					Class = ValueStruct.DeriveMetaClass(*StructProperty);
+				}
+				else if (StructProperty->Struct == SoftClassPathStruct)
+				{
+				// Get the Class property's base UClass from the struct property's MetaData
+					Class = FFlowDataPinOutputProperty_Class::TryGetMetaClassFromProperty(*StructProperty);
+				}
+			}
+			else if (const FClassProperty* ClassProperty = CastField<FClassProperty>(&Property))
+			{
+				// Get the Class property's base UClass from the property's MetaData
+				Class = ClassProperty->MetaClass;
+			}
+			else if (const FSoftClassProperty* SoftClassProperty = CastField<FSoftClassProperty>(&Property))
+			{
+				// Get the Class property's base UClass from the property's MetaData
+				Class = SoftClassProperty->MetaClass;
+			}
+
+			NewFlowPin.SetPinType(PinType, Class);
+		}
+		break;
 
 	default:
 		{
@@ -748,10 +831,13 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 				AddPinForPinType<
 					FFlowDataPinInputProperty_Enum,
 					FFlowDataPinInputProperty_Vector,
+					FFlowDataPinInputProperty_Rotator,
 					FFlowDataPinInputProperty_Transform,
 					FFlowDataPinInputProperty_GameplayTag,
 					FFlowDataPinInputProperty_GameplayTagContainer,
-					FFlowDataPinInputProperty_InstancedStruct>(
+					FFlowDataPinInputProperty_InstancedStruct,
+					FFlowDataPinInputProperty_Object,
+					FFlowDataPinInputProperty_Class>(
 						PinType,
 						FlowNode,
 						Property,
@@ -763,10 +849,13 @@ bool UFlowAsset::TryCreateFlowDataPinFromMetadataValue(
 				AddPinForPinType<
 					FFlowDataPinOutputProperty_Enum,
 					FFlowDataPinOutputProperty_Vector,
+					FFlowDataPinInputProperty_Rotator,
 					FFlowDataPinOutputProperty_Transform,
 					FFlowDataPinOutputProperty_GameplayTag,
 					FFlowDataPinOutputProperty_GameplayTagContainer,
-					FFlowDataPinOutputProperty_InstancedStruct>(
+					FFlowDataPinOutputProperty_InstancedStruct,
+					FFlowDataPinOutputProperty_Object,
+					FFlowDataPinOutputProperty_Class>(
 						PinType,
 						FlowNode,
 						Property,
@@ -918,7 +1007,7 @@ TArray<UFlowNode*> UFlowAsset::GetNodesInExecutionOrder(UFlowNode* FirstIterated
 		}
 	}
 	FoundNodes.Shrink();
-
+	
 	return FoundNodes;
 }
 
@@ -1195,19 +1284,18 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 			if (NodeOwningThisAssetInstance.IsValid())
 			{
 				NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+
 				return;
 			}
-			else
+
+			// if this instance is a Root Flow, we need to deregister it from the subsystem first
+			if (Owner.IsValid())
 			{
-				// if this instance is a Root Flow, we need to deregister it from the subsystem first
-				if (Owner.IsValid())
+				const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
+				if (RootFlowInstances.Contains(this))
 				{
-					const TSet<UFlowAsset*>& RootFlowInstances = GetFlowSubsystem()->GetRootInstancesByOwner(Owner.Get());
-					if (RootFlowInstances.Contains(this))
-					{
-						GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
-						return;
-					}
+					GetFlowSubsystem()->FinishRootFlow(Owner.Get(), TemplateAsset, EFlowFinishPolicy::Keep);
+					return;
 				}
 			}
 

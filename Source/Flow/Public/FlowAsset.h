@@ -191,9 +191,6 @@ public:
 	void HarvestNodeConnections();
 	void HarvestFlowPinMetadata();
 
-	template <typename TFlowDataPinPropertyType, typename TUnrealType>
-	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty& Property);
-
 protected:
 	void AddDataPinPropertyBindingToMap(
 		const FName& PinAuthoredName,
@@ -471,28 +468,3 @@ public:
 	void LogNote(const FString& MessageToLog, const UFlowNodeBase* Node) const;
 #endif
 };
-
-#if WITH_EDITOR
-template <typename TFlowDataPinPropertyType, typename TUnrealType>
-UScriptStruct* UFlowAsset::FindScriptStructForFlowDataPinProperty(const FProperty& Property)
-{
-	// Find the ScriptStruct of the wrapped struct in a wrapper (eg, FFlowDataPinOutputProperty_Vector) or the struct itself (eg, FVector)
-	const FStructProperty* StructProperty = CastField<FStructProperty>(&Property);
-	if (!StructProperty)
-	{
-		return nullptr;
-	}
-
-	UScriptStruct* ScriptStruct = TFlowDataPinPropertyType::StaticStruct();
-	if (StructProperty->Struct == ScriptStruct)
-	{
-		static UScriptStruct* UnrealType = TBaseStructure<TUnrealType>::Get();
-
-		return UnrealType;
-	}
-	else
-	{
-		return StructProperty->Struct;
-	}
-}
-#endif

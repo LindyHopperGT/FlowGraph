@@ -192,7 +192,7 @@ void FFlowPin::SetPinType(EFlowPinType InFlowPinType, UObject* SubCategoryObject
 
 void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	// Set the PinSubCategoryObject based on the PinType (if appropriate)
 	switch (PinType)
@@ -200,6 +200,12 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 	case EFlowPinType::Vector:
 		{
 			PinSubCategoryObject = TBaseStructure<FVector>::Get();
+		}
+		break;
+
+	case EFlowPinType::Rotator:
+		{
+			PinSubCategoryObject = TBaseStructure<FRotator>::Get();
 		}
 		break;
 
@@ -228,12 +234,35 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 		break;
 
 	case EFlowPinType::Enum:
-#if 0 // TODO (gtaylor) Object, Class support
-	case EFlowPinType::Object:
-	case EFlowPinType::Class:
-#endif // 0
 		{
-			// Allow these to preserve their existing subcategory object
+			// Clear the PinSubCategoryObject if it is not an Enum
+			UObject* PinSubCategoryObjectPtr = PinSubCategoryObject.Get();
+			if (PinSubCategoryObjectPtr && !PinSubCategoryObjectPtr->IsA<UEnum>())
+			{
+				PinSubCategoryObject = nullptr;
+			}
+		}
+		break;
+
+	case EFlowPinType::Object:
+		{
+			// Clear the PinSubCategoryObject if it is not a Object
+			UObject* PinSubCategoryObjectPtr = PinSubCategoryObject.Get();
+			if (PinSubCategoryObjectPtr && !PinSubCategoryObjectPtr->IsA<UObject>())
+			{
+				PinSubCategoryObject = nullptr;
+			}
+		}
+		break;
+
+	case EFlowPinType::Class:
+		{
+			// Clear the PinSubCategoryObject if it is not a Class
+			UObject* PinSubCategoryObjectPtr = PinSubCategoryObject.Get();
+			if (PinSubCategoryObjectPtr && !PinSubCategoryObjectPtr->IsA<UClass>())
+			{
+				PinSubCategoryObject = nullptr;
+			}
 		}
 		break;
 
@@ -248,7 +277,7 @@ void FFlowPin::TrySetStructSubCategoryObjectFromPinType()
 
 const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 {
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	switch (FlowPinType)
 	{
@@ -277,25 +306,18 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 		return FFlowPin::PC_Enum;
 
 	case EFlowPinType::Vector:
+	case EFlowPinType::Rotator:
 	case EFlowPinType::Transform:
 	case EFlowPinType::GameplayTag:
 	case EFlowPinType::GameplayTagContainer:
 	case EFlowPinType::InstancedStruct:
 		return FFlowPin::PC_Struct;
 
-#if 0 // TODO (gtaylor) Finish Class/Object support
 	case EFlowPinType::Object:
 		return FFlowPin::PC_Object;
 
-	case EFlowPinType::SoftObject:
-		return FFlowPin::PC_SoftObject;
-
 	case EFlowPinType::Class:
 		return FFlowPin::PC_Class;
-
-	case EFlowPinType::SoftClass:
-		return FFlowPin::PC_SoftClass;
-#endif
 
 	default:
 		{
@@ -308,15 +330,14 @@ const FName& FFlowPin::GetPinCategoryFromPinType(EFlowPinType FlowPinType)
 #if WITH_EDITOR
 void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
 {
-	// PinTypes with PinSubCategoryObjects will need to update thif function
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	// PinTypes with PinSubCategoryObjects will need to update this function
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	// Must be called from PostEditChangeProperty() by an owning UObject <sigh>
 
 	switch (PinType)
 	{
 
-#if 0 // TODO (gtaylor) Finish Class/Object support
 	case EFlowPinType::Class:
 		{
 			PinSubCategoryObject = SubCategoryClassFilter;
@@ -328,7 +349,6 @@ void FFlowPin::PostEditChangedPinTypeOrSubCategorySource()
 			PinSubCategoryObject = SubCategoryObjectFilter;
 		}
 		break;
-#endif
 
 	case EFlowPinType::Enum:
 		{
@@ -370,7 +390,9 @@ FText FFlowPin::BuildHeaderText() const
 
 bool FFlowPin::ValidateEnum(const UEnum& EnumType)
 {
-	// Copied out of UBlackboardKeyType_Enum::ValidateEnum(), because it is inaccessible w/o AIModule and private access
+	// This function copied and adapted from UBlackboardKeyType_Enum::ValidateEnum(),
+	// because it is inaccessible w/o AIModule and private access
+
 	bool bAllValid = true;
 
 	// Do not test the max value (if present) since it is an internal value and users don't have access to it

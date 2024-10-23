@@ -5,6 +5,7 @@
 
 #include "FlowAsset.h"
 #include "FlowSettings.h"
+#include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 #include "Types/FlowDataPinProperties.h"
 
 #include "Components/ActorComponent.h"
@@ -17,7 +18,6 @@
 #include "Misc/App.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/MemoryWriter.h"
-#include "Interfaces/FlowNodeWithExternalDataPinSupplierInterface.h"
 
 FFlowPin UFlowNode::DefaultInputPin(TEXT("In"));
 FFlowPin UFlowNode::DefaultOutputPin(TEXT("Out"));
@@ -672,7 +672,7 @@ bool UFlowNode::FindConnectedNodeForPinSlow(const FName& PinName, FGuid* OutGuid
 }
 
 // Must implement TrySupplyDataPinAs... for every EFlowPinType 
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 FFlowDataPinResult_Bool UFlowNode::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
 {
@@ -714,6 +714,11 @@ FFlowDataPinResult_Vector UFlowNode::TrySupplyDataPinAsVector_Implementation(con
 	return TrySupplyDataPinAsStructType<FFlowDataPinResult_Vector, FFlowDataPinOutputProperty_Vector, FVector>(PinName);
 }
 
+FFlowDataPinResult_Rotator UFlowNode::TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const
+{
+	return TrySupplyDataPinAsStructType<FFlowDataPinResult_Rotator, FFlowDataPinOutputProperty_Rotator, FRotator>(PinName);
+}
+
 FFlowDataPinResult_Transform UFlowNode::TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const
 {
 	return TrySupplyDataPinAsStructType<FFlowDataPinResult_Transform, FFlowDataPinOutputProperty_Transform, FTransform>(PinName);
@@ -732,6 +737,16 @@ FFlowDataPinResult_GameplayTagContainer UFlowNode::TrySupplyDataPinAsGameplayTag
 FFlowDataPinResult_InstancedStruct UFlowNode::TrySupplyDataPinAsInstancedStruct_Implementation(const FName& PinName) const
 {
 	return TrySupplyDataPinAsStructType<FFlowDataPinResult_InstancedStruct, FFlowDataPinOutputProperty_InstancedStruct, FInstancedStruct>(PinName);
+}
+
+FFlowDataPinResult_Object UFlowNode::TrySupplyDataPinAsObject_Implementation(const FName& PinName) const
+{
+	return TrySupplyDataPinAsUObjectType<FFlowDataPinResult_Object, FFlowDataPinOutputProperty_Object, UObject, FObjectProperty, FSoftObjectProperty, FWeakObjectProperty, FLazyObjectProperty>(PinName);
+}
+
+FFlowDataPinResult_Class UFlowNode::TrySupplyDataPinAsClass_Implementation(const FName& PinName) const
+{
+	return TrySupplyDataPinAsUClassType<FFlowDataPinResult_Class, FFlowDataPinOutputProperty_Class, UClass, FClassProperty, FSoftClassProperty>(PinName);
 }
 
 void UFlowNode::RecursiveFindNodesByClass(UFlowNode* Node, const TSubclassOf<UFlowNode> Class, uint8 Depth, TArray<UFlowNode*>& OutNodes)

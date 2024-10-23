@@ -16,7 +16,7 @@ class UFlowDataPinBlueprintLibrary : public UBlueprintFunctionLibrary
 public:
 
 	// Recommend implementing AutoConvert_FlowDataPinProperty... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	// FFlowDataPinProperty auto-cast functions
 
@@ -88,6 +88,10 @@ public:
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Vector", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FVector AutoConvert_FlowDataPinPropertyVectorToVector(const FFlowDataPinOutputProperty_Vector& VectorProperty) { return VectorProperty.Value; }
 
+	// Convert Rotator property values to their inner Rotator
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Rotator", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static FRotator AutoConvert_FlowDataPinPropertyRotatorToRotator(const FFlowDataPinOutputProperty_Rotator& RotatorProperty) { return RotatorProperty.Value; }
+
 	// Convert Transform property values to their inner Transform
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Transform", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FTransform AutoConvert_FlowDataPinPropertyTransformToTransform(const FFlowDataPinOutputProperty_Transform& TransformProperty) { return TransformProperty.Value; }
@@ -107,8 +111,20 @@ public:
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to InstancedStruct", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FInstancedStruct AutoConvert_FlowDataPinPropertyInstancedStructToInstancedStruct(const FFlowDataPinOutputProperty_InstancedStruct& InstancedStructProperty) { return InstancedStructProperty.Value; }
 
+	// Convert Object property values to their inner Object
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Object", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static UObject* AutoConvert_FlowDataPinPropertyObjectToObject(const FFlowDataPinOutputProperty_Object& ObjectProperty) { return ObjectProperty.GetObjectValue(); }
+
+	// Convert Class property values to their inner Class
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Class", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static UClass* AutoConvert_FlowDataPinPropertyClassToClass(const FFlowDataPinOutputProperty_Class& ClassProperty) { return ClassProperty.GetResolvedClass(); }
+
+	// Convert Class property values to their FSoftClassPath
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to SoftClass", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static FSoftClassPath AutoConvert_FlowDataPinPropertyClassToSoftClass(const FFlowDataPinOutputProperty_Class& ClassProperty) { return ClassProperty.GetAsSoftClass(); }
+
 	// Recommend implementing AutoConvert_FlowDataPinResult... for every EFlowPinType
-	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+	FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 	// FFlowDataPinResults auto-cast functions
 
@@ -171,6 +187,10 @@ public:
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Vector", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FVector AutoConvert_FlowDataPinResultVectorToVector(const FFlowDataPinResult_Vector& VectorProperty) { return VectorProperty.Value; }
 
+	// Convert Rotator property values to their inner Rotator
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Rotator", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static FRotator AutoConvert_FlowDataPinResultRotatorToRotator(const FFlowDataPinResult_Rotator& RotatorProperty) { return RotatorProperty.Value; }
+
 	// Convert Transform property values to their inner Transform
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Transform", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FTransform AutoConvert_FlowDataPinResultTransformToTransform(const FFlowDataPinResult_Transform& TransformProperty) { return TransformProperty.Value; }
@@ -189,4 +209,16 @@ public:
 	// Convert InstancedStruct property values to their inner InstancedStruct
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to InstancedStruct", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
 	static FInstancedStruct AutoConvert_FlowDataPinResultInstancedStructToInstancedStruct(const FFlowDataPinResult_InstancedStruct& InstancedStructProperty) { return InstancedStructProperty.Value; }
+
+	// Convert Object property values to their inner Object
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Object", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static UObject* AutoConvert_FlowDataPinResultObjectToObject(const FFlowDataPinResult_Object& ObjectProperty) { return ObjectProperty.Value; }
+
+	// Convert Class property values to their inner Class
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to Class", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static UClass* AutoConvert_FlowDataPinResultClassToClass(const FFlowDataPinResult_Class& ClassProperty) { return ClassProperty.GetOrResolveClass(); }
+
+	// Convert Class property values to their the FSoftClassPath
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert to SoftClass", CompactNodeTitle = "->", BlueprintAutocast), Category = DataPins)
+	static FSoftClassPath AutoConvert_FlowDataPinResultClassToSoftClass(const FFlowDataPinResult_Class& ClassProperty) { return ClassProperty.GetAsSoftClass(); }
 };

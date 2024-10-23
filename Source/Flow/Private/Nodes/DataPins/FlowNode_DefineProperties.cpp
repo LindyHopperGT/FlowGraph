@@ -88,9 +88,8 @@ void UFlowNode_DefineProperties::PostEditChangeChainProperty(FPropertyChangedCha
 				EnumProperty.OnEnumNameChanged();
 			}
 
-			// We need to manually call any PostEdit linked property updates here for future enum values
-			// (Class, Object are likely cases)
-			FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+			// We may need to manually call any PostEdit linked property updates here for future EFlowPinType values
+			FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 		}
 	}
 

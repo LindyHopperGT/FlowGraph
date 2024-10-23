@@ -45,7 +45,7 @@ bool UFlowNode_Start::TryAppendExternalInputPins(TArray<FFlowPin>& InOutPins) co
 #endif // WITH_EDITOR
 
 // Must implement TrySupplyDataPinAs... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 FFlowDataPinResult_Bool UFlowNode_Start::TrySupplyDataPinAsBool_Implementation(const FName& PinName) const
 {
@@ -167,6 +167,21 @@ FFlowDataPinResult_Vector UFlowNode_Start::TrySupplyDataPinAsVector_Implementati
 	return Super::TrySupplyDataPinAsVector_Implementation(PinName);
 }
 
+FFlowDataPinResult_Rotator UFlowNode_Start::TrySupplyDataPinAsRotator_Implementation(const FName& PinName) const
+{
+	if (FlowDataPinValueSupplierInterface)
+	{
+		FFlowDataPinResult_Rotator SuppliedResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsRotator(FlowDataPinValueSupplierInterface.GetObject(), PinName);
+
+		if (SuppliedResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return SuppliedResult;
+		}
+	}
+
+	return Super::TrySupplyDataPinAsRotator_Implementation(PinName);
+}
+
 FFlowDataPinResult_Transform UFlowNode_Start::TrySupplyDataPinAsTransform_Implementation(const FName& PinName) const
 {
 	if (FlowDataPinValueSupplierInterface)
@@ -225,4 +240,34 @@ FFlowDataPinResult_InstancedStruct UFlowNode_Start::TrySupplyDataPinAsInstancedS
 	}
 
 	return Super::TrySupplyDataPinAsInstancedStruct_Implementation(PinName);
+}
+
+FFlowDataPinResult_Object UFlowNode_Start::TrySupplyDataPinAsObject_Implementation(const FName& PinName) const
+{
+	if (FlowDataPinValueSupplierInterface)
+	{
+		FFlowDataPinResult_Object SuppliedResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsObject(FlowDataPinValueSupplierInterface.GetObject(), PinName);
+
+		if (SuppliedResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return SuppliedResult;
+		}
+	}
+
+	return Super::TrySupplyDataPinAsObject_Implementation(PinName);
+}
+
+FFlowDataPinResult_Class UFlowNode_Start::TrySupplyDataPinAsClass_Implementation(const FName& PinName) const
+{
+	if (FlowDataPinValueSupplierInterface)
+	{
+		FFlowDataPinResult_Class SuppliedResult = IFlowDataPinValueSupplierInterface::Execute_TrySupplyDataPinAsClass(FlowDataPinValueSupplierInterface.GetObject(), PinName);
+
+		if (SuppliedResult.Result == EFlowDataPinResolveResult::Success)
+		{
+			return SuppliedResult;
+		}
+	}
+
+	return Super::TrySupplyDataPinAsClass_Implementation(PinName);
 }

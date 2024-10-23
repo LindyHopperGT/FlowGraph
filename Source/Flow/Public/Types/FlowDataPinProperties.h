@@ -7,8 +7,12 @@
 #include "GameplayTagContainer.h"
 #include "InstancedStruct.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "UObject/Class.h"
 
 #include "FlowDataPinProperties.generated.h"
+
+class FStructProperty;
+class UScriptStruct;
 
 USTRUCT(BlueprintType, DisplayName = "Base - Flow DataPin Property")
 struct FFlowDataPinProperty
@@ -23,11 +27,34 @@ struct FFlowDataPinProperty
 
 #if WITH_EDITOR
 	FLOW_API static FFlowPin CreateFlowPin(const FName& PinName, const TInstancedStruct<FFlowDataPinProperty>& DataPinProperty);
+
+	template <typename TFlowDataPinPropertyType, typename TUnrealType>
+	static UScriptStruct* FindScriptStructForFlowDataPinProperty(const FProperty& Property)
+	{
+		// Find the ScriptStruct of the wrapped struct in a wrapper (eg, FFlowDataPinOutputProperty_Vector) or the struct itself (eg, FVector)
+		const FStructProperty* StructProperty = CastField<FStructProperty>(&Property);
+		if (!StructProperty)
+		{
+			return nullptr;
+		}
+
+		UScriptStruct* ScriptStruct = TFlowDataPinPropertyType::StaticStruct();
+		if (StructProperty->Struct == ScriptStruct)
+		{
+			static UScriptStruct* UnrealType = TBaseStructure<TUnrealType>::Get();
+
+			return UnrealType;
+		}
+		else
+		{
+			return StructProperty->Struct;
+		}
+	}
 #endif
 };
 
 // Recommend implementing FFlowDataPinProperty... for every EFlowPinType
-FLOW_ASSERT_ENUM_MAX(EFlowPinType, 13);
+FLOW_ASSERT_ENUM_MAX(EFlowPinType, 16);
 
 // Wrapper struct for a bool that will generate and link to a Data Pin with its same name
 USTRUCT(BlueprintType, DisplayName = "Bool - Output Flow Data Pin Property", meta = (FlowPinType = "Bool"))
@@ -240,6 +267,25 @@ public:
 	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Vector; }
 };
 
+// Wrapper struct for a FRotator that will generate and link to a Data Pin with its same name
+USTRUCT(BlueprintType, DisplayName = "Rotator - Output Flow Data Pin Property", meta = (FlowPinType = "Rotator"))
+struct FFlowDataPinOutputProperty_Rotator : public FFlowDataPinProperty
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
+	FRotator Value;
+
+public:
+
+	FFlowDataPinOutputProperty_Rotator() {}
+	FFlowDataPinOutputProperty_Rotator(const FRotator& InValue) : Value(InValue) { }
+
+	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Rotator; }
+};
+
 // Wrapper struct for a FTransform that will generate and link to a Data Pin with its same name
 USTRUCT(BlueprintType, DisplayName = "Transform - Output Flow Data Pin Property", meta = (FlowPinType = "Transform"))
 struct FFlowDataPinOutputProperty_Transform : public FFlowDataPinProperty
@@ -314,6 +360,91 @@ public:
 	FFlowDataPinOutputProperty_InstancedStruct(const FInstancedStruct& InValue) : Value(InValue) { }
 
 	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::InstancedStruct; }
+};
+
+// Wrapper struct for a UObject that will generate and link to a Data Pin with its same name
+USTRUCT(BlueprintType, DisplayName = "Object - Output Flow DataPin Property", meta = (FlowPinType = "Object"))
+struct FFlowDataPinOutputProperty_Object : public FFlowDataPinProperty
+{
+	GENERATED_BODY()
+
+	friend class FFlowDataPinProperty_ObjectCustomizationBase;
+
+protected:
+
+	// These pointers are separate so that the default value for the object can be configured 
+	// in the editor according to the type of object that it is (instanced or not).
+
+	// Object reference if the object is a non-instanced UObject type (ie, not EditInlineNew)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins, DisplayName = "Value (reference)", meta = (EditCondition = "InlineValue == nullptr"))
+	TObjectPtr<UObject> ReferenceValue = nullptr;
+
+	// Ofject reference if the object is an instanced UObject type (ie, EditInlineNew)
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = DataPins, DisplayName = "Value (inline)", meta = (EditCondition = "ReferenceValue == nullptr"))
+	TObjectPtr<UObject> InlineValue = nullptr;
+
+public:
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract))
+	TObjectPtr<UClass> ClassFilter = nullptr;
+#endif // WITH_EDITORONLY_DATA
+
+public:
+
+	FFlowDataPinOutputProperty_Object() {}
+	FLOW_API FFlowDataPinOutputProperty_Object(UObject* InValue, UClass* InClassFilter);
+
+	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Object; }
+
+	UObject* GetObjectValue() const { return ReferenceValue ? ReferenceValue : InlineValue; }
+	void SetObjectValue(UObject* InValue);
+
+#if WITH_EDITOR
+	UClass* DeriveObjectClass(const FProperty& MetaDataProperty) const;
+	FLOW_API static UClass* TryGetObjectClassFromProperty(const FProperty& MetaDataProperty);
+#endif
+};
+
+// Wrapper struct for a UClass that will generate and link to a Data Pin with its same name
+USTRUCT(BlueprintType, DisplayName = "Class - Output Flow DataPin Property", meta = (FlowPinType = "Class"))
+struct FFlowDataPinOutputProperty_Class : public FFlowDataPinProperty
+{
+	GENERATED_BODY()
+
+	friend class FFlowDataPinProperty_ClassCustomizationBase;
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DataPins)
+	FSoftClassPath Value;
+
+public:
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, Category = DataPins, meta = (AllowAbstract))
+	TObjectPtr<UClass> ClassFilter = nullptr;
+#endif // WITH_EDITORONLY_DATA
+
+public:
+
+	FFlowDataPinOutputProperty_Class() {}
+	FFlowDataPinOutputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter)
+		: Value(InValue)
+#if WITH_EDITOR
+		, ClassFilter(InClassFilter)
+#endif
+	{ }
+
+	virtual EFlowPinType GetFlowPinType() const override { return EFlowPinType::Class; }
+
+#if WITH_EDITOR
+	UClass* DeriveMetaClass(const FProperty& MetaDataProperty) const;
+	FLOW_API static UClass* TryGetMetaClassFromProperty(const FProperty& MetaDataProperty);
+#endif
+
+	const FSoftClassPath& GetAsSoftClass() const { return Value; }
+	UClass* GetResolvedClass() const { return Value.ResolveClass(); }
 };
 
 // Wrapper for FFlowDataPinProperty that is used for flow nodes that add 
@@ -436,6 +567,15 @@ struct FFlowDataPinInputProperty_Vector : public FFlowDataPinOutputProperty_Vect
 	FFlowDataPinInputProperty_Vector(const FVector& InValue) : Super(InValue) { }
 };
 
+USTRUCT(BlueprintType, DisplayName = "Rotator - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Rotator"))
+struct FFlowDataPinInputProperty_Rotator : public FFlowDataPinOutputProperty_Rotator
+{
+	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Rotator() : Super() { }
+	FFlowDataPinInputProperty_Rotator(const FRotator& InValue) : Super(InValue) { }
+};
+
 USTRUCT(BlueprintType, DisplayName = "Transform - Input Flow Data Pin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Transform"))
 struct FFlowDataPinInputProperty_Transform : public FFlowDataPinOutputProperty_Transform
 {
@@ -471,3 +611,22 @@ struct FFlowDataPinInputProperty_InstancedStruct : public FFlowDataPinOutputProp
 	FFlowDataPinInputProperty_InstancedStruct() : Super() { }
 	FFlowDataPinInputProperty_InstancedStruct(const FInstancedStruct& InValue) : Super(InValue) { }
 };
+
+USTRUCT(BlueprintType, DisplayName = "Object - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Object"))
+struct FFlowDataPinInputProperty_Object : public FFlowDataPinOutputProperty_Object
+{
+	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Object() : Super() { }
+	FFlowDataPinInputProperty_Object(UObject* InValue, UClass* InClassFilter) : Super(InValue, InClassFilter) { }
+};
+
+USTRUCT(BlueprintType, DisplayName = "Class - Input Flow DataPin Property", meta = (Hidden, DefaultForInputFlowPin, FlowPinType = "Class"))
+struct FFlowDataPinInputProperty_Class : public FFlowDataPinOutputProperty_Class
+{
+	GENERATED_BODY()
+
+	FFlowDataPinInputProperty_Class() : Super() { }
+	FFlowDataPinInputProperty_Class(const FSoftClassPath& InValue, UClass* InClassFilter) : Super(InValue, InClassFilter) { }
+};
+
