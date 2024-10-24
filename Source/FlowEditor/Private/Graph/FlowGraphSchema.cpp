@@ -809,6 +809,13 @@ TSharedPtr<FEdGraphSchemaAction> UFlowGraphSchema::GetCreateCommentAction() cons
 
 void UFlowGraphSchema::OnPinConnectionDoubleCicked(UEdGraphPin* PinA, UEdGraphPin* PinB, const FVector2D& GraphPosition) const
 {
+	if (!FFlowPin::IsExecPinCategory(PinA->PinType.PinCategory) || !FFlowPin::IsExecPinCategory(PinB->PinType.PinCategory))
+	{
+		// Disallowing Reroute node creation for non-exec connections (until we have a good solution for it)
+
+		return;
+	}
+
 	const FScopedTransaction Transaction(LOCTEXT("CreateFlowRerouteNodeOnWire", "Create Flow Reroute Node"));
 
 	const FVector2D NodeSpacerSize(42.0f, 24.0f);
