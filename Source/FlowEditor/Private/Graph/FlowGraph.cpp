@@ -29,6 +29,7 @@ UFlowGraph::UFlowGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	bLockUpdates = false;
+	bIsLoadingGraph = false;
 
 	if (!UFlowAsset::GetFlowGraphInterface().IsValid())
 	{
@@ -110,7 +111,6 @@ void UFlowGraph::NotifyGraphChanged()
 	UFlowAsset* FlowAsset = GetFlowAsset();
 
 	FlowAsset->HarvestNodeConnections();
-	FlowAsset->HarvestFlowPinMetadata();
 
 	Super::NotifyGraphChanged();
 }
@@ -168,6 +168,9 @@ void UFlowGraph::RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& Fro
 		FromNodeInstance->SetupForEditing(FromFlowGraphNode);
 	}
 
+	// Reconstruct the node when starting up editing
+	FromFlowGraphNode.ReconstructNode();
+
 	for (UFlowGraphNode* SubNode : FromFlowGraphNode.SubNodes)
 	{
 		// Setup all of the flow subnodes for editing
@@ -210,6 +213,8 @@ void UFlowGraph::OnLoaded()
 {
 	check(GEditor);
 
+	bIsLoadingGraph = true;
+
 	// Setup all the Nodes in the graph for editing
 	for (UEdGraphNode* EdNode : Nodes)
 	{
@@ -228,6 +233,8 @@ void UFlowGraph::OnLoaded()
 	}
 
 	RefreshGraph();
+
+	bIsLoadingGraph = false;
 }
 
 void UFlowGraph::OnSave()
@@ -324,6 +331,24 @@ void UFlowGraph::UpdateFlowGraphNodeErrorMessage(UFlowGraphNode& Node)
 	if (Node.HasErrors())
 	{
 		UE_LOG(LogFlowEditor, Error, TEXT("%s"), *Node.ErrorMessage);
+	}
+}
+
+void UFlowGraph::ValidateAsset(FFlowMessageLog& MessageLog)
+{
+	UFlowAsset* FlowAsset = GetFlowAsset();
+	if (FlowAsset)
+	{
+		FlowAsset->ValidateAsset(MessageLog);
+	}
+
+	for (int32 Idx = 0, IdxNum = Nodes.Num(); Idx < IdxNum; ++Idx)
+	{
+		UFlowGraphNode* Node = Cast<UFlowGraphNode>(Nodes[Idx]);
+		if (Node != nullptr)
+		{
+			Node->ValidateGraphNode(MessageLog);
+		}
 	}
 }
 

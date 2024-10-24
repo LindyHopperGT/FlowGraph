@@ -224,7 +224,6 @@ public:
 	
 	TArray<FFlowPin>& GetMutableAutoInputDataPins() { return AutoInputDataPins; }
 	TArray<FFlowPin>& GetMutableAutoOutputDataPins() { return AutoOutputDataPins; }
-
 #endif // WITH_EDITOR
 
 	// IFlowDataPinValueSupplierInterface

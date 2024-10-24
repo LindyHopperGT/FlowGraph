@@ -269,7 +269,6 @@ void UFlowGraphSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(&Graph)->GetFlowAsset();
 
 	FlowAsset->HarvestNodeConnections();
-	FlowAsset->HarvestFlowPinMetadata();
 }
 
 UFlowGraphNode* UFlowGraphSchema::CreateDefaultNode(UEdGraph& Graph, const UFlowAsset* AssetClassDefaults, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, const bool bPlacedAsGhostNode)
@@ -504,6 +503,15 @@ const FPinConnectionResponse UFlowGraphSchema::CanCreateConnection(const UEdGrap
 
 const FPinConnectionResponse UFlowGraphSchema::DetermineConnectionResponseOfCompatibleTypedPins(const UEdGraphPin* PinA, const UEdGraphPin* PinB, const UEdGraphPin* InputPin, const UEdGraphPin* OutputPin) const
 {
+	const bool bIsExistingConnection = PinA->LinkedTo.Contains(PinB);
+	if (bIsExistingConnection)
+	{
+		// Don't error for queries about existing connections
+		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
+	}
+
+	checkf(!PinB->LinkedTo.Contains(PinA), TEXT("This should be caught with the bIsExistingConnection test above"));
+
 	// Break existing connections on outputs for Exec Pins
 	if (FFlowPin::IsExecPinCategory(InputPin->PinType.PinCategory) && OutputPin->LinkedTo.Num() > 0)
 	{
@@ -767,20 +775,21 @@ void UFlowGraphSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNoti
 
 	// Cache the owning node because calling Super::BreakPinLinks might release the pointer
 	// to the pin owning node as a side effect of notify graph changed events. 
-	UFlowGraphNode* OwningFlowGraphNode = Cast<UFlowGraphNode>(TargetPin.GetOwningNode());
-	if (!IsValid(OwningFlowGraphNode))
-	{
-		return;
-	}
+	UFlowGraphNode* OwningFlowGraphNode = Cast<UFlowGraphNode>(TargetPin.GetOwningNodeUnchecked());
+
+	// NOTE (gtaylor) It is possible for OwningFlowGraphNode to be null if the TargetPin has been orphaned.
 
 	if (TargetPin.bOrphanedPin)
 	{
-		// this calls NotifyGraphChanged()
-		OwningFlowGraphNode->RemoveOrphanedPin(&TargetPin);
+		if (OwningFlowGraphNode)
+		{
+			// this calls NotifyGraphChanged()
+			OwningFlowGraphNode->RemoveOrphanedPin(&TargetPin);
+		}
 	}
 	else if (bSendsNodeNotification)
 	{
-		UEdGraph* EdGraph = OwningFlowGraphNode->GetGraph();
+		UEdGraph* EdGraph = (OwningFlowGraphNode) ? OwningFlowGraphNode->GetGraph() : nullptr;
 		if (IsValid(EdGraph))
 		{
 			EdGraph->NotifyGraphChanged();

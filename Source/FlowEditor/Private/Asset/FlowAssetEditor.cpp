@@ -455,7 +455,11 @@ void FFlowAssetEditor::ValidateAsset_Internal()
 
 void FFlowAssetEditor::ValidateAsset(FFlowMessageLog& MessageLog)
 {
-	FlowAsset->ValidateAsset(MessageLog);
+	UFlowGraph* FlowGraph = Cast<UFlowGraph>(FlowAsset->GetGraph());
+	if (FlowGraph)
+	{
+		FlowGraph->ValidateAsset(MessageLog);
+	}
 }
 
 void FFlowAssetEditor::SearchInAsset()

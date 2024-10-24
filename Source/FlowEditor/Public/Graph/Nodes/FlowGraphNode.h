@@ -14,6 +14,8 @@ class UEdGraphSchema;
 class UFlowGraph;
 class UFlowNodeBase;
 class UFlowNode;
+class UFlowAsset;
+class FFlowMessageLog;
 
 DECLARE_DELEGATE(FFlowGraphNodeEvent);
 
@@ -128,6 +130,8 @@ public:
 	// Get flow node for the inspected asset instance
 	UFlowNode* GetInspectedNodeInstance() const;
 
+	UFlowAsset* GetFlowAsset() const;
+
 	// Used for highlighting active nodes of the inspected asset instance
 	EFlowNodeState GetActivationState() const;
 
@@ -145,6 +149,11 @@ public:
 	virtual void JumpToDefinition() const override;
 	virtual bool SupportsCommentBubble() const override;
 	// --
+
+	/** check if node has any errors, used for assigning colors on graph */
+	virtual bool HasErrors() const;
+
+	void ValidateGraphNode(FFlowMessageLog& MessageLog) const;
 
 //////////////////////////////////////////////////////////////////////////
 // Pins
@@ -283,9 +292,6 @@ public:
 	/** Check if node instance uses blueprint for its implementation */
 	bool UsesBlueprint() const;
 
-	/** check if node has any errors, used for assigning colors on graph */
-	virtual bool HasErrors() const;
-	
 protected:
 
 	virtual void ResetNodeOwner();

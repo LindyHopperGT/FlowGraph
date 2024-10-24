@@ -230,8 +230,6 @@ UFlowAsset* UFlowSubsystem::CreateFlowInstance(const TWeakObjectPtr<UObject> Own
 	{
 		// Fix connections - even in packaged game if assets haven't been re-saved in the editor after changing node's definition
 		LoadedFlowAsset->HarvestNodeConnections();
-
-		LoadedFlowAsset->HarvestFlowPinMetadata();
 	}
 #endif
 

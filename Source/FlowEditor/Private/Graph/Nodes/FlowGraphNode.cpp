@@ -81,7 +81,7 @@ void UFlowGraphNode::PostLoad()
 		SubscribeToExternalChanges();
 	}
 
-	ReconstructNode();
+// !!! doing this elsewhere	ReconstructNode();
 }
 
 void UFlowGraphNode::PostDuplicate(bool bDuplicateForPIE)
@@ -160,7 +160,7 @@ void UFlowGraphNode::PostCopyNode()
 	// Make sure this NodeInstance is owned by the FlowAsset it's being pasted into
 	if (NodeInstance)
 	{
-		UFlowAsset* FlowAsset = CastChecked<UFlowGraph>(GetGraph())->GetFlowAsset();
+		UFlowAsset* FlowAsset = GetFlowAsset();
 
 		if (NodeInstance->GetOuter() != FlowAsset)
 		{
@@ -297,11 +297,21 @@ void UFlowGraphNode::ReconstructNode()
 	InputPins.Reset();
 	OutputPins.Reset();
 
-	// Recreate pins
-	if (SupportsContextPins() && (NodeInstance->CanRefreshContextPinsOnLoad() || bNeedsFullReconstruction))
+	bool bChangedAutoFlowPins = false;
+
+	// Harvest the auto-generated pins before refreshing context pins
+	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
 	{
-		RefreshContextPins(false);
+		if (UFlowAsset* FlowAsset = NodeInstance->GetFlowAsset())
+		{
+			bChangedAutoFlowPins = FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNode);
+		}
 	}
+
+	// Recreate pins
+	constexpr bool bReconstructNode = false;
+	RefreshContextPins(bReconstructNode);
+
 	AllocateDefaultPins();
 	RewireOldPinsToNewPins(OldPins);
 
@@ -971,8 +981,25 @@ void UFlowGraphNode::RefreshContextPins(const bool bReconstructNode)
 		return;
 	}
 
-	const bool bShouldConsiderRefreshingContextPins = SupportsContextPins() || bHasContextPins;
-	if (!bShouldConsiderRefreshingContextPins)
+	// Update the auto-generated pins before refreshing context pins
+	bool bChangedAutoFlowPins = false;
+	if (UFlowAsset* FlowAsset = NodeInstance->GetFlowAsset())
+	{
+		bChangedAutoFlowPins = FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNode);
+	}
+
+	bool bIsLoad = false;
+	if (UFlowGraph* FlowGraph = GetFlowGraph())
+	{
+		bIsLoad = FlowGraph->IsLoadingGraph();
+	}
+
+	// Confirm that we should be refreshing context pins
+	const bool bIsAllowedToRefreshPins = !bIsLoad || NodeInstance->CanRefreshContextPinsOnLoad();
+	const bool bShouldConsiderRefreshingContextPins = bIsAllowedToRefreshPins && (SupportsContextPins() || bHasContextPins);
+	const bool bShouldRefreshContextPins = bShouldConsiderRefreshingContextPins || bChangedAutoFlowPins || bNeedsFullReconstruction;
+
+	if (!bShouldRefreshContextPins)
 	{
 		return;
 	}
@@ -1208,14 +1235,24 @@ void UFlowGraphNode::PostEditUndo()
 	}
 }
 
-void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const
+UFlowAsset* UFlowGraphNode::GetFlowAsset() const
 {
 	if (UFlowGraph* FlowGraph = GetFlowGraph())
 	{
 		if (UFlowAsset* FlowAsset = FlowGraph->GetFlowAsset())
 		{
-			FlowAsset->LogError(MessageToLog, FlowNodeBase);
+			return FlowAsset;
 		}
+	}
+
+	return nullptr;
+}
+
+void UFlowGraphNode::LogError(const FString& MessageToLog, const UFlowNodeBase* FlowNodeBase) const
+{
+	if (UFlowAsset* FlowAsset = GetFlowAsset())
+	{
+		FlowAsset->LogError(MessageToLog, FlowNodeBase);
 	}
 }
 
@@ -1646,6 +1683,49 @@ void UFlowGraphNode::UpdateNodeClassData()
 bool UFlowGraphNode::HasErrors() const
 {
 	return ErrorMessage.Len() > 0 || !IsValid(NodeInstance);
+}
+
+void UFlowGraphNode::ValidateGraphNode(FFlowMessageLog& MessageLog) const
+{
+	// Verify that all input data pin connections are legal
+
+	bool bAppendedErrors = false;
+
+	if (!NodeInstance)
+	{
+		// Missing the node instance!
+
+		MessageLog.Error<UFlowNode>(TEXT("FlowGraphNode is missing its UFlowNode instance!"), nullptr);
+
+		return;
+	}
+
+	FFlowMessageLog& ValidationLog = NodeInstance->ValidationLog;
+
+	const UFlowGraphSchema* Schema = CastChecked<UFlowGraphSchema>(GetSchema());
+
+	for (const UEdGraphPin* EdGraphPin : InputPins)
+	{
+		if (!FFlowPin::IsDataPinCategory(EdGraphPin->PinType.PinCategory))
+		{
+			continue;
+		}
+
+		if (!EdGraphPin->HasAnyConnections())
+		{
+			continue;
+		}
+
+		for (UEdGraphPin* const ConnectedPin : EdGraphPin->LinkedTo)
+		{
+			const FPinConnectionResponse Response = Schema->CanCreateConnection(ConnectedPin, EdGraphPin);
+			
+			if (!Response.CanSafeConnect())
+			{
+				MessageLog.Error<UFlowNodeBase>(*FString::Printf(TEXT("Pin %s has invalid connection: %s"), *EdGraphPin->GetName(), *Response.Message.ToString()), NodeInstance);
+			}
+		}
+	}
 }
 
 bool UFlowGraphNode::IsAncestorNode(const UFlowGraphNode& OtherNode) const

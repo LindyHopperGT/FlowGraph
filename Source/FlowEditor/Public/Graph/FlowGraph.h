@@ -46,7 +46,9 @@ public:
 	virtual void OnNodeInstanceRemoved(UObject* NodeInstance);
 
 	UEdGraphPin* FindGraphNodePin(UEdGraphNode* Node, EEdGraphPinDirection Dir);
-	
+
+	void ValidateAsset(FFlowMessageLog& MessageLog);
+
 public:
 
 	virtual void OnCreated();
@@ -71,6 +73,8 @@ public:
 	void LockUpdates();
 	void UnlockUpdates();
 
+	bool IsLoadingGraph() const { return bIsLoadingGraph; }
+
 protected:
 	static void RecursivelySetupAllFlowGraphNodesForEditing(UFlowGraphNode& FromFlowGraphNode);
 	void RecursivelyRefreshAddOns(UFlowGraphNode& FromFlowGraphNode);
@@ -88,4 +92,7 @@ protected:
 	 *  flag allows freezing update during heavy changes like pasting new nodes 
 	 */
 	uint32 bLockUpdates : 1;
+
+	// is currently loading the flow graph (used to suppress some work during load)
+	uint32 bIsLoadingGraph : 1;
 };
