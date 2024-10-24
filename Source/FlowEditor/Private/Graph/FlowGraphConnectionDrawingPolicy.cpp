@@ -142,7 +142,7 @@ void FFlowGraphConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* Output
 	{
 		Params.WireColor = Schema->GetPinTypeColor(OutputPin->PinType);
 
-		if (InputPin)
+		if (InputPin && FFlowPin::IsExecPinCategory(InputPin->PinType.PinCategory))
 		{
 			// selected paths
 			if (SelectedPaths.Contains(OutputPin) || SelectedPaths.Contains(InputPin))
